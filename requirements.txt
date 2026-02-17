@@ -1,0 +1,21 @@
+# Web Framework
+flask>=2.3.0
+flask-cors>=4.0.0
+
+# Deep Learning
+torch>=2.0.0
+transformers>=4.30.0
+
+# Image Processing
+Pillow>=10.0.0
+pillow-heif>=0.13.0
+
+# LLM & Agents
+openai>=1.0.0
+langchain>=0.1.0
+langchain-openai>=0.0.5
+langchain-community>=0.0.10
+langgraph>=0.0.10
+
+# Environment Management
+python-dotenv>=1.0.0
