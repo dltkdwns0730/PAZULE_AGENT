@@ -1,136 +1,85 @@
-"""Qwen-VL style adapter.
+"""Qwen-VL 모델 스텁 (OpenRouter 연동).
 
-This module uses an LLM-compatible JSON judging prompt as a practical adapter.
-If no API key is configured, it falls back to deterministic token similarity.
+OpenRouter 플랫폼을 통해 Qwen 멀티모달 모델을 호출합니다.
 """
 
 from __future__ import annotations
-
-import time
+import base64
+import json
 from typing import Any, Dict
-
-from langchain.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-
+from langchain_core.messages import HumanMessage
 from app.core.config import settings
-from app.models.adapter_utils import normalize_label, safe_json_loads, text_overlap_score
 
 
-def _fallback_vote(
-    mission: str, answer: str, context: str, prompt_bundle: Dict[str, Dict[str, str]]
-) -> Dict[str, Any]:
-    """Caller: ?? ?? ???? ???
-    Purpose: `_fallback_vote` ?? ??? ????
-    Returns: ?? ?? ?? ??
-    Deps: ?? ??? ??
-    Args: mission: ???? ???? ??; answer: ???? ???? ??; context: ???? ???? ??; prompt_bundle: ???? ???? ??
-    Note: ?? ?? ?? ???? ???"""
-    base = text_overlap_score(answer, context)
-    if mission == "location":
-        score = 0.4 + 0.5 * base
-        threshold = 0.68
-    else:
-        score = 0.48 + 0.5 * base
-        threshold = 0.6
-
-    score = max(0.0, min(1.0, score))
-    return {
-        "label": normalize_label(score, threshold),
-        "score": score,
-        "confidence": min(0.9, 0.5 + score * 0.4),
-        "reason": "Fallback Qwen probe using context-text alignment",
-        "evidence": {
-            "answer": answer,
-            "prompt": prompt_bundle.get("qwen", {}),
-            "context_excerpt": context[:320],
-        },
-    }
+def _encode_image_base64(image_path: str) -> str:
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode("utf-8")
 
 
 def probe_with_qwen(
     mission_type: str,
     image_path: str,
     answer: str,
-    prompt_bundle: Dict[str, Dict[str, str]] | None = None,
+    prompt_bundle: Dict[str, Any],
 ) -> Dict[str, Any]:
-    """Caller: ?? ?? ???? ???
-    Purpose: `probe_with_qwen` ?? ??? ????
-    Returns: ?? ?? ?? ??
-    Deps: ?? ??? ??
-    Args: mission_type: ???? ???? ??; image_path: ???? ???? ??; answer: ???? ???? ??; prompt_bundle: ???? ???? ??
-    Note: ?? ?? ?? ???? ???"""
-    start = time.perf_counter()
-    mission = "atmosphere" if mission_type == "photo" else mission_type
-    prompts = prompt_bundle or {}
-    from app.models.blip import get_visual_context
-
-    context = get_visual_context(image_path)
-
-    if not settings.OPENAI_API_KEY:
-        vote = _fallback_vote(mission, answer, context, prompts)
+    """OpenRouter를 경유하여 Qwen-VL 모델로 이미지를 분석한다."""
+    if not settings.OPENROUTER_API_KEY:
         return {
             "model": "qwen",
-            "mission_type": mission,
-            "latency_ms": round((time.perf_counter() - start) * 1000, 2),
-            "success": True,
-            **vote,
+            "score": 0.0,
+            "label": "fail",
+            "reason": "OPENROUTER_API_KEY가 설정되지 않아 Qwen-VL 호출을 건너뜁니다.",
         }
-
-    system_prompt = prompts.get("qwen", {}).get(
-        "system",
-        "You are a visual mission judge. Return strict JSON only.",
-    )
-    user_prompt = prompts.get("qwen", {}).get(
-        "user",
-        "Judge alignment between target and image context.",
-    )
-
-    chain = ChatPromptTemplate.from_messages(
-        [
-            ("system", system_prompt),
-            (
-                "user",
-                (
-                    f"{user_prompt}\n\n"
-                    f"mission_type={mission}\n"
-                    f"target={answer}\n"
-                    f"context={context}\n\n"
-                    'Return JSON: {"label":"match|mismatch","score":0..1,'
-                    '"confidence":0..1,"reason":"..."}'
-                ),
-            ),
-        ]
-    ) | ChatOpenAI(model="gpt-4o-mini", temperature=0, api_key=settings.OPENAI_API_KEY)
 
     try:
-        raw = chain.invoke({}).content
-        parsed = safe_json_loads(raw)
-    except Exception as exc:
-        parsed = {
-            "label": "mismatch",
-            "score": 0.35,
-            "confidence": 0.4,
-            "reason": f"Qwen probe failed: {exc}",
+        llm = ChatOpenAI(
+            api_key=settings.OPENROUTER_API_KEY,
+            base_url="https://openrouter.ai/api/v1",
+            model=settings.QWEN_VL_MODEL_ID or "qwen/qwen-2.5-vl-7b-instruct:free",
+            temperature=0.1,
+            max_tokens=300,
+        )
+
+        base64_image = _encode_image_base64(image_path)
+        qwen_prompt = prompt_bundle.get("qwen_prompt", f"Does this image match the keyword: {answer}?")
+        
+        # JSON 포맷으로 출력하도록 명시적인 지시어 추가
+        system_instruction = (
+            "You are an AI assistant specialized in analyzing images. "
+            "You must respond ONLY with a valid JSON object. Do not include any markdown formatting like ```json. "
+            "The JSON object must contain exactly three keys:\n"
+            '1. "score": a float between 0.0 and 1.0 indicating your confidence.\n'
+            '2. "label": either "match" or "mismatch".\n'
+            '3. "reason": a short explanation of your reasoning based on the image.\n'
+            f"Analyze the image according to this prompt: {qwen_prompt}"
+        )
+
+        msg = HumanMessage(
+            content=[
+                {"type": "text", "text": system_instruction},
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
+                },
+            ]
+        )
+
+        response = llm.invoke([msg])
+        response_text = response.content.replace("```json", "").replace("```", "").strip()
+        parsed = json.loads(response_text)
+
+        return {
+            "model": "qwen",
+            "score": float(parsed.get("score", 0.0)),
+            "label": parsed.get("label", "mismatch"),
+            "reason": parsed.get("reason", "OpenRouter Qwen response parse failed."),
         }
-
-    score = float(parsed.get("score", 0.0))
-    score = max(0.0, min(1.0, score))
-    label = parsed.get("label") or normalize_label(score, 0.6)
-    confidence = float(parsed.get("confidence", 0.5))
-    confidence = max(0.0, min(1.0, confidence))
-
-    return {
-        "model": "qwen",
-        "mission_type": mission,
-        "label": label,
-        "score": score,
-        "confidence": confidence,
-        "reason": parsed.get("reason", "Qwen-style probe result"),
-        "latency_ms": round((time.perf_counter() - start) * 1000, 2),
-        "success": True,
-        "evidence": {
-            "answer": answer,
-            "prompt": prompts.get("qwen", {}),
-            "context_excerpt": context[:320],
-        },
-    }
+    except Exception as e:
+        print(f"[Qwen-VL Error] {e}")
+        return {
+            "model": "qwen",
+            "score": 0.0,
+            "label": "fail",
+            "reason": f"OpenRouter API 호출 또는 파싱 오류: {e}",
+        }

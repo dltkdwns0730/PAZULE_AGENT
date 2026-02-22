@@ -156,68 +156,43 @@ def get_visual_context(user_image_path: str) -> str:
     return "\n".join(context_parts)
 
 
-def probe_with_blip_location(
-    user_image_path: str, answer: str, prompt_bundle: Dict[str, Dict[str, str]] | None = None
-) -> Dict[str, Any]:
-    """Caller: ?? ?? ???? ???
-    Purpose: `probe_with_blip_location` ?? ??? ????
-    Returns: ?? ?? ?? ??
-    Deps: ?? ??? ??
-    Args: user_image_path: ???? ???? ??; answer: ???? ???? ??; prompt_bundle: ???? ???? ??
-    Note: ?? ?? ?? ???? ???"""
-    start = time.perf_counter()
-    is_success, failed_list = check_with_blip(user_image_path, answer)
-    total = len(landmark_qa_data.get(answer, []))
-    wrong = len(failed_list)
-    score = 1.0 if is_success else max(0.0, (total - wrong) / total) if total else 0.0
-    label = normalize_label(score, SUCCESS_THRESHOLD)
+def probe_with_blip_location(image_path: str, answer: str, prompt_bundle: dict) -> dict:
+    """BLIP VQA로 위치 미션을 검증한다 (파이프라인 인터페이스).
 
+    Args:
+        image_path: 이미지 파일 경로
+        answer: 미션 정답 랜드마크 이름
+        prompt_bundle: 프롬프트 번들
+
+    Returns:
+        모델 투표 결과 딕셔너리
+    """
+    is_success, _ = check_with_blip(image_path, answer)
     return {
         "model": "blip",
-        "mission_type": "location",
-        "label": label,
-        "score": score,
-        "confidence": min(0.95, 0.55 + score * 0.4),
-        "reason": "BLIP VQA landmark verification",
-        "latency_ms": round((time.perf_counter() - start) * 1000, 2),
-        "success": True,
-        "evidence": {
-            "answer": answer,
-            "failed_questions": failed_list[:5],
-            "prompt": (prompt_bundle or {}).get("blip", {}),
-        },
+        "score": 1.0 if is_success else 0.0,
+        "label": "match" if is_success else "mismatch",
+        "reason": f"BLIP VQA location probe for '{answer}'",
     }
 
 
-def probe_with_blip_atmosphere(
-    user_image_path: str, answer: str, prompt_bundle: Dict[str, Dict[str, str]] | None = None
-) -> Dict[str, Any]:
-    """Caller: ?? ?? ???? ???
-    Purpose: `probe_with_blip_atmosphere` ?? ??? ????
-    Returns: ?? ?? ?? ??
-    Deps: ?? ??? ??
-    Args: user_image_path: ???? ???? ??; answer: ???? ???? ??; prompt_bundle: ???? ???? ??
-    Note: ?? ?? ?? ???? ???"""
-    start = time.perf_counter()
-    context = get_visual_context(user_image_path)
-    from app.models.llm import llm_service  # Local import to keep module import lighter.
+def probe_with_blip_atmosphere(image_path: str, answer: str, prompt_bundle: dict) -> dict:
+    """BLIP VQA로 분위기 미션을 검증한다 (파이프라인 인터페이스).
 
-    verification = llm_service.verify_mood(answer, context)
-    score = 0.78 if verification.get("success") else 0.34
-    label = normalize_label(score, 0.62)
+    Args:
+        image_path: 이미지 파일 경로
+        answer: 미션 정답 분위기 키워드
+        prompt_bundle: 프롬프트 번들
 
+    Returns:
+        모델 투표 결과 딕셔너리
+    """
+    context = get_visual_context(image_path)
+    keyword_lower = answer.lower()
+    found = keyword_lower in context.lower()
     return {
         "model": "blip",
-        "mission_type": "atmosphere",
-        "label": label,
-        "score": score,
-        "confidence": min(0.92, 0.5 + score * 0.45),
-        "reason": verification.get("reason", "BLIP context + LLM verification"),
-        "latency_ms": round((time.perf_counter() - start) * 1000, 2),
-        "success": True,
-        "evidence": {
-            "answer": answer,
-            "prompt": (prompt_bundle or {}).get("blip", {}),
-            "context_excerpt": context[:320],
-        },
+        "score": 0.85 if found else 0.2,
+        "label": "match" if found else "mismatch",
+        "reason": f"BLIP atmosphere probe for '{answer}': {'keyword found' if found else 'keyword not found'}",
     }
