@@ -165,8 +165,44 @@ tests/
 cd projects/active/PAZULE
 python -m venv .venv
 .venv\Scripts\activate
+```
+
+### Install with uv (Recommended)
+
+API-only runtime:
+
+```bash
+uv pip install .
+```
+
+Model runtime (BLIP/Qwen/SigLIP2/LangGraph path):
+
+```bash
+uv pip install ".[model]"
+```
+
+Full local development profile:
+
+```bash
+uv pip install ".[dev,model]"
+```
+
+### Legacy pip Compatibility
+
+```bash
 pip install -r requirements.txt
+```
+
+### Start server
+
+```bash
 python run.py
+```
+
+Windows console can fail on non-UTF8 output. If needed:
+
+```powershell
+$env:PYTHONUTF8="1"
 ```
 
 ## Test
