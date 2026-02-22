@@ -1,83 +1,76 @@
+"""LLM 기반 힌트 생성 및 감성 검증 서비스."""
+
+from __future__ import annotations
+
 import json
 
 from langchain.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
 from app.core.config import settings
+from app.prompts.registry import PromptVersion, with_prompt
 
 
 class LLMService:
-    """LLM 기반 힌트 생성 및 감성 검증 서비스"""
+    """LLM 기반 힌트 생성 및 감성 검증 서비스."""
 
     def __init__(self):
-        self.llm = ChatOpenAI(
-            model="gpt-4o-mini",
-            temperature=0.7,
-            api_key=settings.OPENAI_API_KEY,
-        )
+        # 1. OpenRouter (우선순위 1)
+        if settings.OPENROUTER_API_KEY:
+            self.llm = ChatOpenAI(
+                model=settings.LLM_MODEL_ID or "google/gemini-2.5-pro",
+                temperature=0.7,
+                api_key=settings.OPENROUTER_API_KEY,
+                base_url="https://openrouter.ai/api/v1",
+            )
+        # 2. Native Gemini API (우선순위 2)
+        elif settings.GEMINI_API_KEY:
+            try:
+                from langchain_google_genai import ChatGoogleGenerativeAI
+                self.llm = ChatGoogleGenerativeAI(
+                    model=settings.LLM_MODEL_ID or "gemini-2.5-pro",
+                    temperature=0.7,
+                    api_key=settings.GEMINI_API_KEY,
+                )
+            except ImportError:
+                raise ImportError("GEMINI_API_KEY is set but langchain-google-genai is not installed.")
+        # 3. Default OpenAI
+        else:
+            self.llm = ChatOpenAI(
+                model=settings.LLM_MODEL_ID or "gpt-4o-mini",
+                temperature=0.7,
+                api_key=settings.OPENAI_API_KEY,
+            )
 
-        # 미션1: BLIP 오답 기반 힌트 생성 프롬프트
-        self.blip_hint_prompt = ChatPromptTemplate.from_messages(
-            [
-                (
-                    "system",
-                    "당신은 파주 출판단지 보물찾기 게임의 힌트 제공자입니다.\n"
-                    "사용자가 촬영한 사진이 정답 랜드마크가 아닐 때, "
-                    "정답을 직접 언급하지 않고 추상적이고 시적인 힌트를 제공하세요.\n"
-                    "BLIP VQA 분석 결과를 바탕으로 부족한 특징을 은유적으로 설명하세요.",
-                ),
-                (
-                    "user",
-                    "정답 랜드마크: {answer}\n분석 결과: {failed_info}\n\n"
-                    "위 정보를 바탕으로 창의적인 힌트를 작성해주세요.",
-                ),
-            ]
-        )
-
-        # 미션2: 감성 사진 검증 프롬프트
-        self.mood_verification_prompt = ChatPromptTemplate.from_messages(
-            [
-                (
-                    "system",
-                    "당신은 감성 사진 심사위원입니다.\n"
-                    "주어진 '이미지 시각적 맥락(BLIP 분석)'을 읽고, "
-                    "이 사진이 목표로 하는 '감성 키워드'와 일치하는지 판단하세요.\n"
-                    "참고로 키워드의 정의는 다음과 같습니다.\n"
-                    "{keyword_definitions}\n\n"
-                    "판단 결과는 반드시 JSON 형식으로 반환해야 합니다.\n"
-                    '{{"success": true/false, '
-                    '"reason": "판단 근거를 한 문장으로 작성"}}\n'
-                    "엄격하게 판단하지 말고, 분위기가 어느 정도 느껴지면 성공으로 인정해주세요.",
-                ),
-                (
-                    "user",
-                    "목표 감성: {answer}\n이미지 시각적 맥락:\n{context}",
-                ),
-            ]
-        )
-
-    def generate_blip_hint(self, answer: str, failed_questions: list) -> str:
+    @with_prompt("hint_generation")
+    def generate_blip_hint(
+        self, *, answer: str, failed_info: str, prompt: PromptVersion | None = None
+    ) -> str:
         """BLIP 오답 정보를 기반으로 힌트를 생성한다."""
-        failed_info = self._format_blip_failures(failed_questions)
-        chain = self.blip_hint_prompt | self.llm
-        response = chain.invoke({"answer": answer, "failed_info": failed_info})
+        chat_prompt = ChatPromptTemplate.from_messages(
+            [("system", prompt.system), ("user", prompt.user)]
+        )
+        chain = chat_prompt | self.llm
+        response = chain.invoke({})
         return response.content
 
-    def verify_mood(self, answer: str, context: str) -> dict:
+    @with_prompt("mood_verification")
+    def verify_mood(
+        self,
+        *,
+        answer: str,
+        context: str,
+        keyword_definitions: str,
+        prompt: PromptVersion | None = None,
+    ) -> dict:
         """감성 키워드와 이미지 컨텍스트를 비교하여 일치 여부를 판단한다."""
-        from app.core.keyword import feedback_guide
-
-        definition = feedback_guide.get(answer, {}).get("desc", "정의 없음")
-        chain = self.mood_verification_prompt | self.llm
+        chat_prompt = ChatPromptTemplate.from_messages(
+            [("system", prompt.system), ("user", prompt.user)]
+        )
+        chain = chat_prompt | self.llm
 
         try:
-            response = chain.invoke(
-                {
-                    "answer": answer,
-                    "context": context,
-                    "keyword_definitions": f"{answer}: {definition}",
-                }
-            )
+            response = chain.invoke({})
             content = (
                 response.content.replace("```json", "").replace("```", "").strip()
             )
@@ -88,6 +81,23 @@ class LLMService:
                 "success": False,
                 "reason": "AI 판단 중 오류가 발생했습니다.",
             }
+
+    def generate_blip_hint_from_questions(
+        self, answer: str, failed_questions: list
+    ) -> str:
+        """기존 인터페이스 호환: failed_questions를 포맷팅하여 힌트를 생성한다."""
+        failed_info = self._format_blip_failures(failed_questions)
+        return self.generate_blip_hint(answer=answer, failed_info=failed_info)
+
+    def verify_mood_with_answer(self, answer: str, context: str) -> dict:
+        """기존 인터페이스 호환: answer와 context로 감성 검증을 수행한다."""
+        from app.core.keyword import feedback_guide
+
+        definition = feedback_guide.get(answer, {}).get("desc", "정의 없음")
+        keyword_definitions = f"{answer}: {definition}"
+        return self.verify_mood(
+            answer=answer, context=context, keyword_definitions=keyword_definitions
+        )
 
     def _format_blip_failures(self, questions: list) -> str:
         """BLIP 오답 리스트를 텍스트로 포맷한다."""
