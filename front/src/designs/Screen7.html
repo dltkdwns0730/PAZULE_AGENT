@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PAZULE - Coupon Redemption</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#377770",
+                        "primary-dark": "#2a5c56",
+                        "accent": "#4ce0b3",
+                        "background-light": "#f6f7f7",
+                        "background-dark": "#151d1c",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1e2928",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "sans": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display min-h-screen flex flex-col text-[#131615] dark:text-white overflow-hidden transition-colors duration-200">
+<!-- Top Navigation -->
+<header class="w-full bg-surface-light dark:bg-surface-dark border-b border-[#f1f3f3] dark:border-[#2d3a38] px-6 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+<div class="flex items-center gap-3">
+<button class="p-2 -ml-2 rounded-full hover:bg-background-light dark:hover:bg-background-dark text-primary dark:text-primary transition-colors">
+<span class="material-symbols-outlined text-2xl">arrow_back</span>
+</button>
+<div class="flex items-center gap-2">
+<div class="size-6 text-primary">
+<svg class="w-full h-full" fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-primary dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">PAZULE</h2>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 text-primary font-medium hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-[20px]">help</span>
+<span class="text-sm">Help</span>
+</button>
+<div class="size-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
+                JD
+            </div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col items-center justify-center p-4 md:p-8 relative">
+<!-- Abstract Background Pattern -->
+<div class="absolute inset-0 z-0 opacity-[0.03] pointer-events-none" style="background-image: radial-gradient(#377770 1px, transparent 1px); background-size: 24px 24px;">
+</div>
+<div class="relative w-full max-w-[440px] flex flex-col gap-6 z-10 animate-fade-in-up">
+<!-- Header Text -->
+<div class="text-center space-y-2 mb-2">
+<h1 class="text-[#131615] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">
+                    Redeem Reward
+                </h1>
+<p class="text-[#6d7e7c] dark:text-gray-400 text-base font-normal">
+                    Show this code to the cashier at checkout
+                </p>
+</div>
+<!-- Redemption Card -->
+<div class="bg-surface-light dark:bg-surface-dark rounded-2xl shadow-xl border border-[#f1f3f3] dark:border-[#2d3a38] overflow-hidden flex flex-col">
+<!-- Card Header with Store Info -->
+<div class="p-6 border-b border-[#f1f3f3] dark:border-[#2d3a38] bg-gradient-to-r from-surface-light to-[#f8faf9] dark:from-surface-dark dark:to-[#1a2423]">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-center overflow-hidden">
+<!-- Logo Placeholder -->
+<img alt="Starbucks Logo" class="w-full h-full object-cover" data-alt="Starbucks logo icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB58gW6k88c5JE0Fugk2TWynlxY0eJ0J9o77xi4uUSBsy1PVtWlXqrGQZYXIDTEcKQRdFUwsQEmYbDHa7qeXrZpTNpC3otdktUWVZ7dF_h4OAYX_eDKnzzn8vMh2fiQIOsDNX_tvt5ZOdKUOtWWKhLTjIKJBqEFDGA9yNDbuUnuHme2CfM5Jzif4n6O6UMU0pes62qXZpmNmGGWLpPLUuL4sam1xy2-EGZ9lXqxaho4phnvLv32rAmXpepRDUDJ2U-rVOPJwEoWxXY"/>
+</div>
+<div>
+<h3 class="font-bold text-lg text-[#131615] dark:text-white leading-tight">Starbucks</h3>
+<p class="text-xs text-[#6d7e7c] dark:text-gray-400 font-medium uppercase tracking-wider">Coffee &amp; Tea</p>
+</div>
+</div>
+<!-- Active Pulse Indicator -->
+<div class="flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/20">
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent"></span>
+</span>
+<span class="text-xs font-bold text-primary dark:text-accent uppercase tracking-wide">Active</span>
+</div>
+</div>
+<div class="mt-2">
+<p class="text-2xl font-bold text-primary dark:text-accent">20% off your next coffee</p>
+<p class="text-sm text-[#6d7e7c] dark:text-gray-400 mt-1">Valid until Sep 30, 2024</p>
+</div>
+</div>
+<!-- QR Code Area -->
+<div class="p-8 flex flex-col items-center justify-center bg-white dark:bg-white relative"> <!-- QR area kept white for contrast -->
+<div class="relative group cursor-pointer">
+<div class="bg-white p-4 rounded-xl border-2 border-dashed border-gray-200">
+<!-- Using a generated QR code image placeholder -->
+<img alt="QR Code for coupon redemption" class="w-48 h-48 md:w-56 md:h-56 object-contain mix-blend-multiply opacity-90 group-hover:opacity-100 transition-opacity" data-alt="QR Code for scanning" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPhvdJJuogxQaeMasKYwMTK4IB7FwMZPQ9OWMEtDhk0KVyJZASDneJUB4o7Q2H-JKLN7kz8mu99ZY9ztiSgpzQkj4HhlI5-L4DYGQQQS9-zDyO7aW5qXdJ2PdkEXBCVxgKGJSg0CPDHaq2iWZPF56O5O_EDLEY7Oh35rxESAu52XGZZMQNJ20CnT84_ML0erh7O6y6T41k9LdvNox9omQ23Y6fmusm8gc_VY30qzZnw-MG6g1DBTYncFr5-hsCitlywjrNOw8NYJY"/>
+</div>
+<!-- Magnify hint -->
+<div class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-surface-dark text-white text-[10px] px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            Click to expand
+                        </div>
+</div>
+<div class="mt-6 flex flex-col items-center gap-1">
+<p class="text-xs text-gray-400 font-mono tracking-widest uppercase">Code: PZL-8823-X9</p>
+<p class="text-sm font-medium text-gray-500 flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">center_focus_strong</span>
+                            Scan me at the counter
+                        </p>
+</div>
+</div>
+</div>
+<!-- Timer / Expiry Warning -->
+<div class="flex justify-center gap-6 text-[#131615] dark:text-white px-4">
+<div class="flex flex-col items-center">
+<span class="text-2xl font-bold tabular-nums tracking-tight">04</span>
+<span class="text-xs uppercase text-[#6d7e7c] font-medium tracking-wide">Min</span>
+</div>
+<div class="text-2xl font-bold text-gray-300">:</div>
+<div class="flex flex-col items-center">
+<span class="text-2xl font-bold tabular-nums tracking-tight text-primary dark:text-accent">59</span>
+<span class="text-xs uppercase text-[#6d7e7c] font-medium tracking-wide">Sec</span>
+</div>
+</div>
+<!-- Action Button -->
+<div class="pt-2 pb-8">
+<button class="w-full flex items-center justify-center gap-2 h-14 bg-primary hover:bg-primary-dark text-white text-lg font-bold rounded-xl shadow-lg shadow-primary/30 transition-all transform active:scale-[0.98]">
+<span class="material-symbols-outlined">check_circle</span>
+<span>Done</span>
+</button>
+<button class="w-full mt-3 py-2 text-sm text-[#6d7e7c] hover:text-primary font-medium transition-colors">
+                    Having trouble scanning?
+                </button>
+</div>
+</div>
+</main>
+</body></html>

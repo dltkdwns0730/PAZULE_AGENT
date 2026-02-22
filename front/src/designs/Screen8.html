@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PAZULE - AI Mission Detailed Analysis Log</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#377771",
+                        "secondary": "#4ce0b3",
+                        "accent-1": "#ffaf87",
+                        "accent-2": "#ff8e72",
+                        "background-light": "#f6f7f7",
+                        "background-dark": "#151d1c",
+                        "neutral-light": "#f1f3f3",
+                        "neutral-dark": "#2d3837",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer base {
+            body { @apply font-body bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased; }
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            @apply bg-transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            @apply bg-slate-300 dark:bg-white/10 rounded-full;
+        }
+    </style>
+</head>
+<body class="flex min-h-screen w-full overflow-hidden">
+<aside class="w-64 bg-primary flex-shrink-0 flex flex-col justify-between hidden md:flex h-screen fixed left-0 top-0 z-50 text-white">
+<div class="p-6">
+<div class="flex items-center gap-3 mb-10">
+<div class="flex items-center justify-center bg-white/10 rounded-lg h-10 w-10">
+<span class="material-symbols-outlined text-white text-[24px]">grid_view</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-white text-lg font-bold leading-none tracking-tight">PAZULE</h1>
+<p class="text-white/60 text-xs font-normal mt-1">Admin Control</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/10 text-white transition-colors" href="#">
+<span class="material-symbols-outlined">monitoring</span>
+<span class="text-sm font-medium">Analysis Log</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined">confirmation_number</span>
+<span class="text-sm font-medium">Coupon Management</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined">psychology</span>
+<span class="text-sm font-medium">AI Configuration</span>
+</a>
+</nav>
+</div>
+<div class="p-6">
+<div class="mt-4 pt-4 border-t border-white/10 flex items-center gap-3 px-2">
+<div class="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDJ00lxcOUtxA6QxKJapEvzZ2Be0fVETyx65raeNnDXwV64dS7fa4bg5GwLegn68FP8u9o0hRHtzLR_lruitHbEdFb5OstTilgQcsfO0vN7jtrCfrm4dxbuNbAz_brTaaFXgrqhIUlqq-p34KmadvonvT01801ctEg9sXORyuxRB-GljRJV_72vzzLyUrRi6FndP9mTEu-TeGAQzC6r0PuMnq0ggrM8TEB0Cz7xBzFTjk3uYrRjhMPApI-EJN8RRmcDuXISpeeqW38');"></div>
+<div class="flex flex-col overflow-hidden">
+<span class="text-sm font-medium text-white truncate">Admin User</span>
+<span class="text-xs text-white/50 truncate">admin@pazule.io</span>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 md:ml-64 flex flex-col h-screen overflow-hidden">
+<header class="bg-white dark:bg-[#1e2625] border-b border-neutral-light dark:border-white/5 sticky top-0 z-30 px-6 py-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<button class="md:hidden text-slate-500">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="flex items-center gap-2">
+<a class="text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+</a>
+<h2 class="text-slate-900 dark:text-white text-xl font-bold tracking-tight">AI Mission Detailed Analysis Log</h2>
+</div>
+</div>
+<div class="flex items-center gap-4 text-xs font-medium text-slate-400">
+<span>SESSION ID: <span class="text-slate-900 dark:text-white">PZ-9281-X7</span></span>
+<span class="h-4 w-px bg-slate-200 dark:bg-white/10"></span>
+<span>2023-11-24 14:22:01 UTC</span>
+</div>
+</header>
+<div class="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 bg-background-light dark:bg-background-dark custom-scrollbar">
+<div class="max-w-[1600px] mx-auto grid grid-cols-1 xl:grid-cols-12 gap-8">
+<div class="xl:col-span-7 space-y-6">
+<div class="bg-white dark:bg-[#1e2625] rounded-xl overflow-hidden shadow-sm border border-neutral-light dark:border-white/5 relative group">
+<div class="aspect-video relative bg-slate-100 dark:bg-neutral-dark">
+<img alt="User Submission" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9UeheTk9e6CLBJFWhAWbf8SNIqcQZQfzhn5UjD3OXSyoPkZz3XvymyD4BofAM1D8KtPmRwr8mEZKERGKKprYntwyW9Jd-1nsK3xqCOqesQxUqUw3aCSLYcjh8Ku2awN5zAGUdutoEaJ4Xf9DKR02FMMZFuCZ8r6gWFqig3pJlgK6527MiEeR3moxdgMAzf8eIM2hcld4BAw3CJ0W_GxvePNsOUoOGIx4_AyeMs4KA6qo5nM93I0yrMKngRKeNTS4cW-6iZ0uUMQA"/>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
+<div class="bg-black/60 backdrop-blur-md rounded-lg p-4 text-white border border-white/10">
+<h4 class="text-xs font-bold uppercase tracking-widest text-secondary mb-3">Metadata Analysis</h4>
+<div class="grid grid-cols-2 gap-4 text-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-white/60">location_on</span>
+<div>
+<p class="text-[10px] text-white/40 uppercase leading-none mb-1">GPS Coordinates</p>
+<p class="font-mono text-xs">35.6895° N, 139.6917° E</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-secondary">verified</span>
+<div>
+<p class="text-[10px] text-white/40 uppercase leading-none mb-1">Timestamp Validation</p>
+<p class="text-xs font-semibold">MATCHED (± 2.4s)</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-white/60">devices</span>
+<div>
+<p class="text-[10px] text-white/40 uppercase leading-none mb-1">Device ID</p>
+<p class="text-xs font-mono">iPhone14,2-U712</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-white/60">image</span>
+<div>
+<p class="text-[10px] text-white/40 uppercase leading-none mb-1">EXIF Authenticity</p>
+<p class="text-xs text-secondary font-semibold">VERIFIED</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="p-4 border-t border-neutral-light dark:border-white/5 flex justify-between items-center bg-slate-50 dark:bg-white/[0.02]">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 rounded-full border-2 border-white shadow-sm bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCIuGEDg0a8orCRbpB5oll6Ih4D_Usuj1xiuGMJ-hS7cdkU0ckEso_jR1nE5UGnM6Dcr57_f0mPGru1UOr285-9QQgx7lwhHrBLDOEu8MlCRIA5o842kYeBNfYA_fJntsl654ZHQAzw233Xm5sx-2T8TCviJVqVb8ye9cdY5Ved_N31pMuZsTvNfpdc0rZygHQpwblSUFrUBHbVTwi56wUkXeTS2FwOW0fWh5n3zcpCjdSWYxIYEiQV8IiEkWq-zFEHCsVtEnQwzrc');"></div>
+<div>
+<p class="text-sm font-bold text-slate-900 dark:text-white">Alice Freeman</p>
+<p class="text-xs text-slate-500">Mission: "Cozy Cafe Vibes"</p>
+</div>
+</div>
+<button class="text-primary hover:text-primary/80 text-sm font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">open_in_new</span>
+                            View Original
+                        </button>
+</div>
+</div>
+<div class="bg-white dark:bg-[#1e2625] rounded-xl p-6 shadow-sm border border-neutral-light dark:border-white/5">
+<h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">account_tree</span>
+                        System Trace: LangGraph Pipeline
+                    </h3>
+<div class="relative">
+<div class="absolute left-[15px] top-2 bottom-2 w-px bg-slate-200 dark:bg-white/10"></div>
+<div class="space-y-6">
+<div class="relative pl-10">
+<div class="absolute left-0 top-1 h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white z-10 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">security</span>
+</div>
+<div>
+<div class="flex justify-between items-center mb-1">
+<h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">Gatekeeper Node</h4>
+<span class="text-[10px] font-mono text-slate-400">0.42ms</span>
+</div>
+<p class="text-xs text-slate-500">Validation passed. No NSFW content detected. Metadata integrity check: 100%.</p>
+</div>
+</div>
+<div class="relative pl-10">
+<div class="absolute left-0 top-1 h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white z-10 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">alt_route</span>
+</div>
+<div>
+<div class="flex justify-between items-center mb-1">
+<h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">Task Router</h4>
+<span class="text-[10px] font-mono text-slate-400">1.2ms</span>
+</div>
+<p class="text-xs text-slate-500">Routing to Image-Text Consensus cluster. Mission type identified: <span class="text-primary font-medium">Atmosphere_Visual</span>.</p>
+</div>
+</div>
+<div class="relative pl-10">
+<div class="absolute left-0 top-1 h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-white z-10 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">call_split</span>
+</div>
+<div>
+<div class="flex justify-between items-center mb-1">
+<h4 class="text-sm font-bold text-slate-800 dark:text-slate-200">Fan-out Parallel Process</h4>
+<span class="text-[10px] font-mono text-slate-400">421ms</span>
+</div>
+<p class="text-xs text-slate-500">Initializing BLIP, CLIP, SigLIP2, and Qwen-VL vision encoders in parallel...</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="xl:col-span-5 space-y-6">
+<div class="bg-white dark:bg-[#1e2625] rounded-xl p-1 shadow-sm border border-neutral-light dark:border-white/5 overflow-hidden">
+<div class="bg-secondary/10 dark:bg-secondary/5 p-6 rounded-lg border border-secondary/20">
+<div class="flex justify-between items-center mb-4">
+<span class="px-2.5 py-1 rounded bg-secondary text-primary font-bold text-xs uppercase tracking-widest">SUCCESS</span>
+<div class="text-right">
+<p class="text-[10px] text-slate-500 uppercase font-bold leading-none mb-1">Aggregate Confidence</p>
+<p class="text-2xl font-black text-slate-900 dark:text-white">94.8<span class="text-sm font-normal text-slate-400">%</span></p>
+</div>
+</div>
+<p class="text-sm text-slate-600 dark:text-slate-300">The ensemble models have reached a consensus. The submitted image accurately represents the mission criteria for <strong>"Cozy Cafe Vibes"</strong>.</p>
+<div class="mt-4 pt-4 border-t border-secondary/10 flex gap-2">
+<button class="flex-1 py-2 px-4 bg-primary text-white rounded-lg text-sm font-bold hover:opacity-90 transition-opacity">Approve Manually</button>
+<button class="py-2 px-4 bg-white dark:bg-neutral-dark border border-neutral-light dark:border-white/10 rounded-lg text-sm font-bold text-red-500 hover:bg-red-50 transition-colors">Flag</button>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-[#1e2625] rounded-xl p-6 shadow-sm border border-neutral-light dark:border-white/5">
+<h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-6 flex items-center justify-between">
+<span class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">hive</span>
+                            Model Ensemble Votes
+                        </span>
+<span class="text-[10px] text-slate-400 font-normal">N = 4 MODELS</span>
+</h3>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between items-center mb-2">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-[#ffaf87]"></div>
+<span class="text-sm font-semibold text-slate-700 dark:text-slate-200">BLIP (Bootstrapping Language-Image)</span>
+</div>
+<span class="text-sm font-bold text-slate-900 dark:text-white">88.4%</span>
+</div>
+<div class="w-full bg-slate-100 dark:bg-white/5 rounded-full h-2">
+<div class="bg-[#ffaf87] h-2 rounded-full shadow-[0_0_8px_rgba(255,175,135,0.4)]" style="width: 88.4%"></div>
+</div>
+<p class="text-[10px] text-slate-400 mt-1.5 italic">"A high-quality photo of a wooden interior cafe with warm lighting."</p>
+</div>
+<div>
+<div class="flex justify-between items-center mb-2">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-[#ff8e72]"></div>
+<span class="text-sm font-semibold text-slate-700 dark:text-slate-200">CLIP (ViT-L/14)</span>
+</div>
+<span class="text-sm font-bold text-slate-900 dark:text-white">91.2%</span>
+</div>
+<div class="w-full bg-slate-100 dark:bg-white/5 rounded-full h-2">
+<div class="bg-[#ff8e72] h-2 rounded-full shadow-[0_0_8px_rgba(255,142,114,0.4)]" style="width: 91.2%"></div>
+</div>
+<p class="text-[10px] text-slate-400 mt-1.5 italic">Semantic alignment: [cafe: 0.98, aesthetic: 0.92, warm: 0.89]</p>
+</div>
+<div>
+<div class="flex justify-between items-center mb-2">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-[#4ce0b3]"></div>
+<span class="text-sm font-semibold text-slate-700 dark:text-slate-200">SigLIP2 (SoTA Zero-shot)</span>
+</div>
+<span class="text-sm font-bold text-slate-900 dark:text-white">99.1%</span>
+</div>
+<div class="w-full bg-slate-100 dark:bg-white/5 rounded-full h-2">
+<div class="bg-[#4ce0b3] h-2 rounded-full shadow-[0_0_10px_rgba(76,224,179,0.5)]" style="width: 99.1%"></div>
+</div>
+<p class="text-[10px] text-slate-400 mt-1.5 italic">Maximized pairwise sigmoid loss on "Cafe Interior" target.</p>
+</div>
+<div>
+<div class="flex justify-between items-center mb-2">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-[#377771]"></div>
+<span class="text-sm font-semibold text-slate-700 dark:text-slate-200">Qwen-VL (Visual-LLM)</span>
+</div>
+<span class="text-sm font-bold text-slate-900 dark:text-white">97.5%</span>
+</div>
+<div class="w-full bg-slate-100 dark:bg-white/5 rounded-full h-2">
+<div class="bg-[#377771] h-2 rounded-full shadow-[0_0_8px_rgba(55,119,113,0.4)]" style="width: 97.5%"></div>
+</div>
+<p class="text-[10px] text-slate-400 mt-1.5 italic">Reasoning: "Multiple coffee mugs, wooden tables, and ambient yellow lighting present."</p>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-[#1e2625] rounded-xl p-6 shadow-sm border border-neutral-light dark:border-white/5">
+<h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Mission Configuration</h3>
+<div class="space-y-3">
+<div class="flex justify-between text-xs">
+<span class="text-slate-500">Mission Type</span>
+<span class="font-medium text-slate-900 dark:text-white">Visual Verification</span>
+</div>
+<div class="flex justify-between text-xs">
+<span class="text-slate-500">Difficulty Tier</span>
+<span class="font-medium text-slate-900 dark:text-white">Advanced (Ensemble Required)</span>
+</div>
+<div class="flex justify-between text-xs">
+<span class="text-slate-500">Reward Assigned</span>
+<span class="font-medium text-secondary">50 PAZ Tokens + 20% Coupon</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+</body></html>
