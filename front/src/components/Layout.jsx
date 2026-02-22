@@ -1,69 +1,85 @@
-import { Outlet, NavLink, useLocation } from "react-router-dom";
+import React from "react";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 
 export default function Layout() {
+    const navigate = useNavigate();
     const location = useLocation();
 
+    // Check if we are on screens that shouldn't show the bottom nav
+    const hideBottomNav = ['/mission/submit', '/mission/result', '/coupon/success', '/scan'].includes(location.pathname);
+    const isScanPage = location.pathname === '/scan';
+
     return (
-        <div className="min-h-screen bg-[#111111] lg:flex lg:items-center lg:justify-center lg:py-8 font-display">
-            {/* Phone Frame Container */}
-            <div className="
-                w-full min-h-screen flex flex-col relative overflow-hidden
-                md:max-w-[640px] md:mx-auto
-                lg:max-w-[400px] lg:min-h-0 lg:h-[850px] lg:rounded-[2.5rem] lg:shadow-2xl lg:shadow-black/50 
-                lg:border-[8px] lg:border-[#2a3534] lg:ring-1 lg:ring-black/5
-            ">
-                {/* Status Bar (Simulated) */}
-                <div className="h-10 w-full bg-white dark:bg-[#1e2827] flex items-center justify-between px-6 select-none shrink-0 z-50 transition-colors">
-                    <span className="text-xs font-bold text-gray-900 dark:text-white">9:41</span>
-                    <div className="flex gap-1.5">
-                        <span className="material-symbols-outlined text-[16px] text-gray-900 dark:text-white">signal_cellular_alt</span>
-                        <span className="material-symbols-outlined text-[16px] text-gray-900 dark:text-white">wifi</span>
-                        <span className="material-symbols-outlined text-[16px] text-gray-900 dark:text-white">battery_full</span>
+        <div className="w-full h-full flex items-center justify-center bg-transparent">
+            {/* The primary "phone" container */}
+            <div className="relative w-full max-w-[420px] h-[100dvh] max-h-[850px] shadow-2xl rounded-[2.5rem] overflow-hidden flex flex-col sm:border-[8px] sm:border-slate-800/10 bg-white dark:bg-[#1a2322]">
+
+                {/* Simulated status bar space if needed - hidden completely for full-screen immersive feel on specific pages */}
+                {/* {!isScanPage && (
+                    <div className="h-0 w-full shrink-0 flex items-center justify-center pointer-events-none sticky top-0 z-50">
+                        <div className="w-1/3 h-[5px] bg-black/10 rounded-b-xl absolute top-0"></div>
                     </div>
+                )} */}
+
+                {/* Main Content Area */}
+                <div className="flex-1 w-full h-full overflow-hidden relative">
+                    <Outlet />
                 </div>
 
-                {/* Content Area */}
-                <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background-light dark:bg-background-dark no-scrollbar pb-24">
-                    <Outlet />
-                </main>
+                {/* Fixed Bottom Navigation (Only visible on main pages) */}
+                {!hideBottomNav && (
+                    <nav className="shrink-0 h-20 bg-white/80 dark:bg-[#1a2322]/80 backdrop-blur-xl border-t border-slate-200/50 dark:border-slate-800 flex justify-around items-center px-4 pb-4 pt-2 shadow-[0_-10px_40px_rgba(0,0,0,0.03)] z-40 sticky bottom-0">
+                        {/* Nav Item: Home */}
+                        <div
+                            onClick={() => navigate('/')}
+                            className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${location.pathname === '/' ? 'text-[#37776f]' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+                        >
+                            <span className={`material-symbols-outlined text-2xl transition-transform ${location.pathname === '/' ? 'font-variation-settings-\'FILL\' 1; scale-110' : ''}`}>home</span>
+                            <span className="text-[10px] font-bold tracking-wide">Home</span>
+                        </div>
 
-                {/* Bottom Navigation */}
-                <nav className="
-                    absolute bottom-0 w-full
-                    bg-white/90 dark:bg-[#1e2827]/90 backdrop-blur-md border-t border-gray-200 dark:border-gray-800
-                    pb-5 pt-3 px-6 z-40
-                ">
-                    <div className="flex justify-between items-center px-4">
-                        <NavLink to="/" end className={({ isActive }) => `flex flex-col items-center gap-1 group w-14 ${isActive ? "text-primary" : "text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"}`}>
-                            <div className="relative">
-                                <span className="material-symbols-outlined text-[26px] group-hover:scale-110 transition-transform">home</span>
-                                {location.pathname === '/' && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full"></span>}
-                            </div>
-                            <span className="text-[10px] font-bold">Home</span>
-                        </NavLink>
+                        {/* Nav Item: Map (Placeholder action) */}
+                        <div
+                            onClick={() => { }}
+                            className="flex flex-col items-center gap-1 cursor-pointer transition-all text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                        >
+                            <span className="material-symbols-outlined text-2xl">map</span>
+                            <span className="text-[10px] font-bold tracking-wide">Map</span>
+                        </div>
 
-                        <NavLink to="/map" className={({ isActive }) => `flex flex-col items-center gap-1 group w-14 ${isActive ? "text-primary" : "text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"}`}>
-                            <span className="material-symbols-outlined text-[26px] group-hover:scale-110 transition-transform">map</span>
-                            <span className="text-[10px] font-medium">Map</span>
-                        </NavLink>
+                        {/* Center Floating Prompt Button - Redirects to a new general mission or context aware action */}
+                        <div
+                            onClick={() => navigate('/')}
+                            className="relative -top-6 w-14 h-14 bg-gradient-to-r from-[#f45c25] to-[#e04812] rounded-full flex items-center justify-center text-white shadow-[0_8px_20px_rgba(244,92,37,0.4)] cursor-pointer hover:scale-105 active:scale-95 transition-all outline outline-[6px] outline-white dark:outline-[#1a2322]"
+                        >
+                            <span className="material-symbols-outlined text-3xl font-light">camera</span>
+                        </div>
 
-                        <NavLink to="/wallet" className={({ isActive }) => `flex flex-col items-center gap-1 group w-14 ${isActive ? "text-primary" : "text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"}`}>
-                            <span className="material-symbols-outlined text-[26px] group-hover:scale-110 transition-transform">account_balance_wallet</span>
-                            <span className="text-[10px] font-medium">Wallet</span>
-                        </NavLink>
+                        {/* Nav Item: Wallet */}
+                        <div
+                            onClick={() => navigate('/wallet')}
+                            className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${location.pathname === '/wallet' ? 'text-[#37776f]' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+                        >
+                            <span className={`material-symbols-outlined text-2xl transition-transform ${location.pathname === '/wallet' ? 'font-variation-settings-\'FILL\' 1; scale-110' : ''}`}>account_balance_wallet</span>
+                            <span className="text-[10px] font-bold tracking-wide">Wallet</span>
+                        </div>
 
-                        <NavLink to="/profile" className={({ isActive }) => `flex flex-col items-center gap-1 group w-14 ${isActive ? "text-primary" : "text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"}`}>
-                            <div className="relative">
-                                <span className="material-symbols-outlined text-[26px] group-hover:scale-110 transition-transform">person</span>
-                                <span className="absolute top-0 right-0 w-2 h-2 bg-accent rounded-full border border-white dark:border-[#1e2827]"></span>
-                            </div>
-                            <span className="text-[10px] font-medium">Profile</span>
-                        </NavLink>
-                    </div>
-                </nav>
+                        {/* Nav Item: Profile (Placeholder action) */}
+                        <div
+                            onClick={() => { }}
+                            className="flex flex-col items-center gap-1 cursor-pointer transition-all text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                        >
+                            <span className="material-symbols-outlined text-2xl">person</span>
+                            <span className="text-[10px] font-bold tracking-wide">Profile</span>
+                        </div>
+                    </nav>
+                )}
 
-                {/* Home Indicator (iOS style) */}
-                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-32 h-1 bg-gray-300 dark:bg-gray-600 rounded-full z-50"></div>
+                {/* OS Bottom Home Bar Indicator (Simulated) */}
+                <div className="h-1 w-full bg-transparent shrink-0 flex justify-center pb-2 pt-1 sticky bottom-0 z-50 pointer-events-none">
+                    <div className="w-1/3 h-1 bg-black/20 dark:bg-white/20 rounded-full"></div>
+                </div>
+
             </div>
         </div>
     );
