@@ -4,67 +4,52 @@ from __future__ import annotations
 
 from langgraph.graph import END, StateGraph
 
+from app.council.deliberation import council
 from app.council.nodes import (
-    coupon_policy_engine,
-    decision_engine,
-    evidence_aggregator,
-    finalizer,
-    gate_keeper,
-    model_fanout,
-    task_router,
+    validator,
+    router,
+    evaluator,
+    aggregator,
+    judge,
+    policy,
+    responder,
 )
 from app.council.state import PipelineState
 
 
 def _route_after_gate(state: PipelineState) -> str:
-    """Caller: ?? ?? ???? ???
-    Purpose: `_route_after_gate` ?? ??? ????
-    Returns: ?? ?? ?? ??
-    Deps: ?? ??? ??
-    Args: state: ???? ???? ??
-    Note: ?? ?? ?? ???? ???"""
     gate_result = state.get("artifacts", {}).get("gate_result", {})
-    return "task_router" if gate_result.get("passed") else "finalizer"
+    return "router" if gate_result.get("passed") else "responder"
 
 
 def _route_after_decision(state: PipelineState) -> str:
-    """Caller: ?? ?? ???? ???
-    Purpose: `_route_after_decision` ?? ??? ????
-    Returns: ?? ?? ?? ??
-    Deps: ?? ??? ??
-    Args: state: ???? ???? ??
-    Note: ?? ?? ?? ???? ???"""
     judgment = state.get("artifacts", {}).get("judgment", {})
-    return "coupon_policy_engine" if judgment.get("success") else "finalizer"
+    return "policy" if judgment.get("success") else "responder"
 
 
 def build_pipeline():
-    """Caller: ?? ?? ???? ???
-    Purpose: `build_pipeline` ?? ??? ????
-    Returns: ?? ?? ?? ??
-    Deps: ?? ??? ??
-    Args: None
-    Note: ?? ?? ?? ???? ???"""
     workflow = StateGraph(PipelineState)
 
-    workflow.add_node("gate_keeper", gate_keeper)
-    workflow.add_node("task_router", task_router)
-    workflow.add_node("model_fanout", model_fanout)
-    workflow.add_node("evidence_aggregator", evidence_aggregator)
-    workflow.add_node("decision_engine", decision_engine)
-    workflow.add_node("coupon_policy_engine", coupon_policy_engine)
-    workflow.add_node("finalizer", finalizer)
+    workflow.add_node("validator", validator)
+    workflow.add_node("router", router)
+    workflow.add_node("evaluator", evaluator)
+    workflow.add_node("aggregator", aggregator)
+    workflow.add_node("council", council)
+    workflow.add_node("judge", judge)
+    workflow.add_node("policy", policy)
+    workflow.add_node("responder", responder)
 
-    workflow.set_entry_point("gate_keeper")
-    workflow.add_conditional_edges("gate_keeper", _route_after_gate, ["task_router", "finalizer"])
-    workflow.add_edge("task_router", "model_fanout")
-    workflow.add_edge("model_fanout", "evidence_aggregator")
-    workflow.add_edge("evidence_aggregator", "decision_engine")
+    workflow.set_entry_point("validator")
+    workflow.add_conditional_edges("validator", _route_after_gate, ["router", "responder"])
+    workflow.add_edge("router", "evaluator")
+    workflow.add_edge("evaluator", "aggregator")
+    workflow.add_edge("aggregator", "council")
+    workflow.add_edge("council", "judge")
     workflow.add_conditional_edges(
-        "decision_engine", _route_after_decision, ["coupon_policy_engine", "finalizer"]
+        "judge", _route_after_decision, ["policy", "responder"]
     )
-    workflow.add_edge("coupon_policy_engine", "finalizer")
-    workflow.add_edge("finalizer", END)
+    workflow.add_edge("policy", "responder")
+    workflow.add_edge("responder", END)
     return workflow.compile()
 
 

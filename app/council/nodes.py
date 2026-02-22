@@ -12,12 +12,7 @@ from app.services.mission_session_service import mission_session_service
 
 
 def _normalize_mission_type(mission_type: str) -> str:
-    """Caller: ?? ?? ???? ???
-    Purpose: `_normalize_mission_type` ?? ??? ????
-    Returns: ?? ?? ?? ??
-    Deps: ?? ??? ??
-    Args: mission_type: ???? ???? ??
-    Note: ?? ?? ?? ???? ???"""
+    """미션 타입을 내부 시스템에서 다루기 편한 표준 형식으로 정규화합니다."""
     if mission_type == "photo":
         return "atmosphere"
     return mission_type if mission_type in {"location", "atmosphere"} else "location"
@@ -31,12 +26,7 @@ def _append_error(
     retryable: bool,
     model: str | None = None,
 ) -> None:
-    """Caller: ?? ?? ???? ???
-    Purpose: `_append_error` ?? ??? ????
-    Returns: ?? ?? ?? ??
-    Deps: ?? ??? ??
-    Args: errors: ???? ???? ??; code: ???? ???? ??; message: ???? ???? ??; node: ???? ???? ??; retryable: ???? ???? ??; model: ???? ???? ??
-    Note: ?? ?? ?? ???? ???"""
+    """파이프라인 실행 중 발생한 오류나 거절 사유를 state의 errors 배열에 안전하게 추가합니다."""
     payload = {
         "code": code,
         "message": message,
@@ -48,13 +38,8 @@ def _append_error(
     errors.append(payload)
 
 
-def gate_keeper(state: Dict[str, Any]) -> Dict[str, Any]:
-    """Caller: ?? ?? ???? ???
-    Purpose: `gate_keeper` ?? ??? ????
-    Returns: ?? ?? ?? ??
-    Deps: ?? ??? ??
-    Args: state: ???? ???? ??
-    Note: ?? ?? ?? ???? ???"""
+def validator(state: Dict[str, Any]) -> Dict[str, Any]:
+    """[검증기] 이미지 업로드 누락, 메타데이터 유효성, 유저 어뷰징(중복 해시) 등을 1차 방어합니다."""
     request_context = dict(state.get("request_context", {}))
     artifacts = dict(state.get("artifacts", {}))
     errors = list(state.get("errors", []))
@@ -63,14 +48,14 @@ def gate_keeper(state: Dict[str, Any]) -> Dict[str, Any]:
     image_path = request_context.get("image_path")
     user_id = request_context.get("user_id", "guest")
     if not image_path:
-        _append_error(errors, "MISSING_IMAGE", "image_path is required", "gate_keeper", False)
+        _append_error(errors, "MISSING_IMAGE", "image_path is required", "validator", False)
         artifacts["gate_result"] = {"passed": False, "reason": "image_path_missing", "risk_flags": ["missing_image"]}
         control_flags["terminate"] = True
         return {
             "artifacts": artifacts,
             "errors": errors,
             "control_flags": control_flags,
-            "messages": ["gate_keeper: missing image_path"],
+            "messages": ["validator: missing image_path"],
         }
 
     metadata_valid = validate_metadata(image_path)
@@ -88,7 +73,7 @@ def gate_keeper(state: Dict[str, Any]) -> Dict[str, Any]:
 
     if not passed:
         control_flags["terminate"] = True
-        _append_error(errors, "GATE_BLOCKED", reason, "gate_keeper", False)
+        _append_error(errors, "GATE_BLOCKED", reason, "validator", False)
 
     request_context["image_hash"] = image_hash
     artifacts["gate_result"] = {
@@ -103,17 +88,12 @@ def gate_keeper(state: Dict[str, Any]) -> Dict[str, Any]:
         "artifacts": artifacts,
         "errors": errors,
         "control_flags": control_flags,
-        "messages": [f"gate_keeper: {reason}"],
+        "messages": [f"validator: {reason}"],
     }
 
 
-def task_router(state: Dict[str, Any]) -> Dict[str, Any]:
-    """Caller: ?? ?? ???? ???
-    Purpose: `task_router` ?? ??? ????
-    Returns: ?? ?? ?? ??
-    Deps: ?? ??? ??
-    Args: state: ???? ???? ??
-    Note: ?? ?? ?? ???? ???"""
+def router(state: Dict[str, Any]) -> Dict[str, Any]:
+    """[분배기] 미션 종류에 따라 평가기(Evaluator)로 안전하게 트래픽을 분배할 준비를 합니다."""
     request_context = dict(state.get("request_context", {}))
     mission_type = _normalize_mission_type(request_context.get("mission_type", "location"))
     request_context["mission_type"] = mission_type
@@ -126,17 +106,12 @@ def task_router(state: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "request_context": request_context,
         "route_decision": route_decision,
-        "messages": [f"task_router: {mission_type}"],
+        "messages": [f"router: {mission_type}"],
     }
 
 
 def _select_models(mission_type: str, override: str | None = None) -> list[str]:
-    """Caller: ?? ?? ???? ???
-    Purpose: `_select_models` ?? ??? ????
-    Returns: ?? ?? ?? ??
-    Deps: ?? ??? ??
-    Args: mission_type: ???? ???? ??; override: ???? ???? ??
-    Note: ?? ?? ?? ???? ???"""
+    """미션 유형과 커스텀 오버라이드 값에 기반하여 투입할 비전 모델 리스트를 산출합니다."""
     if override:
         mode = override.lower().strip()
         if mode == "ensemble":
@@ -159,41 +134,16 @@ def _select_models(mission_type: str, override: str | None = None) -> list[str]:
 
 
 def _invoke_model(model_name: str, mission_type: str, image_path: str, answer: str, prompt_bundle):
-    """Caller: ?? ?? ???? ???
-    Purpose: `_invoke_model` ?? ??? ????
-    Returns: ?? ?? ?? ??
-    Deps: ?? ??? ??
-    Args: model_name: ???? ???? ??; mission_type: ???? ???? ??; image_path: ???? ???? ??; answer: ???? ???? ??; prompt_bundle: ???? ???? ??
-    Note: ?? ?? ?? ???? ???"""
-    model_name = model_name.lower().strip()
-    if model_name == "blip":
-        from app.models.blip import probe_with_blip_atmosphere, probe_with_blip_location
+    """ModelRegistry를 통해 모델 프로브를 조회하고 실행한다."""
+    from app.models.model_registry import ModelRegistry
 
-        if mission_type == "location":
-            return probe_with_blip_location(image_path, answer, prompt_bundle)
-        return probe_with_blip_atmosphere(image_path, answer, prompt_bundle)
-    if model_name == "clip":
-        from app.models.clip import probe_with_clip
-
-        return probe_with_clip(mission_type, image_path, answer, prompt_bundle)
-    if model_name == "qwen":
-        from app.models.qwen_vl import probe_with_qwen
-
-        return probe_with_qwen(mission_type, image_path, answer, prompt_bundle)
-    if model_name == "siglip2":
-        from app.models.siglip2 import probe_with_siglip2
-
-        return probe_with_siglip2(mission_type, image_path, answer, prompt_bundle)
-    raise ValueError(f"Unsupported model: {model_name}")
+    registry = ModelRegistry.get_instance()
+    probe = registry.get(model_name)
+    return probe.probe(mission_type, image_path, answer, prompt_bundle)
 
 
-def model_fanout(state: Dict[str, Any]) -> Dict[str, Any]:
-    """Caller: ?? ?? ???? ???
-    Purpose: `model_fanout` ?? ??? ????
-    Returns: ?? ?? ?? ??
-    Deps: ?? ??? ??
-    Args: state: ???? ???? ??
-    Note: ?? ?? ?? ???? ???"""
+def evaluator(state: Dict[str, Any]) -> Dict[str, Any]:
+    """[평가기] 선택된 모델 조합(Ensemble/가벼운 단일 모델)에 이미지를 투입하고 각 AI의 점수를 받아옵니다."""
     request_context = dict(state.get("request_context", {}))
     artifacts = dict(state.get("artifacts", {}))
     errors = list(state.get("errors", []))
@@ -216,7 +166,7 @@ def model_fanout(state: Dict[str, Any]) -> Dict[str, Any]:
                 errors,
                 "MODEL_FAILURE",
                 f"{model_name}: {exc}",
-                "model_fanout",
+                "evaluator",
                 True,
                 model=model_name,
             )
@@ -227,31 +177,27 @@ def model_fanout(state: Dict[str, Any]) -> Dict[str, Any]:
     artifacts["model_votes"] = votes
 
     if not votes:
-        _append_error(errors, "NO_MODEL_VOTES", "No models produced output", "model_fanout", False)
+        _append_error(errors, "NO_MODEL_VOTES", "No models produced output", "evaluator", False)
 
     return {
         "artifacts": artifacts,
         "errors": errors,
-        "messages": [f"model_fanout: {','.join(selected_models)}"],
+        "messages": [f"evaluator: {','.join(selected_models)}"],
     }
 
 
-def evidence_aggregator(state: Dict[str, Any]) -> Dict[str, Any]:
-    """Caller: ?? ?? ???? ???
-    Purpose: `evidence_aggregator` ?? ??? ????
-    Returns: ?? ?? ?? ??
-    Deps: ?? ??? ??
-    Args: state: ???? ???? ??
-    Note: ?? ?? ?? ???? ???"""
+def aggregator(state: Dict[str, Any]) -> Dict[str, Any]:
+    """[취합기] 다수의 모델 의견(Score)을 미션 가중치 스펙에 맞춰 하나의 대표 점수(Merged Score)로 병합합니다.
+    모델 간 이견이 클 경우 충돌(Conflict) 플래그를 세웁니다."""
     request_context = dict(state.get("request_context", {}))
     artifacts = dict(state.get("artifacts", {}))
     mission_type = _normalize_mission_type(request_context.get("mission_type", "location"))
     votes = list(artifacts.get("model_votes", []))
 
     if mission_type == "location":
-        weights = {"blip": 0.45, "qwen": 0.35, "clip": 0.2, "siglip2": 0.1}
+        weights = {"siglip2": 0.60, "blip": 0.40}
     else:
-        weights = {"siglip2": 0.45, "qwen": 0.35, "blip": 0.15, "clip": 0.05}
+        weights = {"siglip2": 0.75, "blip": 0.25}
 
     weighted_sum = 0.0
     total_weight = 0.0
@@ -284,16 +230,11 @@ def evidence_aggregator(state: Dict[str, Any]) -> Dict[str, Any]:
         "conflict": conflict,
         "vote_count": len(votes),
     }
-    return {"artifacts": artifacts, "messages": [f"evidence_aggregator: score={merged_score:.2f}"]}
+    return {"artifacts": artifacts, "messages": [f"aggregator: score={merged_score:.2f}"]}
 
 
-def decision_engine(state: Dict[str, Any]) -> Dict[str, Any]:
-    """Caller: ?? ?? ???? ???
-    Purpose: `decision_engine` ?? ??? ????
-    Returns: ?? ?? ?? ??
-    Deps: ?? ??? ??
-    Args: state: ???? ???? ??
-    Note: ?? ?? ?? ???? ???"""
+def judge(state: Dict[str, Any]) -> Dict[str, Any]:
+    """[심판] 최종 산출된 통과/실패 기준을 적용하여 사진의 제출 스코어가 미션 합격을 달성했는지 확정합니다."""
     artifacts = dict(state.get("artifacts", {}))
     control_flags = dict(state.get("control_flags", {}))
     errors = list(state.get("errors", []))
@@ -309,7 +250,7 @@ def decision_engine(state: Dict[str, Any]) -> Dict[str, Any]:
             "mission_type": ensemble.get("mission_type", "location"),
         }
         artifacts["judgment"] = judgment
-        return {"artifacts": artifacts, "messages": ["decision_engine: gate blocked"]}
+        return {"artifacts": artifacts, "messages": ["judge: gate blocked"]}
 
     merged_score = float(ensemble.get("merged_score", 0.0))
     threshold = float(ensemble.get("threshold", 1.0))
@@ -321,7 +262,19 @@ def decision_engine(state: Dict[str, Any]) -> Dict[str, Any]:
         success = False
         reason = "model_conflict_requires_retry"
         control_flags["manual_review"] = True
-        _append_error(errors, "MODEL_CONFLICT", reason, "decision_engine", False)
+        _append_error(errors, "MODEL_CONFLICT", reason, "judge", False)
+
+    # Council verdict 교차 검증
+    council_verdict = artifacts.get("council_verdict")
+    council_override = False
+    if council_verdict:
+        council_approved = bool(council_verdict.get("approved"))
+        if council_approved != success:
+            council_override = True
+            success = council_approved
+            reason = f"council_override: {council_verdict.get('reason', 'N/A')}"
+        if council_verdict.get("escalated"):
+            control_flags["manual_review"] = True
 
     artifacts["judgment"] = {
         "success": success,
@@ -329,22 +282,18 @@ def decision_engine(state: Dict[str, Any]) -> Dict[str, Any]:
         "confidence": round(merged_score, 4),
         "mission_type": ensemble.get("mission_type", "location"),
         "conflict": conflict,
+        "council_override": council_override,
     }
     return {
         "artifacts": artifacts,
         "errors": errors,
         "control_flags": control_flags,
-        "messages": [f"decision_engine: {reason}"],
+        "messages": [f"judge: {reason}"],
     }
 
 
-def coupon_policy_engine(state: Dict[str, Any]) -> Dict[str, Any]:
-    """Caller: ?? ?? ???? ???
-    Purpose: `coupon_policy_engine` ?? ??? ????
-    Returns: ?? ?? ?? ??
-    Deps: ?? ??? ??
-    Args: state: ???? ???? ??
-    Note: ?? ?? ?? ???? ???"""
+def policy(state: Dict[str, Any]) -> Dict[str, Any]:
+    """[정책] AI 판단을 통과했더라도 비즈니스 정책(어뷰징, 이벤트 중단 등)상 쿠폰 지급 요건이 되는지 조사합니다."""
     artifacts = dict(state.get("artifacts", {}))
     judgment = artifacts.get("judgment", {})
     gate = artifacts.get("gate_result", {})
@@ -358,16 +307,11 @@ def coupon_policy_engine(state: Dict[str, Any]) -> Dict[str, Any]:
         "deny_reason": deny_reason,
         "discount_rule": "10%_OFF",
     }
-    return {"artifacts": artifacts, "messages": [f"coupon_policy_engine: eligible={eligible}"]}
+    return {"artifacts": artifacts, "messages": [f"policy: eligible={eligible}"]}
 
 
-def finalizer(state: Dict[str, Any]) -> Dict[str, Any]:
-    """Caller: ?? ?? ???? ???
-    Purpose: `finalizer` ?? ??? ????
-    Returns: ?? ?? ?? ??
-    Deps: ?? ??? ??
-    Args: state: ???? ???? ??
-    Note: ?? ?? ?? ???? ???"""
+def responder(state: Dict[str, Any]) -> Dict[str, Any]:
+    """[응답기] 파이프라인에서 누적된 방대한 State 데이터를 프론트엔드가 파싱하기 편한 API DTO 포맷으로 조립합니다."""
     request_context = dict(state.get("request_context", {}))
     artifacts = dict(state.get("artifacts", {}))
     errors = list(state.get("errors", []))
@@ -393,7 +337,7 @@ def finalizer(state: Dict[str, Any]) -> Dict[str, Any]:
         }
         return {
             "final_response": {"ui_theme": "error", "message": msg, "data": final_data},
-            "messages": ["finalizer: blocked"],
+            "messages": ["responder: blocked"],
         }
 
     success = bool(judgment.get("success"))
@@ -414,7 +358,7 @@ def finalizer(state: Dict[str, Any]) -> Dict[str, Any]:
         }
         return {
             "final_response": {"ui_theme": "confetti", "message": message, "data": final_data},
-            "messages": ["finalizer: success"],
+            "messages": ["responder: success"],
         }
 
     failure_reason = judgment.get("reason", "판정 실패")
@@ -435,5 +379,5 @@ def finalizer(state: Dict[str, Any]) -> Dict[str, Any]:
     }
     return {
         "final_response": {"ui_theme": "encouragement", "message": message, "data": final_data},
-        "messages": ["finalizer: fail"],
+        "messages": ["responder: fail"],
     }
