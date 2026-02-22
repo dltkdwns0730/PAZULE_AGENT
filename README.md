@@ -17,20 +17,19 @@ This repository now uses a LangGraph-based orchestration pipeline with mission s
 
 ### 1) Location Mission
 - Goal: verify whether the uploaded image matches the target place
-- Recommended models: `blip`, `qwen`, `clip`
+- Recommended models: `siglip2`, `blip`, `qwen`
 - Default ensemble weights:
-  - `blip`: `0.45`
-  - `qwen`: `0.35`
-  - `clip`: `0.20`
+  - `siglip2`: `0.50`
+  - `blip`: `0.30`
+  - `qwen`: `0.20`
 
 ### 2) Atmosphere Mission
 - Goal: verify whether the uploaded image matches the target atmosphere keyword
-- Recommended models: `siglip2`, `qwen`, `blip`, `clip`
+- Recommended models: `siglip2`, `qwen`, `blip`
 - Default ensemble weights:
-  - `siglip2`: `0.45`
-  - `qwen`: `0.35`
+  - `siglip2`: `0.60`
+  - `qwen`: `0.25`
   - `blip`: `0.15`
-  - `clip`: `0.05`
 
 ## Orchestration Pipeline
 
@@ -38,52 +37,56 @@ Entrypoint: `app/council/graph.py` -> `pipeline_app`
 
 ```text
 START
-  -> gate_keeper
-      pass -> task_router
-      fail -> finalizer(error)
-  -> task_router
-  -> model_fanout
-  -> evidence_aggregator
-  -> decision_engine
-      success -> coupon_policy_engine
-      fail    -> finalizer(fail)
-  -> coupon_policy_engine
-  -> finalizer(success)
+  -> validator
+      pass -> router
+      fail -> responder(error)
+  -> router
+  -> evaluator
+  -> aggregator
+  -> council
+  -> judge
+      success -> policy
+      fail    -> responder(fail)
+  -> policy
+  -> responder(success)
 END
 ```
 
 ## Node Responsibilities
 
-- `gate_keeper` (`app/council/nodes.py`)
+- `validator` (`app/council/nodes.py`)
   - validates metadata
   - checks duplicate image hash per user
   - writes `gate_result` and risk flags
 
-- `task_router`
+- `router`
   - normalizes mission type (`photo` -> `atmosphere`)
   - writes route decision metadata
 
-- `model_fanout`
+- `evaluator`
   - selects single model or ensemble from config/runtime override
   - runs model probes and collects `model_votes`
 
-- `evidence_aggregator`
+- `aggregator`
   - merges votes with mission-specific weights
   - computes `merged_score`, `threshold`, and `conflict`
 
-- `decision_engine`
+- `council`
+  - runs final deliberation logic before pass/fail determination (AI Council)
+
+- `judge`
   - applies pass/fail threshold
   - applies conservative handling when conflict is high
 
-- `coupon_policy_engine`
+- `policy`
   - converts mission judgment to coupon eligibility policy
 
-- `finalizer`
+- `responder`
   - builds API response DTO (`success`, `message`, `confidence`, traces)
 
 ## API Surface
 
-See full schema and examples in `API_SPEC.md`.
+See full schema and examples in `docs/api_specification.md`.
 
 - `POST /api/mission/start`
 - `POST /api/mission/submit`
@@ -115,8 +118,8 @@ Key environment variables:
 OPENAI_API_KEY=...
 MODEL_SELECTION_LOCATION=blip
 MODEL_SELECTION_ATMOSPHERE=ensemble
-ENSEMBLE_MODELS_LOCATION=blip,qwen,clip
-ENSEMBLE_MODELS_ATMOSPHERE=siglip2,qwen,blip,clip
+ENSEMBLE_MODELS_LOCATION=siglip2,blip,qwen
+ENSEMBLE_MODELS_ATMOSPHERE=siglip2,qwen,blip
 LOCATION_PASS_THRESHOLD=0.70
 ATMOSPHERE_PASS_THRESHOLD=0.62
 MISSION_SESSION_TTL_MINUTES=60
@@ -136,8 +139,6 @@ app/
     state.py
     agents.py
   models/
-    blip.py
-    clip.py
     qwen_vl.py
     siglip2.py
     prompts.py
@@ -157,6 +158,16 @@ app/
 tests/
   test_nodes_logic.py
   test_coupon_service.py
+
+docs/
+  api_specification.md
+  assets/
+    pipeline_architecture.png
+
+scripts/
+  simulate_cli.py
+  test_real_models.py
+  test_pipeline_mock.py
 ```
 
 ## Run Locally
@@ -189,20 +200,99 @@ uv pip install ".[dev,model]"
 
 ### Legacy pip Compatibility
 
+(Legacy requirements.txt was removed, use uv instead)
+
+### 로컬 통합 테스트 (백엔드 + 프론트엔드)
+
+두 서버를 **별도 터미널**에서 동시에 실행합니다:
+
+| 터미널 | 명령어 | URL |
+| --- | --- | --- |
+| 백엔드 | `python main.py` | `http://localhost:8080` |
+| 프론트엔드 | `cd front && npm run dev` | `http://localhost:5173` |
+
+**백엔드 서버 실행:**
+
 ```bash
-pip install -r requirements.txt
+# Windows 콘솔에서 UTF-8 출력이 깨질 경우 먼저 실행
+$env:PYTHONUTF8="1"   # PowerShell
+set PYTHONUTF8=1      # CMD
+
+python main.py
+# → PAZULE vX.X.X 서버 실행 중 (포트 8080)...
 ```
 
-### Start server
+**프론트엔드 서버 실행:**
 
 ```bash
-python run.py
+cd front
+npm install     # 최초 1회
+npm run dev
+# → Local: http://localhost:5173
 ```
 
-Windows console can fail on non-UTF8 output. If needed:
+브라우저에서 `http://localhost:5173` 접속 시 프론트가 `/api/*` 요청을 백엔드(8080)로 자동 프록시합니다.
 
-```powershell
-$env:PYTHONUTF8="1"
+### API 엔드포인트 단독 테스트
+
+```bash
+# 오늘의 힌트 조회
+curl "http://localhost:8080/get-today-hint?mission_type=location"
+
+# 미션 세션 시작
+curl -X POST http://localhost:8080/api/mission/start \
+  -H 'Content-Type: application/json' \
+  -d '{"mission_type": "location", "user_id": "dev-user", "site_id": "pazule-default"}'
+
+# 이미지 제출 (미션 ID는 위 응답의 mission_id 사용)
+curl -X POST http://localhost:8080/api/mission/submit \
+  -F "mission_id=<mission_id>" \
+  -F "image=@/path/to/photo.jpg"
+```
+
+### 파이프라인 직접 실행 (Python)
+
+`pipeline_app.invoke()` 를 스크립트에서 바로 호출할 수 있습니다:
+
+```python
+from app.council.graph import pipeline_app
+
+initial_state = {
+    "request_context": {
+        "mission_id":      "test-session-001",   # 임의 세션 ID
+        "user_id":         "dev-user",
+        "site_id":         "pazule-default",
+        "mission_type":    "location",            # "location" | "atmosphere"
+        "image_path":      "/path/to/photo.jpg",  # 절대 경로 권장
+        "answer":          "한길책박물관",           # 오늘의 정답 키워드
+        "model_selection": None,                  # None → .env 기본값 사용
+    },
+    "artifacts":     {},
+    "errors":        [],
+    "control_flags": {},
+    "messages":      [],
+}
+
+output = pipeline_app.invoke(initial_state)
+
+# 최종 판정 결과
+final = output.get("final_response", {}).get("data", {})
+print(final)
+# → {
+#     "success":        True,
+#     "score":          0.87,
+#     "message":        "위치가 확인되었습니다.",
+#     "couponEligible": True,
+#     "mission_id":     "test-session-001",
+#   }
+```
+
+보조 스크립트:
+
+```bash
+uv run scripts/simulate_cli.py       # 대화형 CLI 시뮬레이션
+uv run scripts/test_real_models.py   # 실제 모델 성능 측정
+uv run scripts/test_pipeline_mock.py # 목 데이터로 파이프라인 검증
 ```
 
 ## Test
