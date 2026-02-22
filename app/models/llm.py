@@ -79,7 +79,7 @@ class LLMService:
             print(f"LLM 검증 오류: {e}")
             return {
                 "success": False,
-                "reason": "분위기 판정에 실패했습니다. 구도와 색감을 바꿔 다시 촬영해 주세요.",
+                "reason": "AI 판단 중 오류가 발생했습니다.",
             }
 
     def generate_blip_hint_from_questions(
@@ -100,20 +100,15 @@ class LLMService:
         )
 
     def _format_blip_failures(self, questions: list) -> str:
-        """Caller: ?? ?? ???? ???
-        Purpose: `_format_blip_failures` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: questions: ???? ???? ??
-        Note: ?? ?? ?? ???? ???"""
+        """BLIP 오답 리스트를 텍스트로 포맷한다."""
         if not questions:
-            return "(실패 근거 없음)"
+            return "(부족한 특징 정보 없음)"
         result = []
         for q in questions:
             result.append(
                 f"질문: {q.get('question')}, "
-                f"모델 답: {q.get('model_answer')}, "
-                f"기대 답: {q.get('expected_answer')}"
+                f"모델 답변: {q.get('model_answer')}, "
+                f"기대 답변: {q.get('expected_answer')}"
             )
         return "\n".join(result)
 
