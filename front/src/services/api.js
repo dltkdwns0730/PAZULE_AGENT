@@ -1,78 +1,80 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+/**
+ * API Service for interacting with the backend endpoints.
+ * Requires VITE_API_URL to be set in .env
+ */
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 class ApiError extends Error {
     constructor(message, status) {
         super(message);
         this.status = status;
+        this.name = 'ApiError';
     }
 }
 
-async function request(endpoint, options = {}) {
-    try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
-
-        const contentType = response.headers.get('content-type');
-        let data;
-        if (contentType && contentType.includes('application/json')) {
-            data = await response.json();
-        } else {
-            data = await response.text();
-        }
-
-        if (!response.ok) {
-            throw new ApiError(data.error || data.message || 'API request failed', response.status);
-        }
-
-        return data;
-    } catch (error) {
-        if (error instanceof ApiError) throw error;
-        throw new Error('Network error or server is down');
+async function handleResponse(response) {
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new ApiError(errorData.detail || errorData.error || 'API Request Failed', response.status);
     }
+    return response.json();
 }
 
 export const api = {
     /**
-     * @param {string} missionType 'location' | 'atmosphere'
-     * @returns {Promise<{hint: string}>}
+     * Get the daily hint for a mission type
+     * @param {string} missionType 'location' or 'atmosphere'
      */
-    getTodayHint: async (missionType) => {
-        return request(`/get-today-hint?mission_type=${missionType}`);
+    async getTodayHint(missionType = 'location') {
+        const response = await fetch(`${API_BASE}/api/v1/missions/hint?mission_type=${missionType}`);
+        return handleResponse(response);
     },
 
     /**
-     * @param {object} payload 
-     * @param {string} payload.mission_type
-     * @param {string} payload.user_id
-     * @returns {Promise<{mission_id: string, message: string}>}
+     * Start a new mission session
+     * @param {Object} data - { user_id: string, mission_type: string }
      */
-    startMission: async (payload) => {
-        return request('/api/mission/start', {
+    async startMission(data) {
+        const response = await fetch(`${API_BASE}/api/v1/missions/start`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
         });
+        return handleResponse(response);
     },
 
     /**
-     * @param {FormData} formData Must contain 'image', 'mission_id', and optionally 'model_selection'
-     * @returns {Promise<{success: boolean, score: number, message: string, couponEligible: boolean, error?: string}>}
+     * Submit a photo for verification
+     * @param {FormData} formData - Contains 'image' (File) and 'mission_id' (string)
      */
-    submitMission: async (formData) => {
-        return request('/api/mission/submit', {
+    async submitMission(formData) {
+        const response = await fetch(`${API_BASE}/api/v1/missions/submit`, {
             method: 'POST',
-            body: formData, // Browser sets Content-Type to multipart/form-data automatically
+            // Do not set Content-Type header when sending FormData; 
+            // the browser sets it automatically with the boundary
+            body: formData,
         });
+
+        // The submission endpoint might return 200 with success: false for wrong photos.
+        // handleResponse will throw on 4xx/5xx.
+        return handleResponse(response);
     },
 
     /**
-     * @param {string} missionId
-     * @returns {Promise<{code: string, expires_at: string, description: string}>}
+     * Issue a coupon after a successful mission
+     * @param {string} missionId - The ID of the successful mission
      */
-    issueCoupon: async (missionId) => {
-        return request('/api/coupon/issue', {
+    async issueCoupon(missionId) {
+        const response = await fetch(`${API_BASE}/api/v1/coupons/issue`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+            },
             body: JSON.stringify({ mission_id: missionId }),
         });
-    }
+        return handleResponse(response);
+    },
 };
