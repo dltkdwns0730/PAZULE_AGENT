@@ -7,6 +7,10 @@ export default defineConfig({
     exclude: ['heic2any']
   },
   server: {
+    proxy: {
+      '/api': 'http://localhost:8080',
+      '/get-today-hint': 'http://localhost:8080',
+    },
     fs: {
       allow: ['..']
     }

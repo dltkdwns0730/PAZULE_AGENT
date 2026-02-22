@@ -201,3 +201,45 @@ def get_visual_context(user_image_path):
             print(f"VQA 오류 ('{question}'): {e}")
 
     return "\n".join(context_parts)
+
+
+def probe_with_blip_location(image_path: str, answer: str, prompt_bundle: dict) -> dict:
+    """BLIP VQA로 위치 미션을 검증한다 (파이프라인 인터페이스).
+
+    Args:
+        image_path: 이미지 파일 경로
+        answer: 미션 정답 랜드마크 이름
+        prompt_bundle: 프롬프트 번들
+
+    Returns:
+        모델 투표 결과 딕셔너리
+    """
+    is_success, _ = check_with_blip(image_path, answer)
+    return {
+        "model": "blip",
+        "score": 1.0 if is_success else 0.0,
+        "label": "match" if is_success else "mismatch",
+        "reason": f"BLIP VQA location probe for '{answer}'",
+    }
+
+
+def probe_with_blip_atmosphere(image_path: str, answer: str, prompt_bundle: dict) -> dict:
+    """BLIP VQA로 분위기 미션을 검증한다 (파이프라인 인터페이스).
+
+    Args:
+        image_path: 이미지 파일 경로
+        answer: 미션 정답 분위기 키워드
+        prompt_bundle: 프롬프트 번들
+
+    Returns:
+        모델 투표 결과 딕셔너리
+    """
+    context = get_visual_context(image_path)
+    keyword_lower = answer.lower()
+    found = keyword_lower in context.lower()
+    return {
+        "model": "blip",
+        "score": 0.85 if found else 0.2,
+        "label": "match" if found else "mismatch",
+        "reason": f"BLIP atmosphere probe for '{answer}': {'keyword found' if found else 'keyword not found'}",
+    }

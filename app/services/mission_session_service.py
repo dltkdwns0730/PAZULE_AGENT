@@ -1,0 +1,223 @@
+"""Mission session persistence and policy checks."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import uuid
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
+
+from app.core.config import settings
+
+
+def _utcnow() -> datetime:
+    """Caller: ?? ?? ???? ???
+    Purpose: `_utcnow` ?? ??? ????
+    Returns: ?? ?? ?? ??
+    Deps: ?? ??? ??
+    Args: None
+    Note: ?? ?? ?? ???? ???"""
+    return datetime.now(timezone.utc)
+
+
+class MissionSessionService:
+    """Purpose: `MissionSessionService` ??? ??? ?? ??? ???
+    Context: ?? ???? ?? ??? ??? ??
+    Attrs: ?? ?? ???? ?? ??? ???"""
+    def __init__(self):
+        """Caller: ?? ?? ???? ???
+        Purpose: `__init__` ?? ??? ????
+        Returns: ?? ?? ?? ??
+        Deps: ?? ??? ??
+        Args: None
+        Note: ?? ?? ?? ???? ???"""
+        self._path = os.path.join(settings.DATA_DIR, "mission_sessions.json")
+        os.makedirs(settings.DATA_DIR, exist_ok=True)
+
+    def _read_all(self) -> Dict[str, Any]:
+        """Caller: ?? ?? ???? ???
+        Purpose: `_read_all` ?? ??? ????
+        Returns: ?? ?? ?? ??
+        Deps: ?? ??? ??
+        Args: None
+        Note: ?? ?? ?? ???? ???"""
+        if not os.path.exists(self._path):
+            return {"sessions": []}
+        try:
+            with open(self._path, "r", encoding="utf-8") as file:
+                return json.load(file)
+        except Exception:
+            return {"sessions": []}
+
+    def _write_all(self, payload: Dict[str, Any]) -> None:
+        """Caller: ?? ?? ???? ???
+        Purpose: `_write_all` ?? ??? ????
+        Returns: ?? ?? ?? ??
+        Deps: ?? ??? ??
+        Args: payload: ???? ???? ??
+        Note: ?? ?? ?? ???? ???"""
+        with open(self._path, "w", encoding="utf-8") as file:
+            json.dump(payload, file, ensure_ascii=False, indent=2)
+
+    def create_session(
+        self,
+        user_id: str,
+        site_id: str,
+        mission_type: str,
+        answer: str,
+        hint: str,
+    ) -> Dict[str, Any]:
+        """Caller: ?? ?? ???? ???
+        Purpose: `create_session` ?? ??? ????
+        Returns: ?? ?? ?? ??
+        Deps: ?? ??? ??
+        Args: user_id: ???? ???? ??; site_id: ???? ???? ??; mission_type: ???? ???? ??; answer: ???? ???? ??; hint: ???? ???? ??
+        Note: ?? ?? ?? ???? ???"""
+        now = _utcnow()
+        expires = now + timedelta(minutes=settings.MISSION_SESSION_TTL_MINUTES)
+        session = {
+            "mission_id": str(uuid.uuid4()),
+            "user_id": user_id or "guest",
+            "site_id": site_id or "pazule-default",
+            "mission_type": "atmosphere" if mission_type == "photo" else mission_type,
+            "answer": answer,
+            "hint": hint,
+            "status": "created",
+            "created_at": now.isoformat(),
+            "expires_at": expires.isoformat(),
+            "max_submissions": settings.MISSION_MAX_SUBMISSIONS,
+            "submissions": [],
+            "latest_judgment": None,
+        }
+        data = self._read_all()
+        data.setdefault("sessions", []).append(session)
+        self._write_all(data)
+        return session
+
+    def get_session(self, mission_id: str) -> Optional[Dict[str, Any]]:
+        """Caller: ?? ?? ???? ???
+        Purpose: `get_session` ?? ??? ????
+        Returns: ?? ?? ?? ??
+        Deps: ?? ??? ??
+        Args: mission_id: ???? ???? ??
+        Note: ?? ?? ?? ???? ???"""
+        data = self._read_all()
+        for session in data.get("sessions", []):
+            if session.get("mission_id") == mission_id:
+                return session
+        return None
+
+    def _update_session(self, mission_id: str, mutate_fn):
+        """Caller: ?? ?? ???? ???
+        Purpose: `_update_session` ?? ??? ????
+        Returns: ?? ?? ?? ??
+        Deps: ?? ??? ??
+        Args: mission_id: ???? ???? ??; mutate_fn: ???? ???? ??
+        Note: ?? ?? ?? ???? ???"""
+        data = self._read_all()
+        updated = None
+        for idx, session in enumerate(data.get("sessions", [])):
+            if session.get("mission_id") == mission_id:
+                updated = mutate_fn(dict(session))
+                data["sessions"][idx] = updated
+                break
+        if updated is None:
+            return None
+        self._write_all(data)
+        return updated
+
+    def can_submit(self, mission_id: str) -> tuple[bool, str]:
+        """Caller: ?? ?? ???? ???
+        Purpose: `can_submit` ?? ??? ????
+        Returns: ?? ?? ?? ??
+        Deps: ?? ??? ??
+        Args: mission_id: ???? ???? ??
+        Note: ?? ?? ?? ???? ???"""
+        session = self.get_session(mission_id)
+        if not session:
+            return False, "session_not_found"
+        if _utcnow() > datetime.fromisoformat(session["expires_at"]):
+            return False, "session_expired"
+        if len(session.get("submissions", [])) >= int(session.get("max_submissions", 0)):
+            return False, "submission_limit_reached"
+        return True, "ok"
+
+    def record_submission(
+        self,
+        mission_id: str,
+        image_hash: str,
+        result: Dict[str, Any],
+    ) -> Optional[Dict[str, Any]]:
+        """Caller: ?? ?? ???? ???
+        Purpose: `record_submission` ?? ??? ????
+        Returns: ?? ?? ?? ??
+        Deps: ?? ??? ??
+        Args: mission_id: ???? ???? ??; image_hash: ???? ???? ??; result: ???? ???? ??
+        Note: ?? ?? ?? ???? ???"""
+        def mutate(session: Dict[str, Any]) -> Dict[str, Any]:
+            session["status"] = "submitted"
+            session.setdefault("submissions", []).append(
+                {
+                    "submitted_at": _utcnow().isoformat(),
+                    "image_hash": image_hash,
+                    "result_summary": {
+                        "success": bool(result.get("success")),
+                        "confidence": result.get("confidence"),
+                    },
+                }
+            )
+            session["latest_judgment"] = result
+            return session
+
+        return self._update_session(mission_id, mutate)
+
+    def mark_coupon_issued(self, mission_id: str, coupon_code: str) -> Optional[Dict[str, Any]]:
+        """Caller: ?? ?? ???? ???
+        Purpose: `mark_coupon_issued` ?? ??? ????
+        Returns: ?? ?? ?? ??
+        Deps: ?? ??? ??
+        Args: mission_id: ???? ???? ??; coupon_code: ???? ???? ??
+        Note: ?? ?? ?? ???? ???"""
+        def mutate(session: Dict[str, Any]) -> Dict[str, Any]:
+            session["coupon_code"] = coupon_code
+            session["status"] = "coupon_issued"
+            return session
+
+        return self._update_session(mission_id, mutate)
+
+    def is_duplicate_hash_for_user(self, user_id: str, image_hash: str) -> bool:
+        """Caller: ?? ?? ???? ???
+        Purpose: `is_duplicate_hash_for_user` ?? ??? ????
+        Returns: ?? ?? ?? ??
+        Deps: ?? ??? ??
+        Args: user_id: ???? ???? ??; image_hash: ???? ???? ??
+        Note: ?? ?? ?? ???? ???"""
+        if not image_hash:
+            return False
+        data = self._read_all()
+        for session in data.get("sessions", []):
+            if session.get("user_id") != user_id:
+                continue
+            for sub in session.get("submissions", []):
+                if sub.get("image_hash") == image_hash:
+                    return True
+        return False
+
+    @staticmethod
+    def hash_file(file_path: str) -> str:
+        """Caller: ?? ?? ???? ???
+        Purpose: `hash_file` ?? ??? ????
+        Returns: ?? ?? ?? ??
+        Deps: ?? ??? ??
+        Args: file_path: ???? ???? ??
+        Note: ?? ?? ?? ???? ???"""
+        hasher = hashlib.sha256()
+        with open(file_path, "rb") as file:
+            for chunk in iter(lambda: file.read(8192), b""):
+                hasher.update(chunk)
+        return hasher.hexdigest()
+
+
+mission_session_service = MissionSessionService()
