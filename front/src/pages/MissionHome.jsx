@@ -59,7 +59,7 @@ export default function MissionHome() {
                         {/* Mission Card 1 (Location Hunt - Connected to API) */}
                         <div
                             onClick={() => handleStartMission('location')}
-                            className={`bg-warm-cream rounded-3xl p-6 shadow-card border border-pale-border transform transition-all duration-300 cursor-pointer hover:border-coral-end/30 hover:shadow-lg active:scale-[0.98] relative ${isLoading ? 'opacity-70 pointer-events-none' : ''}`}
+                            className={`bg-warm-cream rounded-3xl p-6 shadow-card border border-pale-border transform transition-all duration-300 cursor-pointer hover:border-coral-end/30 hover:shadow-lg active:scale-[0.98] relative z-20 ${isLoading ? 'opacity-70 pointer-events-none' : ''}`}
                         >
                             {isLoading && (
                                 <div className="absolute inset-0 bg-white/50 backdrop-blur-sm rounded-3xl z-10 flex items-center justify-center">

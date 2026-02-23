@@ -1,9 +1,8 @@
 /**
  * API Service for interacting with the backend endpoints.
- * Requires VITE_API_URL to be set in .env
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_BASE = import.meta.env.PROD ? (import.meta.env.VITE_API_URL || '') : '';
 
 class ApiError extends Error {
     constructor(message, status) {
@@ -27,7 +26,7 @@ export const api = {
      * @param {string} missionType 'location' or 'atmosphere'
      */
     async getTodayHint(missionType = 'location') {
-        const response = await fetch(`${API_BASE}/api/v1/missions/hint?mission_type=${missionType}`);
+        const response = await fetch(`${API_BASE}/get-today-hint?mission_type=${missionType}`);
         return handleResponse(response);
     },
 
@@ -36,7 +35,7 @@ export const api = {
      * @param {Object} data - { user_id: string, mission_type: string }
      */
     async startMission(data) {
-        const response = await fetch(`${API_BASE}/api/v1/missions/start`, {
+        const response = await fetch(`${API_BASE}/api/mission/start`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -51,7 +50,7 @@ export const api = {
      * @param {FormData} formData - Contains 'image' (File) and 'mission_id' (string)
      */
     async submitMission(formData) {
-        const response = await fetch(`${API_BASE}/api/v1/missions/submit`, {
+        const response = await fetch(`${API_BASE}/api/mission/submit`, {
             method: 'POST',
             // Do not set Content-Type header when sending FormData; 
             // the browser sets it automatically with the boundary
@@ -68,7 +67,7 @@ export const api = {
      * @param {string} missionId - The ID of the successful mission
      */
     async issueCoupon(missionId) {
-        const response = await fetch(`${API_BASE}/api/v1/coupons/issue`, {
+        const response = await fetch(`${API_BASE}/api/coupon/issue`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

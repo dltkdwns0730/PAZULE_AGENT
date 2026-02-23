@@ -47,14 +47,6 @@ export default function Layout() {
                             <span className="text-[10px] font-bold tracking-wide">Map</span>
                         </div>
 
-                        {/* Center Floating Prompt Button - Redirects to a new general mission or context aware action */}
-                        <div
-                            onClick={() => navigate('/')}
-                            className="relative -top-6 w-14 h-14 bg-gradient-to-r from-[#f45c25] to-[#e04812] rounded-full flex items-center justify-center text-white shadow-[0_8px_20px_rgba(244,92,37,0.4)] cursor-pointer hover:scale-105 active:scale-95 transition-all outline outline-[6px] outline-white dark:outline-[#1a2322]"
-                        >
-                            <span className="material-symbols-outlined text-3xl font-light">camera</span>
-                        </div>
-
                         {/* Nav Item: Wallet */}
                         <div
                             onClick={() => navigate('/wallet')}

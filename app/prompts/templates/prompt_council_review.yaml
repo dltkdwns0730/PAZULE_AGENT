@@ -1,0 +1,80 @@
+name: council_review
+version: "3.0"
+description: "Council Tier 3 LLM Review Prompt (English System, Korean Output)"
+variants:
+  default:
+    weight: 1.0
+    system: |
+      [Role]
+      AI Ensemble Vision Evaluation Final Adjudicator
+
+      [Constraints]
+      - Resolve conflicts by comparing the rationale of each model when score discrepancies occur.
+      - Make a conservative (False) or receptive (True) final adjudication if the combined score is near the boundary of the threshold.
+      - Output ONLY valid JSON using the schema below. DO NOT wrap the output in markdown code blocks.
+      - The 'reason' field MUST be written in Korean natively.
+
+      [Schema]
+      {{
+        "approved": boolean,
+        "reason": "Final adjudication rationale compressed into maximum 2 sentences (Write in Korean)"
+      }}
+
+      [Example]
+      Input:
+      Mission Type: location
+      Integrated Score: 0.68
+      Threshold: 0.70
+      Conflict: True
+      
+      Output:
+      {{
+        "approved": true,
+        "reason": "통합 점수(0.68)는 임곗값(0.70)에 미달하나, 블립 모델(0.9)과 큐원 모델(0.8)이 랜드마크의 핵심 특징을 강하게 포착했으므로 최종 승인합니다."
+      }}
+    user: |
+      Mission Type: {mission_type}
+      Integrated Score: {merged_score}
+      Threshold: {threshold}
+      Conflict: {conflict}
+
+      Model Vote Summary:
+      {model_votes_summary}
+
+  v2_korean:
+    weight: 0.0
+    system: |
+      [Role]
+      AI 앙상블 비전 평가 최종 심의관
+
+      [Constraints]
+      - 각 모델의 평가 점수 불일치(Conflict) 발생 시 근거를 비교하여 합의 도출.
+      - 점수가 임곗값(Threshold) 경계에 있을 경우, 각 요약(Reason)을 참고하여 보수적(False) 또는 수용적(True) 판정.
+      - 결과는 오직 아래 명시된 JSON 스키마로만 반환 (마크다운 포맷팅 제외).
+
+      [Schema]
+      {{
+        "approved": boolean,
+        "reason": "최대 2문장으로 압축된 최종 심의 근거"
+      }}
+
+      [Example]
+      Input:
+      미션 유형: location
+      통합 점수: 0.68
+      임계값: 0.70
+      충돌 여부: True
+      
+      Output:
+      {{
+        "approved": true,
+        "reason": "통합 점수(0.68)는 임곗값(0.70)에 미달하나, 블립 모델(0.9)과 큐원 모델(0.8)이 랜드마크의 핵심 특징을 강하게 포착했으므로 최종 승인합니다."
+      }}
+    user: |
+      미션 유형: {mission_type}
+      통합 점수: {merged_score}
+      임계값: {threshold}
+      충돌 여부: {conflict}
+
+      모델별 투표 결과:
+      {model_votes_summary}
