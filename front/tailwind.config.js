@@ -15,6 +15,13 @@ export default {
                 "surface-dark": "#1e2827",
                 "card-text": "#377771",
 
+                // Shadcn UI base colors mapping
+                "border": "hsl(var(--border))",
+                "input": "hsl(var(--input))",
+                "ring": "hsl(var(--ring))",
+                "background": "hsl(var(--background))",
+                "foreground": "hsl(var(--foreground))",
+
                 // Screen 4 (Mission Home) & General Mission Theme
                 "toss-teal": "#377771",
                 "toss-peach": "#ffaf87",

@@ -5,7 +5,7 @@
 # [로컬 개발 서버 실행]
 #
 #   1. 가상환경 활성화 (uv 사용 권장):
-#      > .venv\Scripts\activate          # Windows
+#      > .\.venv\Scripts\activate          # Windows
 #      $ source .venv/bin/activate       # macOS/Linux
 #
 #   2. 의존성 설치:
