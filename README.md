@@ -1,311 +1,299 @@
-﻿# PAZULE
+<div align="center">
 
-PAZULE is an AI mission platform that verifies **location** and **atmosphere** missions from uploaded photos, then issues redeemable coupons for successful missions.
+# PAZULE
+**사진 한 장으로 장소와 분위기를 검증하는 AI 미션 플랫폼**
 
-This repository now uses a LangGraph-based orchestration pipeline with mission session lifecycle control and coupon lifecycle control.
+[![Python](https://img.shields.io/badge/Python-3.12%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-latest-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
+[![LangGraph](https://img.shields.io/badge/LangGraph-Orchestration-FF6B35?style=flat-square)](https://langchain-ai.github.io/langgraph/)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
-## What This Build Delivers
+사용자가 업로드한 사진을 여러 비전 모델이 앙상블 투표로 검증하고,<br/>
+미션 성공 시 파트너 쿠폰을 자동 발급하는 위치 기반 미션 플랫폼입니다.
 
-- Mission session lifecycle (`start -> submit -> issue -> redeem`)
-- Image gate checks (metadata validation, duplicate image prevention)
-- Model orchestration with fan-out/fan-in and weighted decision
-- Mission-type aware model routing (`location`, `atmosphere`)
-- Coupon issuance idempotency per mission
-- Coupon redeem state transitions (`issued -> redeemed|expired`)
+[시작하기](#getting-started) &nbsp;&bull;&nbsp; [아키텍처](#architecture) &nbsp;&bull;&nbsp; [기술 결정](#key-technical-decisions) &nbsp;&bull;&nbsp; [시연](#demo) &nbsp;&bull;&nbsp; [팀](#team)
 
-## Mission Types and Model Strategy
+</div>
 
-### 1) Location Mission
-- Goal: verify whether the uploaded image matches the target place
-- Recommended models: `siglip2`, `blip`, `qwen`
-- Default ensemble weights:
-  - `siglip2`: `0.50`
-  - `blip`: `0.30`
-  - `qwen`: `0.20`
+---
 
-### 2) Atmosphere Mission
-- Goal: verify whether the uploaded image matches the target atmosphere keyword
-- Recommended models: `siglip2`, `qwen`, `blip`
-- Default ensemble weights:
-  - `siglip2`: `0.60`
-  - `qwen`: `0.25`
-  - `blip`: `0.15`
+## Overview
 
-## Orchestration Pipeline
+파주 출판단지 보물찾기 이벤트용 팀 프로젝트(**파주시장상** 🏆)가 시작이었습니다.
 
-Entrypoint: `app/council/graph.py` -> `pipeline_app`
+**v1에서 드러난 한계:**
+- **오탐** — 비슷한 외관의 건물 앞 사진이 단일 모델에서 통과하는 경우 발생
+- **어뷰징** — 미션 상태를 서버가 관리하지 않아 같은 사진 반복 제출이 가능
 
-```text
-START
-  -> validator
-      pass -> router
-      fail -> responder(error)
-  -> router
-  -> evaluator
-  -> aggregator
-  -> council
-  -> judge
-      success -> policy
-      fail    -> responder(fail)
-  -> policy
-  -> responder(success)
-END
+이 버전은 수상작 기반으로, 위 한계를 개인적으로 고친 결과물입니다.
+
+| | v1 · 수상작 | v2 · 현재 |
+|---|---|---|
+| 모델 | BLIP-VQA + CLIP (분리 실행) | SigLIP2 + BLIP + Qwen VL (앙상블 투표) |
+| 파이프라인 | `mission_manager.py` 단일 호출 | LangGraph 8노드 오케스트레이션 |
+| API | `POST /mission` 1개 | `start / submit / issue / redeem` 4개 |
+| 프론트엔드 | 없음 | React 19 + Vite + Tailwind |
+| 레포 | [`PAZULE`](https://github.com/dltkdwns0730/PAZULE) | [`PAZULE_AGENT`](https://github.com/dltkdwns0730/PAZULE_AGENT) |
+
+---
+
+## Architecture
+
+```mermaid
+graph TD
+    classDef gate fill:#fff3cd,stroke:#ffc107,stroke-width:2px
+    classDef model fill:#cce5ff,stroke:#007bff,stroke-width:2px
+    classDef result fill:#d4edda,stroke:#28a745,stroke-width:2px
+    classDef fail fill:#f8d7da,stroke:#dc3545,stroke-width:2px
+
+    START((START)) --> validator
+
+    validator[validator\nGate Keeper]:::gate
+    validator -- 통과 --> router
+    validator -- 실패 --> responder_error[responder\nError]:::fail
+
+    router[router\nTask Router] --> evaluator
+
+    evaluator[evaluator\nModel Fanout]:::model
+
+    subgraph 앙상블 투표
+        siglip2(SigLIP2)
+        blip(BLIP)
+        qwen(Qwen VL)
+    end
+    evaluator -.-> siglip2
+    evaluator -.-> blip
+    evaluator -.-> qwen
+
+    siglip2 -.-> aggregator
+    blip -.-> aggregator
+    qwen -.-> aggregator
+
+    aggregator[aggregator\n가중치 집계] --> council
+    council[council\nAI 평의회]:::model --> judge
+
+    judge[judge\nDecision]:::gate
+    judge -- 성공 --> policy
+    judge -- 실패 --> responder_fail[responder\nFail]:::fail
+
+    policy[policy\nCoupon Engine] --> responder_ok[responder\nSuccess]:::result
+
+    responder_ok --> END_NODE((END))
+    responder_fail --> END_NODE
+    responder_error --> END_NODE
 ```
 
-## Node Responsibilities
+**하네스 구조:**
+- LangGraph `StateGraph`가 하네스 역할 — 각 노드는 공유 상태(`PipelineState`)를 읽고 결과를 기록
+- 노드 간 직접 호출 없음 — 조건 분기와 에러 누적은 하네스가 중앙에서 통제
+- **조기 종료** — validator 실패 시 모델 추론 건너뜀 / judge 실패 시 힌트 경로로 분기
 
-- `validator` (`app/council/nodes.py`)
-  - validates metadata
-  - checks duplicate image hash per user
-  - writes `gate_result` and risk flags
+> 상태 흐름, control_flags, Council 3-Tier 에스컬레이션 등 상세 설계는 [`docs/architecture.md`](./docs/architecture.md)를 참고하세요.
 
-- `router`
-  - normalizes mission type (`photo` -> `atmosphere`)
-  - writes route decision metadata
+---
 
-- `evaluator`
-  - selects single model or ensemble from config/runtime override
-  - runs model probes and collects `model_votes`
+## Key Technical Decisions
 
-- `aggregator`
-  - merges votes with mission-specific weights
-  - computes `merged_score`, `threshold`, and `conflict`
+### 1. 분리 모델 → 앙상블 투표
 
-- `council`
-  - runs final deliberation logic before pass/fail determination (AI Council)
+**문제:**
+- BLIP-VQA(장소) + CLIP(분위기)을 각각 로딩 — 추론 비용 2배
+- CLIP이 무거워서 로컬 환경에서 응답 시간·메모리 모두 부담
+- 각 모델이 독립 판정 — 한쪽 오탐 시 보정 수단 없음
 
-- `judge`
-  - applies pass/fail threshold
-  - applies conservative handling when conflict is high
+**대안 검토:**
+- CLIP 유지 + 경량화 시도 → 근본적 한계 (모델 구조 자체가 무거움)
+- SigLIP2로 CLIP 대체 → 동일 태스크(zero-shot 매칭)에서 더 가볍고 빠름
+- Qwen VL을 API로 추가 → 로컬 리소스 부담 없이 정확도 보강
 
-- `policy`
-  - converts mission judgment to coupon eligibility policy
+**선택:**
+- SigLIP2(로컬) + BLIP(로컬)로 앙상블 투표, Qwen VL(API)은 Council 에스컬레이션 시 재호출
+- 미션 타입별 가중치 차등: Location(SigLIP2 60% · BLIP 40%) / Atmosphere(SigLIP2 75% · BLIP 25%)
+- 단일 모델 오탐을 다른 모델이 보정 — score 차이 ≥0.35 시 conflict 플래그
 
-- `responder`
-  - builds API response DTO (`success`, `message`, `confidence`, traces)
+### 2. 함수 체이닝 → LangGraph
 
-## API Surface
+**문제:**
+- v1 구조: `validate() → run_blip() → run_clip() → generate_hint()` 직렬 호출
+- v2에서 세션 관리, 쿠폰 정책, 앙상블 투표 추가 → 조건 분기 급증
+  - validator 실패 → 모델 추론 건너뛰기
+  - judge 실패 → 힌트 경로 분기
+  - council이 judge 오버라이드 가능
+- if-else 중첩이 4단계를 초과
 
-See full schema and examples in `docs/api_specification.md`.
+**대안 검토:**
+- **Airflow / Prefect** → 배치 스케줄러 기반, 실시간 요청 처리(수 초 응답)에 부적합
+- **직접 구현** → 조건 분기·에러 누적·상태 전달을 매번 수동 관리해야 함
 
-- `POST /api/mission/start`
-- `POST /api/mission/submit`
-- `POST /api/coupon/issue`
-- `POST /api/coupon/redeem`
-- `GET /get-today-hint`
-- `POST /api/preview`
+**선택:**
+- LangGraph `StateGraph` 채택
+- `add_conditional_edges()`로 분기 로직을 노드 구현과 분리
+- 노드 간 상태 전달을 선언적으로 정의 — 노드 추가/제거 시 다른 노드 수정 불필요
 
-## Business Flow (Location + Atmosphere + Coupon)
+---
 
-1. User starts a mission in a constrained site context (`site_id`, radius policy)
-2. User submits an image inside mission TTL and submission limit
-3. Pipeline validates trust signals and runs mission-specific model voting
-4. If mission succeeds and policy allows it, user receives one coupon
-5. Partner POS redeems coupon with audit-ready state transition
+## Tech Stack
 
-This design supports campaign monetization by:
-- improving mission quality with multi-model voting
-- reducing abuse through duplicate and policy checks
-- enabling partner-side redemption tracking
+### Backend
 
-## Configuration
+| 분류 | 기술 |
+|---|---|
+| Language | Python 3.12+ |
+| Framework | FastAPI + Uvicorn |
+| Orchestration | LangGraph (StateGraph) |
+| Vision Models | SigLIP2, BLIP-VQA, Qwen VL |
+| LLM | OpenAI / OpenRouter / Gemini |
+| Anti-Abuse | EXIF 날짜, GPS BBox, SHA-256 이미지 해시 |
+| Package Manager | uv |
 
-Main config: `app/core/config.py`
+### Frontend
 
-Key environment variables:
+| 분류 | 기술 |
+|---|---|
+| Framework | React 19 + Vite |
+| Routing | React Router DOM 7 |
+| Styling | Tailwind CSS |
+| State | Zustand |
+| QR Code | qrcode.react |
 
-```env
-OPENAI_API_KEY=...
-MODEL_SELECTION_LOCATION=blip
-MODEL_SELECTION_ATMOSPHERE=ensemble
-ENSEMBLE_MODELS_LOCATION=siglip2,blip,qwen
-ENSEMBLE_MODELS_ATMOSPHERE=siglip2,qwen,blip
-LOCATION_PASS_THRESHOLD=0.70
-ATMOSPHERE_PASS_THRESHOLD=0.62
-MISSION_SESSION_TTL_MINUTES=60
-MISSION_MAX_SUBMISSIONS=3
-MISSION_SITE_RADIUS_METERS=300
+---
+
+## Demo
+
+<!-- 시연 영상이나 스크린샷을 아래에 추가하세요 -->
+
+<div align="center">
+
+> 📹 시연 영상 준비 중입니다.
+
+<!-- 영상이 준비되면 아래 주석을 해제하세요
+[![PAZULE Demo](https://img.youtube.com/vi/VIDEO_ID/maxresdefault.jpg)](https://youtu.be/VIDEO_ID)
+-->
+
+</div>
+
+### 화면 흐름
+
+```
+미션 홈 → 미션 선택 → 사진 촬영 → AI 분석 → 결과 → 쿠폰 발급 → 쿠폰 지갑
 ```
 
-## Project Structure
+| 화면 | 설명 |
+|---|---|
+| **MissionHome** | 오늘의 힌트 확인, 위치/분위기 미션 선택 |
+| **PhotoSubmission** | 카메라 촬영 또는 갤러리 업로드, 남은 시도 횟수 표시 |
+| **MissionResult** | 성공/실패 판정, 신뢰도 점수, AI 힌트 |
+| **CouponWallet** | 보유 쿠폰 목록, QR코드, 사용 상태 |
+| **AdminDashboard** | 미션 현황 모니터링 (관리자) |
 
-```text
-app/
-  api/
-    routes.py
-  council/
-    graph.py
-    nodes.py
-    state.py
-    agents.py
-  models/
-    qwen_vl.py
-    siglip2.py
-    prompts.py
-    adapter_utils.py
-    llm.py
-  services/
-    mission_session_service.py
-    coupon_service.py
-    answer_service.py
-  core/
-    config.py
-    keyword.py
-  metadata/
-    validator.py
-    metadata.py
+---
 
-tests/
-  test_nodes_logic.py
-  test_coupon_service.py
+## Getting Started
 
-docs/
-  api_specification.md
-  assets/
-    pipeline_architecture.png
+### Prerequisites
 
-scripts/
-  simulate_cli.py
-  test_real_models.py
-  test_pipeline_mock.py
-```
+- Python 3.12+
+- Node.js 18+
+- [uv](https://github.com/astral-sh/uv) (권장)
 
-## Run Locally
+### 1. Clone & Install
 
 ```bash
-cd projects/active/PAZULE
+git clone https://github.com/dltkdwns0730/PAZULE_AGENT.git
+cd PAZULE_AGENT
+
 python -m venv .venv
-.venv\Scripts\activate
-```
+.venv\Scripts\activate        # Windows
+# source .venv/bin/activate   # macOS / Linux
 
-### Install with uv (Recommended)
-
-API-only runtime:
-
-```bash
-uv pip install .
-```
-
-Model runtime (BLIP/Qwen/SigLIP2/LangGraph path):
-
-```bash
-uv pip install ".[model]"
-```
-
-Full local development profile:
-
-```bash
 uv pip install ".[dev,model]"
 ```
 
-### Legacy pip Compatibility
+### 2. 환경 변수
 
-(Legacy requirements.txt was removed, use uv instead)
+루트에 `.env` 파일을 생성합니다.
 
-### 로컬 통합 테스트 (백엔드 + 프론트엔드)
+```env
+OPENAI_API_KEY=...
+OPENROUTER_API_KEY=...
+GEMINI_API_KEY=...
+MODEL_SELECTION_LOCATION=siglip2
+MODEL_SELECTION_ATMOSPHERE=ensemble
+```
 
-두 서버를 **별도 터미널**에서 동시에 실행합니다:
+> 전체 환경 변수 목록은 [`app/core/config.py`](./app/core/config.py)를 참고하세요.
 
-| 터미널 | 명령어 | URL |
-| --- | --- | --- |
-| 백엔드 | `python main.py` | `http://localhost:8080` |
-| 프론트엔드 | `cd front && npm run dev` | `http://localhost:5173` |
-
-**백엔드 서버 실행:**
+### 3. 실행
 
 ```bash
-# Windows 콘솔에서 UTF-8 출력이 깨질 경우 먼저 실행
-$env:PYTHONUTF8="1"   # PowerShell
-set PYTHONUTF8=1      # CMD
-
+# 백엔드 (port 8080)
 python main.py
-# → PAZULE vX.X.X 서버 실행 중 (포트 8080)...
+
+# 프론트엔드 (port 5173, 별도 터미널)
+cd front && npm install && npm run dev
 ```
 
-**프론트엔드 서버 실행:**
+---
 
-```bash
-cd front
-npm install     # 최초 1회
-npm run dev
-# → Local: http://localhost:5173
-```
+## API
 
-브라우저에서 `http://localhost:5173` 접속 시 프론트가 `/api/*` 요청을 백엔드(8080)로 자동 프록시합니다.
+전체 스키마는 [`API_SPEC.md`](./API_SPEC.md)를 참고하세요.
 
-### API 엔드포인트 단독 테스트
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| `POST` | `/api/mission/start` | 미션 세션 시작 |
+| `POST` | `/api/mission/submit` | 이미지 제출 → 파이프라인 실행 |
+| `POST` | `/api/coupon/issue` | 쿠폰 발급 (멱등) |
+| `POST` | `/api/coupon/redeem` | 파트너 POS 사용 처리 |
+| `GET` | `/get-today-hint` | 오늘의 힌트 조회 |
 
-```bash
-# 오늘의 힌트 조회
-curl "http://localhost:8080/get-today-hint?mission_type=location"
+---
 
-# 미션 세션 시작
-curl -X POST http://localhost:8080/api/mission/start \
-  -H 'Content-Type: application/json' \
-  -d '{"mission_type": "location", "user_id": "dev-user", "site_id": "pazule-default"}'
+## Contributing
 
-# 이미지 제출 (미션 ID는 위 응답의 mission_id 사용)
-curl -X POST http://localhost:8080/api/mission/submit \
-  -F "mission_id=<mission_id>" \
-  -F "image=@/path/to/photo.jpg"
-```
+1. Fork → `feat/my-feature` 브랜치 생성
+2. 커밋 (`git commit -m 'feat: add my feature'`)
+3. Push → Pull Request
 
-### 파이프라인 직접 실행 (Python)
+---
 
-`pipeline_app.invoke()` 를 스크립트에서 바로 호출할 수 있습니다:
+## Team
 
-```python
-from app.council.graph import pipeline_app
+<div align="center">
 
-initial_state = {
-    "request_context": {
-        "mission_id":      "test-session-001",   # 임의 세션 ID
-        "user_id":         "dev-user",
-        "site_id":         "pazule-default",
-        "mission_type":    "location",            # "location" | "atmosphere"
-        "image_path":      "/path/to/photo.jpg",  # 절대 경로 권장
-        "answer":          "한길책박물관",           # 오늘의 정답 키워드
-        "model_selection": None,                  # None → .env 기본값 사용
-    },
-    "artifacts":     {},
-    "errors":        [],
-    "control_flags": {},
-    "messages":      [],
-}
+<table>
+  <tr>
+    <td align="center" width="150">
+      <a href="https://github.com/dltkdwns0730">
+        <img src="https://avatars.githubusercontent.com/u/208967935?v=4" width="100" height="100" style="border-radius:50%;" alt="dltkdwns0730"/><br/>
+        <sub><b>dltkdwns0730</b></sub>
+      </a><br/>
+      <sub>이상준</sub>
+    </td>
+  </tr>
+</table>
 
-output = pipeline_app.invoke(initial_state)
+v1 수상작은 팀 프로젝트로 개발되었으며, v2는 개인적으로 고도화한 버전입니다.
 
-# 최종 판정 결과
-final = output.get("final_response", {}).get("data", {})
-print(final)
-# → {
-#     "success":        True,
-#     "score":          0.87,
-#     "message":        "위치가 확인되었습니다.",
-#     "couponEligible": True,
-#     "mission_id":     "test-session-001",
-#   }
-```
+</div>
 
-보조 스크립트:
+---
 
-```bash
-uv run scripts/simulate_cli.py       # 대화형 CLI 시뮬레이션
-uv run scripts/test_real_models.py   # 실제 모델 성능 측정
-uv run scripts/test_pipeline_mock.py # 목 데이터로 파이프라인 검증
-```
+## Resources
 
-## Test
+| 자료 | 설명 |
+|---|---|
+| [Architecture](./docs/architecture.md) | 하네스 설계, 상태 흐름, Council 에스컬레이션 상세 |
+| [Pipeline Diagram](./docs/PIPELINE_VISUALIZATION.md) | Mermaid 파이프라인 다이어그램 |
+| [API Specification](./docs/api_specification.md) | 엔드포인트 요청/응답 스키마 |
+| [상용화 전략](./docs/commercialization-plan.md) | 프로덕션 전환 설계 |
+| [v1 수상작 레포](https://github.com/dltkdwns0730/PAZULE) | 파주시장상 수상 코드베이스 |
 
-```bash
-python -m unittest discover -s tests -p "test_*.py"
-```
+---
 
-## Breaking Changes
+<div align="center">
 
-- Legacy single endpoint `POST /api/mission` is replaced by:
-  - `POST /api/mission/start`
-  - `POST /api/mission/submit`
-  - `POST /api/coupon/issue`
-  - `POST /api/coupon/redeem`
-- Frontend clients must follow the new lifecycle sequence.
+🏆 v1은 **파주시장상**을 수상한 팀 프로젝트에서 시작되었습니다.
+
+</div>
