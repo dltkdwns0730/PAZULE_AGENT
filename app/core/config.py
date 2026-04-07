@@ -25,8 +25,12 @@ class Settings:
     SIGLIP2_MODEL_ID: str = os.getenv(
         "SIGLIP2_MODEL_ID", "google/siglip2-base-patch16-224"
     )
-    QWEN_VL_MODEL_ID: str = os.getenv("QWEN_VL_MODEL_ID", "qwen/qwen-2.5-vl-7b-instruct:free")
+    QWEN_VL_MODEL_ID: str = os.getenv("QWEN_VL_MODEL_ID", "qwen/qwen3.6-plus:free")
     LLM_MODEL_ID: str = os.getenv("LLM_MODEL_ID", "")
+    
+    # API Limits (Timeout & Retries)
+    API_TIMEOUT_SECONDS: float = float(os.getenv("API_TIMEOUT_SECONDS", "60.0"))
+    API_MAX_RETRIES: int = int(os.getenv("API_MAX_RETRIES", "2"))
 
     # Runtime model selection
     MODEL_SELECTION_LOCATION: str = os.getenv("MODEL_SELECTION_LOCATION", "siglip2")
