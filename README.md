@@ -41,47 +41,77 @@
 ## Architecture
 
 ```mermaid
-graph TD
-    classDef gate fill:#fff3cd,stroke:#ffc107,stroke-width:2px
-    classDef model fill:#cce5ff,stroke:#007bff,stroke-width:2px
-    classDef result fill:#d4edda,stroke:#28a745,stroke-width:2px
-    classDef fail fill:#f8d7da,stroke:#dc3545,stroke-width:2px
+flowchart TB
+    %% ── 스타일 정의 ──
+    classDef entry fill:#6366f1,stroke:#4f46e5,color:#fff,font-weight:bold,stroke-width:2px
+    classDef gate fill:#fef3c7,stroke:#f59e0b,color:#92400e,stroke-width:2px
+    classDef core fill:#dbeafe,stroke:#3b82f6,color:#1e40af,stroke-width:2px
+    classDef ai fill:#e0e7ff,stroke:#6366f1,color:#3730a3,stroke-width:2px
+    classDef biz fill:#d1fae5,stroke:#10b981,color:#065f46,stroke-width:2px
+    classDef out_ok fill:#bbf7d0,stroke:#22c55e,color:#14532d,stroke-width:2px
+    classDef out_fail fill:#fecaca,stroke:#ef4444,color:#7f1d1d,stroke-width:2px
 
-    START((START)) --> validator
+    %% ── 진입 ──
+    REQ["📷 POST /api/mission/submit"]:::entry
 
-    validator[validator\nGate Keeper]:::gate
-    validator -- 통과 --> router
-    validator -- 실패 --> responder_error[responder\nError]:::fail
-
-    router[router\nTask Router] --> evaluator
-
-    evaluator[evaluator\nModel Fanout]:::model
-
-    subgraph 앙상블 투표
-        siglip2(SigLIP2)
-        blip(BLIP)
-        qwen(Qwen VL)
+    %% ── Stage 1: 검증 ──
+    subgraph STAGE1["① 검증"]
+        direction TB
+        V{"validator<br/>EXIF · GPS · 해시 중복"}:::gate
     end
-    evaluator -.-> siglip2
-    evaluator -.-> blip
-    evaluator -.-> qwen
 
-    siglip2 -.-> aggregator
-    blip -.-> aggregator
-    qwen -.-> aggregator
+    %% ── Stage 2: 모델 추론 ──
+    subgraph STAGE2["② 모델 추론"]
+        direction TB
+        R["router<br/>미션 타입 정규화"]:::core
+        E["evaluator<br/>모델 선택 & 실행"]:::core
 
-    aggregator[aggregator\n가중치 집계] --> council
-    council[council\nAI 평의회]:::model --> judge
+        subgraph ENSEMBLE["앙상블 투표 (가중치 합산)"]
+            direction LR
+            S2["SigLIP2<br/>로컬"]:::ai
+            BL["BLIP<br/>로컬"]:::ai
+        end
 
-    judge[judge\nDecision]:::gate
-    judge -- 성공 --> policy
-    judge -- 실패 --> responder_fail[responder\nFail]:::fail
+        R --> E
+        E -.-> S2
+        E -.-> BL
+    end
 
-    policy[policy\nCoupon Engine] --> responder_ok[responder\nSuccess]:::result
+    %% ── Stage 3: 판정 ──
+    subgraph STAGE3["③ 판정"]
+        direction TB
+        AG["aggregator<br/>merged_score · conflict"]:::core
+        CO["council<br/>3-Tier 에스컬레이션"]:::ai
+        QW["Qwen VL<br/>API 재호출"]:::ai
+        JU{"judge<br/>pass / fail"}:::gate
 
-    responder_ok --> END_NODE((END))
-    responder_fail --> END_NODE
-    responder_error --> END_NODE
+        AG --> CO
+        CO -. "Tier 3<br/>경계값 케이스만" .-> QW
+        QW -.-> CO
+        CO --> JU
+    end
+
+    %% ── Stage 4: 비즈니스 ──
+    subgraph STAGE4["④ 비즈니스"]
+        direction TB
+        PO["policy<br/>쿠폰 자격 · 할인율"]:::biz
+    end
+
+    %% ── 출력 ──
+    OK["✅ 미션 성공 + 쿠폰"]:::out_ok
+    FAIL["❌ 실패 + AI 힌트"]:::out_fail
+
+    %% ── 메인 흐름 ──
+    REQ --> V
+    V -- "통과" --> R
+    S2 -.-> AG
+    BL -.-> AG
+    JU -- "성공" --> PO
+    PO --> OK
+
+    %% ── 실패 경로 ──
+    V -. "차단" .-> FAIL
+    JU -. "실패" .-> FAIL
 ```
 
 **하네스 구조:**
