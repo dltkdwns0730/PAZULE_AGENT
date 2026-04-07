@@ -11,7 +11,7 @@ from typing import Any, Dict
 
 import torch
 from PIL import Image
-from transformers import AutoProcessor, AutoModel
+from transformers import AutoImageProcessor, AutoModel, GemmaTokenizerFast
 
 from app.core.config import settings
 
@@ -19,17 +19,19 @@ from app.core.config import settings
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 MODEL_NAME = settings.SIGLIP2_MODEL_ID
 
-_processor = None
+_image_processor = None
+_tokenizer = None
 _model = None
 
 
 def _load_siglip2():
     """SigLIP2 기반 모델과 프로세서를 지연(lazy) 로드한다."""
-    global _processor, _model
-    if _processor is None or _model is None:
+    global _image_processor, _tokenizer, _model
+    if _model is None:
         print(f"SigLIP2 모델 로딩 중: '{MODEL_NAME}' on {DEVICE}...")
         try:
-            _processor = AutoProcessor.from_pretrained(MODEL_NAME)
+            _image_processor = AutoImageProcessor.from_pretrained(MODEL_NAME)
+            _tokenizer = GemmaTokenizerFast.from_pretrained(MODEL_NAME)
             _model = AutoModel.from_pretrained(MODEL_NAME).to(DEVICE)
             _model.eval()
             print("SigLIP2 모델 로드 완료.")
@@ -75,22 +77,27 @@ def probe_with_siglip2(
             "reason": f"Image load failed: {str(e)}",
         }
 
-    # 미션 타입에 따른 대상 텍스트(레이블) 설정
-    if mission_type == "atmosphere":
-        target_text = f"a photo with {answer} atmosphere"
-    else:
-        target_text = f"a photo of {answer}"
+    # prompt_bundle의 영어 후보 텍스트 사용 (한국어 → 영어 변환 완료 상태)
+    candidates = prompt_bundle.get("siglip2_candidates")
+    if not candidates:
+        if mission_type == "atmosphere":
+            target_text = f"a photo with {answer} atmosphere"
+        else:
+            target_text = f"a photo of {answer}"
+        candidates = [target_text]
 
-    texts = [target_text]
+    target_text = candidates[0]
 
     try:
-        # SigLIP Processor를 이용해 토크나이징 및 텐서 변환
-        inputs = _processor(
-            text=texts, images=raw_image, padding="max_length", return_tensors="pt"
-        ).to(DEVICE)
+        pixel_values = _image_processor(
+            images=raw_image, return_tensors="pt"
+        )["pixel_values"].to(DEVICE)
+        input_ids = _tokenizer(
+            candidates, return_tensors="pt", padding="max_length", max_length=64
+        )["input_ids"].to(DEVICE)
 
         with torch.no_grad():
-            outputs = _model(**inputs)
+            outputs = _model(input_ids=input_ids, pixel_values=pixel_values)
 
         # SigLIP 특성상 softmax 대신 독립적인 sigmoid 함수가 사용됨
         logits_per_image = outputs.logits_per_image
