@@ -33,12 +33,15 @@ def probe_with_qwen(
         }
 
     try:
+        print(f"  --> [Agent: Evaluator / Model: Qwen] API 통신 시작 (Timeout: {settings.API_TIMEOUT_SECONDS}s, Retries: {settings.API_MAX_RETRIES})")
         llm = ChatOpenAI(
             api_key=settings.OPENROUTER_API_KEY,
             base_url="https://openrouter.ai/api/v1",
-            model=settings.QWEN_VL_MODEL_ID or "qwen/qwen-2.5-vl-7b-instruct:free",
+            model=settings.QWEN_VL_MODEL_ID or "qwen/qwen3-vl-8b-instruct",
             temperature=0.1,
             max_tokens=300,
+            timeout=settings.API_TIMEOUT_SECONDS,
+            max_retries=settings.API_MAX_RETRIES,
         )
 
         base64_image = _encode_image_base64(image_path)

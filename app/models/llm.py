@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from langchain.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 
 from app.core.config import settings
@@ -15,31 +15,34 @@ class LLMService:
     """LLM 기반 힌트 생성 및 감성 검증 서비스."""
 
     def __init__(self):
-        # 1. OpenRouter (우선순위 1)
-        if settings.OPENROUTER_API_KEY:
-            self.llm = ChatOpenAI(
-                model=settings.LLM_MODEL_ID or "google/gemini-2.5-pro",
-                temperature=0.7,
-                api_key=settings.OPENROUTER_API_KEY,
-                base_url="https://openrouter.ai/api/v1",
-            )
-        # 2. Native Gemini API (우선순위 2)
-        elif settings.GEMINI_API_KEY:
+        # 1. Gemini API (우선순위 1 — 기본 LLM 프로바이더)
+        if settings.GEMINI_API_KEY:
             try:
                 from langchain_google_genai import ChatGoogleGenerativeAI
                 self.llm = ChatGoogleGenerativeAI(
-                    model=settings.LLM_MODEL_ID or "gemini-2.5-pro",
+                    model=settings.LLM_MODEL_ID or "gemini-2.5-flash",
                     temperature=0.7,
                     api_key=settings.GEMINI_API_KEY,
+                    timeout=settings.API_TIMEOUT_SECONDS,
+                    max_retries=settings.API_MAX_RETRIES,
                 )
             except ImportError:
-                raise ImportError("GEMINI_API_KEY is set but langchain-google-genai is not installed.")
-        # 3. Default OpenAI
-        else:
+                raise ImportError(
+                    "GEMINI_API_KEY is set but langchain-google-genai is not installed. "
+                    "Run: uv pip install langchain-google-genai"
+                )
+        # 2. Fallback: OpenAI
+        elif settings.OPENAI_API_KEY:
             self.llm = ChatOpenAI(
                 model=settings.LLM_MODEL_ID or "gpt-4o-mini",
                 temperature=0.7,
                 api_key=settings.OPENAI_API_KEY,
+                timeout=settings.API_TIMEOUT_SECONDS,
+                max_retries=settings.API_MAX_RETRIES,
+            )
+        else:
+            raise RuntimeError(
+                "LLM 초기화 실패: GEMINI_API_KEY 또는 OPENAI_API_KEY를 .env에 설정하세요."
             )
 
     @with_prompt("hint_generation")

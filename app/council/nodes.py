@@ -151,26 +151,52 @@ def evaluator(state: Dict[str, Any]) -> Dict[str, Any]:
     image_path = request_context.get("image_path")
     answer = request_context.get("answer")
 
+    import concurrent.futures
+    import time
+
     selected_models = _select_models(
         mission_type, request_context.get("model_selection")
     )
     prompt_bundle = build_prompt_bundle(mission_type, answer)
     votes: list[Dict[str, Any]] = []
 
-    for model_name in selected_models:
-        try:
-            vote = _invoke_model(model_name, mission_type, image_path, answer, prompt_bundle)
-            votes.append(vote)
-        except Exception as exc:
-            _append_error(
-                errors,
-                "MODEL_FAILURE",
-                f"{model_name}: {exc}",
-                "evaluator",
-                True,
-                model=model_name,
-            )
-            traceback.print_exc()
+    print(f"\n  --> [Agent: Evaluator] {len(selected_models)}개 모델 동시 평가 시작: {','.join(selected_models)}")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(selected_models)) as executor:
+        future_to_model = {
+            executor.submit(_invoke_model, model_name, mission_type, image_path, answer, prompt_bundle): model_name
+            for model_name in selected_models
+        }
+
+        for future in concurrent.futures.as_completed(future_to_model):
+            model_name = future_to_model[future]
+            try:
+                start_time = time.time()
+                # 설정된 API_TIMEOUT_SECONDS보다 조금 더 여유를 두어 Python 수준의 Timeout 발생.
+                vote = future.result(timeout=settings.API_TIMEOUT_SECONDS + 5.0)
+                elapsed = time.time() - start_time
+                print(f"  --> [Agent: Evaluator / Model: {model_name}] 완료 ({elapsed:.2f}초)")
+                votes.append(vote)
+            except concurrent.futures.TimeoutError:
+                _append_error(
+                    errors,
+                    "MODEL_TIMEOUT",
+                    f"{model_name} execution timed out",
+                    "evaluator",
+                    False,
+                    model=model_name,
+                )
+                print(f"  ⚠️ [Agent: Evaluator / Model: {model_name}] 시간 초과 (Timeout)")
+            except Exception as exc:
+                _append_error(
+                    errors,
+                    "MODEL_FAILURE",
+                    f"{model_name}: {exc}",
+                    "evaluator",
+                    True,
+                    model=model_name,
+                )
+                print(f"  ⚠️ [Agent: Evaluator / Model: {model_name}] 실패: {exc}")
+                traceback.print_exc()
 
     artifacts["prompt_bundle"] = prompt_bundle
     artifacts["selected_models"] = selected_models
