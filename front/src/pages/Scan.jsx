@@ -12,26 +12,33 @@ export default function Scan() {
     const [theme, setTheme] = useState('light'); // For the toggle
 
     useEffect(() => {
-        if (!coupon || !coupon.expires_at) return;
+        if (!coupon) return;
 
-        const expiryTime = new Date(coupon.expires_at).getTime();
+        // 실제 유효기간(7일)이 아닌, 매장 결제용 바코드 표시 타이머(15분)로 동작하게 함
+        const timerDuration = 15 * 60; // 15분
+        setTimeLeft(timerDuration);
 
-        const updateTimer = () => {
-            const now = new Date().getTime();
-            const difference = expiryTime - now;
-            setTimeLeft(Math.max(0, Math.floor(difference / 1000)));
-        };
+        const timerId = setInterval(() => {
+            setTimeLeft(prev => {
+                if (prev <= 1) {
+                    clearInterval(timerId);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
 
-        // Initial update
-        updateTimer();
-
-        // Update every second
-        const timerId = setInterval(updateTimer, 1000);
         return () => clearInterval(timerId);
     }, [coupon]);
 
     const handleGoHome = () => {
         navigate('/');
+    };
+
+    const handleSimulateScan = () => {
+        if (timeLeft === 0) return;
+        alert("🎉 Mock: Coupon scanned successfully at POS!");
+        navigate('/wallet');
     };
 
     if (!coupon) {
@@ -57,7 +64,7 @@ export default function Scan() {
             <div className="absolute top-10 left-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
             <div className="absolute top-20 right-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
 
-            <main className="relative z-10 w-full max-w-[420px] h-[100dvh] max-h-[850px] flex flex-col pt-12">
+            <main className="relative z-10 w-full max-w-[420px] h-full min-h-[100dvh] flex flex-col pt-12">
                 {/* Header */}
                 <header className="px-6 flex justify-between items-center mb-8">
                     <div className="flex items-center gap-3">
@@ -82,9 +89,9 @@ export default function Scan() {
                     </button>
                 </header>
 
-                <div className="flex-1 px-4 sm:px-6 relative flex flex-col items-center">
+                <div className="flex-1 w-full px-4 sm:px-6 relative flex flex-col items-center overflow-y-auto no-scrollbar pb-12">
                     {/* Main Coupon Card */}
-                    <div className={`w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col ${isExpired ? 'opacity-75 grayscale sepia-0' : ''}`}>
+                    <div className={`w-full bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col shrink-0 mt-8 sm:mt-12 ${isExpired ? 'opacity-75 grayscale sepia-0' : ''}`}>
 
                         {/* Card Header (Store Details) */}
                         <div className="p-6 pb-0 flex flex-col items-center relative">
@@ -92,11 +99,7 @@ export default function Scan() {
                             <div className={`absolute top-1/2 -left-3 w-6 h-6 rounded-full ${theme === 'light' ? 'bg-[#f6f7f7]' : 'bg-[#151d1c]'}`}></div>
                             <div className={`absolute top-1/2 -right-3 w-6 h-6 rounded-full ${theme === 'light' ? 'bg-[#f6f7f7]' : 'bg-[#151d1c]'}`}></div>
 
-                            <div className="w-16 h-16 rounded-2xl bg-slate-100 mb-4 shadow-sm overflow-hidden flex items-center justify-center relative -mt-10 border-4 border-white">
-                                <span className="material-symbols-outlined text-[#37776f] text-3xl">auto_stories</span>
-                            </div>
-
-                            <h2 className="text-xl font-bold text-slate-900 mb-1">10% OFF COFFEE</h2>
+                            <h2 className="text-xl font-bold text-slate-900 mt-4 mb-1">10% OFF COFFEE</h2>
                             <p className="text-sm font-medium text-slate-500 mb-6 text-center max-w-[220px]">
                                 {coupon.description || 'Present this QR code at the counter.'}
                             </p>
@@ -110,7 +113,11 @@ export default function Scan() {
                         {/* QR Code Section */}
                         <div className="px-6 pb-6 flex flex-col items-center">
                             {/* QR Frame Container */}
-                            <div className="relative p-2 bg-gradient-to-br from-slate-100 to-slate-50 border border-slate-200 rounded-[24px] shadow-inner mb-6 group cursor-pointer">
+                            <div 
+                                onClick={handleSimulateScan}
+                                className={`relative p-2 bg-gradient-to-br from-slate-100 to-slate-50 border border-slate-200 rounded-[24px] shadow-inner mb-6 group transition-transform ${isExpired ? '' : 'cursor-pointer hover:scale-105 active:scale-95'}`}
+                                title={isExpired ? "QR Code Expired" : "클릭하여 POS 스캔 시뮬레이션"}
+                            >
                                 {/* The actual scanning area */}
                                 <div className={`p-4 bg-white rounded-[16px] shadow-sm relative overflow-hidden ${isExpired ? 'opacity-50' : ''}`}>
                                     {/* Scanning laser animation */}
@@ -156,16 +163,8 @@ export default function Scan() {
                     <div className="absolute -bottom-10 w-full h-20 bg-black/10 blur-xl rounded-full z-0 pointer-events-none"></div>
                 </div>
 
-                {/* Bottom Action */}
-                <div className="h-24 w-full flex items-center justify-center pb-6">
-                    <button
-                        onClick={handleGoHome}
-                        className={`font-bold transition-colors ${theme === 'light' ? 'text-slate-500 hover:text-slate-900' : 'text-slate-400 hover:text-white'} flex items-center gap-2`}
-                    >
-                        <span className="material-symbols-outlined text-[18px]">home</span>
-                        Return Home
-                    </button>
-                </div>
+                {/* Blank space to account for fixed bottom nav */}
+                <div className="h-20 w-full shrink-0"></div>
             </main>
         </div>
     );

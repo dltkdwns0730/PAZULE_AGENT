@@ -6,7 +6,7 @@ export default function Layout() {
     const location = useLocation();
 
     // Check if we are on screens that shouldn't show the bottom nav
-    const hideBottomNav = ['/mission/submit', '/mission/result', '/coupon/success', '/scan'].includes(location.pathname);
+    const hideBottomNav = ['/mission/submit', '/mission/result', '/coupon/success'].includes(location.pathname);
     const isScanPage = location.pathname === '/scan';
 
     return (
