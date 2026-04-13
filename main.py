@@ -101,5 +101,25 @@ def create_app():
 
 if __name__ == "__main__":
     app = create_app()
-    print(f"{settings.PROJECT_NAME} v{settings.VERSION} 서버 실행 중 (포트 8080)...")
-    app.run(host="0.0.0.0", port=8080)
+
+    on  = "\033[92m ON \033[0m"   # 초록
+    off = "\033[90m OFF\033[0m"   # 회색
+    warn = "\033[93m ON \033[0m"  # 노랑 (경고)
+
+    print()
+    print("=" * 52)
+    print(f"  {settings.PROJECT_NAME} v{settings.VERSION}  |  port 8080")
+    print("=" * 52)
+    print("  [Dev Switches]")
+    print(f"    SKIP_METADATA_VALIDATION : {warn if settings.SKIP_METADATA_VALIDATION else off}  (GPS·날짜 검증 우회)")
+    print(f"    BYPASS_MODEL_VALIDATION  : {warn if settings.BYPASS_MODEL_VALIDATION else off}  (AI 모델 추론 우회)")
+    print("  [Model]")
+    print(f"    Location  : {settings.MODEL_SELECTION_LOCATION}")
+    print(f"    Atmosphere: {settings.MODEL_SELECTION_ATMOSPHERE}")
+    print("  [Threshold]")
+    print(f"    Location  : {settings.LOCATION_PASS_THRESHOLD}")
+    print(f"    Atmosphere: {settings.ATMOSPHERE_PASS_THRESHOLD}")
+    print("=" * 52)
+    print()
+
+    app.run(host="0.0.0.0", port=8080, debug=False)

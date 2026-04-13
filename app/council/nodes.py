@@ -47,7 +47,17 @@ def validator(state: Dict[str, Any]) -> Dict[str, Any]:
 
     image_path = request_context.get("image_path")
     user_id = request_context.get("user_id", "guest")
+    mission_type = request_context.get("mission_type", "?")
+
+    print(f"\n{'='*55}")
+    print(f"  [STEP 1] validator")
+    print(f"  user={user_id}  mission_type={mission_type}")
+    print(f"  image_path={image_path}")
+    print(f"{'-'*55}")
+
     if not image_path:
+        print("  ✗ BLOCKED: image_path missing")
+        print(f"{'='*55}\n")
         _append_error(errors, "MISSING_IMAGE", "image_path is required", "validator", False)
         artifacts["gate_result"] = {"passed": False, "reason": "image_path_missing", "risk_flags": ["missing_image"]}
         control_flags["terminate"] = True
@@ -58,9 +68,21 @@ def validator(state: Dict[str, Any]) -> Dict[str, Any]:
             "messages": ["validator: missing image_path"],
         }
 
-    metadata_valid = validate_metadata(image_path)
+    metadata_valid = True  # 기본값: 통과
+    if settings.SKIP_METADATA_VALIDATION:
+        print("  ⚙️  SKIP_METADATA_VALIDATION=true → GPS·날짜 검증 건너뜀")
+    else:
+        print("  ... GPS·날짜 EXIF 검증 중...")
+        metadata_valid = validate_metadata(image_path)
+        print(f"  metadata_valid={metadata_valid}")
+
     image_hash = mission_session_service.hash_file(image_path)
     is_duplicate = mission_session_service.is_duplicate_hash_for_user(user_id, image_hash)
+    print(f"  image_hash={image_hash[:12]}...  is_duplicate={is_duplicate}")
+
+    if settings.SKIP_METADATA_VALIDATION and is_duplicate:
+        print("  ⚙️  SKIP_METADATA_VALIDATION=true → 중복 이미지 제출 검증(duplicate) 건너뜀")
+        is_duplicate = False
 
     risk_flags: list[str] = []
     if not metadata_valid:
@@ -74,6 +96,10 @@ def validator(state: Dict[str, Any]) -> Dict[str, Any]:
     if not passed:
         control_flags["terminate"] = True
         _append_error(errors, "GATE_BLOCKED", reason, "validator", False)
+        print(f"  ✗ BLOCKED: {reason}")
+    else:
+        print(f"  ✓ PASSED")
+    print(f"{'='*55}\n")
 
     request_context["image_hash"] = image_hash
     artifacts["gate_result"] = {
@@ -82,6 +108,7 @@ def validator(state: Dict[str, Any]) -> Dict[str, Any]:
         "risk_flags": risk_flags,
         "metadata_valid": metadata_valid,
         "is_duplicate": is_duplicate,
+        "metadata_check_skipped": settings.SKIP_METADATA_VALIDATION,
     }
     return {
         "request_context": request_context,
@@ -158,6 +185,24 @@ def evaluator(state: Dict[str, Any]) -> Dict[str, Any]:
         mission_type, request_context.get("model_selection")
     )
     prompt_bundle = build_prompt_bundle(mission_type, answer)
+
+    # ── 개발용 우회 스위치 ─────────────────────────────────────
+    if settings.BYPASS_MODEL_VALIDATION:
+        print("  ⚙️  [evaluator] BYPASS_MODEL_VALIDATION=true → 모델 추론 건너뜀, score=1.0 강제")
+        votes = [
+            {"model": m, "score": 1.0, "label": "match", "reason": "bypass_mode"}
+            for m in selected_models
+        ]
+        artifacts["prompt_bundle"] = prompt_bundle
+        artifacts["selected_models"] = selected_models
+        artifacts["model_votes"] = votes
+        return {
+            "artifacts": artifacts,
+            "errors": errors,
+            "messages": [f"evaluator: bypass ({','.join(selected_models)})"],
+        }
+    # ─────────────────────────────────────────────────────────────
+
     votes: list[Dict[str, Any]] = []
 
     print(f"\n  --> [Agent: Evaluator] {len(selected_models)}개 모델 동시 평가 시작: {','.join(selected_models)}")
@@ -256,6 +301,11 @@ def aggregator(state: Dict[str, Any]) -> Dict[str, Any]:
         "conflict": conflict,
         "vote_count": len(votes),
     }
+    print(f"{'='*55}")
+    print(f"  [STEP 4] aggregator")
+    print(f"  votes={len(votes)}  merged_score={merged_score:.4f}  threshold={threshold}")
+    print(f"  merged_label={merged_label}  conflict={conflict}")
+    print(f"{'='*55}\n")
     return {"artifacts": artifacts, "messages": [f"aggregator: score={merged_score:.2f}"]}
 
 
@@ -268,7 +318,15 @@ def judge(state: Dict[str, Any]) -> Dict[str, Any]:
     gate_result = artifacts.get("gate_result", {})
     ensemble = artifacts.get("ensemble_result", {})
 
+    print(f"{'='*55}")
+    print(f"  [STEP 6] judge")
+    merged_score = float(ensemble.get("merged_score", 0.0))
+    threshold = float(ensemble.get("threshold", 1.0))
+    conflict = bool(ensemble.get("conflict"))
+
     if not gate_result.get("passed"):
+        print(f"  ✗ gate not passed → forced fail")
+        print(f"{'='*55}\n")
         judgment = {
             "success": False,
             "reason": gate_result.get("reason", "gate_blocked"),
@@ -278,17 +336,16 @@ def judge(state: Dict[str, Any]) -> Dict[str, Any]:
         artifacts["judgment"] = judgment
         return {"artifacts": artifacts, "messages": ["judge: gate blocked"]}
 
-    merged_score = float(ensemble.get("merged_score", 0.0))
-    threshold = float(ensemble.get("threshold", 1.0))
-    conflict = bool(ensemble.get("conflict"))
     success = merged_score >= threshold
     reason = "score_passed" if success else "score_below_threshold"
+    print(f"  score={merged_score:.4f}  threshold={threshold}  pass={success}")
 
     if conflict and merged_score < (threshold + 0.08):
         success = False
         reason = "model_conflict_requires_retry"
         control_flags["manual_review"] = True
         _append_error(errors, "MODEL_CONFLICT", reason, "judge", False)
+        print(f"  ✗ conflict detected → overridden to fail")
 
     # Council verdict 교차 검증
     council_verdict = artifacts.get("council_verdict")
@@ -299,8 +356,13 @@ def judge(state: Dict[str, Any]) -> Dict[str, Any]:
             council_override = True
             success = council_approved
             reason = f"council_override: {council_verdict.get('reason', 'N/A')}"
+            print(f"  ⚠️  council override → success={success}")
         if council_verdict.get("escalated"):
             control_flags["manual_review"] = True
+
+    result_icon = "✓" if success else "✗"
+    print(f"  {result_icon} FINAL: success={success}  reason={reason}")
+    print(f"{'='*55}\n")
 
     artifacts["judgment"] = {
         "success": success,
@@ -328,6 +390,11 @@ def policy(state: Dict[str, Any]) -> Dict[str, Any]:
     eligible = bool(judgment.get("success")) and "duplicate_image" not in risk_flags
     deny_reason = None if eligible else ("duplicate_image" if "duplicate_image" in risk_flags else judgment.get("reason"))
 
+    print(f"{'='*55}")
+    print(f"  [STEP 7] policy")
+    print(f"  coupon_eligible={eligible}  deny={deny_reason}")
+    print(f"{'='*55}\n")
+
     artifacts["coupon_decision"] = {
         "eligible": eligible,
         "deny_reason": deny_reason,
@@ -350,6 +417,14 @@ def responder(state: Dict[str, Any]) -> Dict[str, Any]:
     mission_type = request_context.get("mission_type", "location")
     legacy_mission_type = "photo" if mission_type == "atmosphere" else mission_type
 
+    success = bool(judgment.get("success")) if gate.get("passed") else False
+    icon = "🎉" if success else "❌"
+    print(f"{'='*55}")
+    print(f"  [STEP 8] responder  →  {icon} {'SUCCESS' if success else 'FAIL'}")
+    if errors:
+        print(f"  errors: {[e.get('code') for e in errors]}")
+    print(f"{'='*55}\n")
+
     if not gate.get("passed"):
         msg = "제출이 정책을 통과하지 못했습니다."
         final_data = {
@@ -366,7 +441,6 @@ def responder(state: Dict[str, Any]) -> Dict[str, Any]:
             "messages": ["responder: blocked"],
         }
 
-    success = bool(judgment.get("success"))
     if success:
         message = "미션 성공! 쿠폰 발급 단계로 이동할 수 있습니다."
         final_data = {

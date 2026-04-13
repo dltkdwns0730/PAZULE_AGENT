@@ -67,6 +67,12 @@ class Settings:
         os.getenv("COUNCIL_BORDERLINE_MARGIN", "0.08")
     )
 
+    # Dev / Debug
+    # true 로 설정하면 GPS·날짜 메타데이터 검증을 완전히 우회합니다 (로컬 테스트용).
+    SKIP_METADATA_VALIDATION: bool = os.getenv("SKIP_METADATA_VALIDATION", "false").lower() == "true"
+    # true 로 설정하면 AI 모델 추론 없이 score=1.0 으로 항상 통과 처리합니다 (로컬 테스트용).
+    BYPASS_MODEL_VALIDATION: bool = os.getenv("BYPASS_MODEL_VALIDATION", "false").lower() == "true"
+
     # Path Configuration
     BASE_DIR: str = os.path.dirname(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
