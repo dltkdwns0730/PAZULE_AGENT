@@ -9,8 +9,9 @@ export function useMission() {
     const store = useMissionStore();
 
     const fetchHint = async (missionType) => {
+        setIsLoading(true);
+        setError(null);
         try {
-            setError(null);
             const data = await api.getTodayHint(missionType);
             store.setHint(data.hint);
             return data.hint;
@@ -18,6 +19,8 @@ export function useMission() {
             console.error('Failed to fetch hint:', err);
             store.setHint('힌트를 불러올 수 없습니다.');
             return null;
+        } finally {
+            setIsLoading(false);
         }
     };
 
