@@ -1,6 +1,6 @@
 # PAZULE Changelog
 
-> **분류**: 레퍼런스 · **버전**: v2.4 · **최종 수정**: 2026-04-07
+> **분류**: 레퍼런스 · **버전**: v2.5 · **최종 수정**: 2026-04-14
 >
 > 프로젝트의 주요 변경 이력을 버전별로 정리합니다.
 
@@ -56,8 +56,20 @@
 - 쿠폰 멱등성 (`mission_id` 기반 중복 발급 방지)
 - 세션 생애주기 관리 (TTL, 최대 제출 횟수, 이미지 해시 중복 차단)
 
-### v2.4.0 — 문서화 + 상용화 전략 (현재)
+### v2.4.0 — 문서화 + 상용화 전략
 
 - `docs/architecture.md`: 하네스 설계, 상태 흐름, Council 에스컬레이션 상세
 - `docs/commercialization-plan.md`: 프로덕션 전환 설계
 - `docs/benchmarks/`: SigLIP2 성능 벤치마크 시작
+
+### v2.4.1 — TDD 기반 프론트엔드 버그 수정 (2026-04-14)
+
+> 브랜치: `fix/front-tdd-api-hooks-photo-bugs` → main 병합 완료
+> 상세 원인·수정·검증 이력: [`docs/bugfix-log.md`](./bugfix-log.md)
+
+- `chore(test-env)`: Vitest + Testing Library 테스트 환경 초기 구성 (`0ed9608`)
+  - Jest 대신 Vitest 선택 — Vite 스택 네이티브, ES Module 지원, Babel 불필요
+- `fix(api)` — **BUG-001**: 모든 fetch 호출에 `fetchWithTimeout()` 헬퍼 적용, 10초 초과 시 AbortController로 자동 취소 (`01f52cb`)
+- `fix(hooks)` — **BUG-002**: `fetchHint()`에 `setIsLoading(true/false)` 추가, 힌트 로딩 중 스피너 미표시 수정 (`3165017`)
+- `fix(pages)` — **BUG-003**: `PhotoSubmission.jsx` stale state race condition 수정, `newAttemptsLeft` 지역 변수로 navigate 조건 확정 (`f69d982`)
+- `fix(pages)` — **BUG-004**: `missionId` 없이 `/mission/submit` 직접 접근 시 `'/'`로 redirect하는 route guard 추가 (`f69d982`)
