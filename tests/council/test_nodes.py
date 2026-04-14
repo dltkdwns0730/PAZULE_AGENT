@@ -81,7 +81,7 @@ class TestTaskRouter:
         _print_io("router (photo -> atmosphere)", input_state, output)
 
         assert output["request_context"]["mission_type"] == "atmosphere"
-        assert output["route_decision"]["next_node"] == "evaluator"
+        assert output["route_decision"]["next_node"] == "model_fanout"
 
 
 class TestModelFanout:
