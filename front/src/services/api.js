@@ -12,6 +12,16 @@ class ApiError extends Error {
     }
 }
 
+const FETCH_TIMEOUT_MS = 10_000;
+
+function fetchWithTimeout(url, options = {}) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    return fetch(url, { ...options, signal: controller.signal }).finally(() => {
+        clearTimeout(timeoutId);
+    });
+}
+
 async function handleResponse(response) {
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -26,7 +36,7 @@ export const api = {
      * @param {string} missionType 'location' or 'atmosphere'
      */
     async getTodayHint(missionType = 'location') {
-        const response = await fetch(`${API_BASE}/get-today-hint?mission_type=${missionType}`);
+        const response = await fetchWithTimeout(`${API_BASE}/get-today-hint?mission_type=${missionType}`);
         return handleResponse(response);
     },
 
@@ -35,7 +45,7 @@ export const api = {
      * @param {Object} data - { user_id: string, mission_type: string }
      */
     async startMission(data) {
-        const response = await fetch(`${API_BASE}/api/mission/start`, {
+        const response = await fetchWithTimeout(`${API_BASE}/api/mission/start`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -50,9 +60,9 @@ export const api = {
      * @param {FormData} formData - Contains 'image' (File) and 'mission_id' (string)
      */
     async submitMission(formData) {
-        const response = await fetch(`${API_BASE}/api/mission/submit`, {
+        const response = await fetchWithTimeout(`${API_BASE}/api/mission/submit`, {
             method: 'POST',
-            // Do not set Content-Type header when sending FormData; 
+            // Do not set Content-Type header when sending FormData;
             // the browser sets it automatically with the boundary
             body: formData,
         });
@@ -67,7 +77,7 @@ export const api = {
      * @param {string} missionId - The ID of the successful mission
      */
     async issueCoupon(missionId) {
-        const response = await fetch(`${API_BASE}/api/coupon/issue`, {
+        const response = await fetchWithTimeout(`${API_BASE}/api/coupon/issue`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
