@@ -102,8 +102,8 @@ def create_app():
 if __name__ == "__main__":
     app = create_app()
 
-    on  = "\033[92m ON \033[0m"   # 초록
-    off = "\033[90m OFF\033[0m"   # 회색
+    on = "\033[92m ON \033[0m"  # 초록
+    off = "\033[90m OFF\033[0m"  # 회색
     warn = "\033[93m ON \033[0m"  # 노랑 (경고)
 
     print()
@@ -111,8 +111,12 @@ if __name__ == "__main__":
     print(f"  {settings.PROJECT_NAME} v{settings.VERSION}  |  port 8080")
     print("=" * 52)
     print("  [Dev Switches]")
-    print(f"    SKIP_METADATA_VALIDATION : {warn if settings.SKIP_METADATA_VALIDATION else off}  (GPS·날짜 검증 우회)")
-    print(f"    BYPASS_MODEL_VALIDATION  : {warn if settings.BYPASS_MODEL_VALIDATION else off}  (AI 모델 추론 우회)")
+    print(
+        f"    SKIP_METADATA_VALIDATION : {warn if settings.SKIP_METADATA_VALIDATION else off}  (GPS·날짜 검증 우회)"
+    )
+    print(
+        f"    BYPASS_MODEL_VALIDATION  : {warn if settings.BYPASS_MODEL_VALIDATION else off}  (AI 모델 추론 우회)"
+    )
     print("  [Model]")
     print(f"    Location  : {settings.MODEL_SELECTION_LOCATION}")
     print(f"    Atmosphere: {settings.MODEL_SELECTION_ATMOSPHERE}")

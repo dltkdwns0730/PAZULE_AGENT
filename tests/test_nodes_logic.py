@@ -1,6 +1,11 @@
 import unittest
 
-from app.council.nodes import coupon_policy_engine, decision_engine, evidence_aggregator, task_router
+from app.council.nodes import (
+    coupon_policy_engine,
+    decision_engine,
+    evidence_aggregator,
+    task_router,
+)
 
 
 class NodesLogicTest(unittest.TestCase):

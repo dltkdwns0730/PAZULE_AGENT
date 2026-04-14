@@ -31,7 +31,6 @@ class _QwenProbe(VLMProbe):
         return probe_with_qwen(mission_type, image_path, answer, prompt_bundle)
 
 
-
 class _SigLIP2Probe(VLMProbe):
     @property
     def model_name(self) -> str:
@@ -70,7 +69,9 @@ class ModelRegistry:
     def get(self, name: str) -> VLMProbe:
         name = name.lower().strip()
         if name not in self._probes:
-            raise ValueError(f"Model '{name}' not registered. Available: {list(self._probes.keys())}")
+            raise ValueError(
+                f"Model '{name}' not registered. Available: {list(self._probes.keys())}"
+            )
         return self._probes[name]
 
     def list_models(self) -> list[str]:

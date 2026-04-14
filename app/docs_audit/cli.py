@@ -55,7 +55,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     root = Path(args.root_path).resolve()
-    output_dir = Path(args.output_dir) if args.output_dir else root / "generated-docs" / "docs-audit"
+    output_dir = (
+        Path(args.output_dir)
+        if args.output_dir
+        else root / "generated-docs" / "docs-audit"
+    )
 
     if args.command == "scan":
         result = audit_project(root, profile=args.profile)
@@ -75,7 +79,9 @@ def main(argv: list[str] | None = None) -> int:
                 print("Top findings:")
                 for finding in result.findings[:10]:
                     location = f" ({finding.path})" if finding.path else ""
-                    print(f"  - [{finding.severity}] {finding.code}{location}: {finding.message}")
+                    print(
+                        f"  - [{finding.severity}] {finding.code}{location}: {finding.message}"
+                    )
         return 0
 
     if args.command == "report":

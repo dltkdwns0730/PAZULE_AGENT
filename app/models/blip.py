@@ -97,9 +97,9 @@ def check_with_blip(user_image_path, landmark_name):
         return False, []
 
     try:
-        pixel_values = processor(
-            images=raw_image, return_tensors="pt"
-        ).pixel_values.to(DEVICE)
+        pixel_values = processor(images=raw_image, return_tensors="pt").pixel_values.to(
+            DEVICE
+        )
     except Exception as e:
         print(f"이미지 전처리 오류: {e}")
         return False, []
@@ -167,9 +167,9 @@ def get_visual_context(user_image_path):
 
     try:
         raw_image = Image.open(user_image_path).convert("RGB")
-        pixel_values = processor(
-            images=raw_image, return_tensors="pt"
-        ).pixel_values.to(DEVICE)
+        pixel_values = processor(images=raw_image, return_tensors="pt").pixel_values.to(
+            DEVICE
+        )
     except Exception as e:
         return f"이미지 로드 오류: {e}"
 
@@ -223,7 +223,9 @@ def probe_with_blip_location(image_path: str, answer: str, prompt_bundle: dict) 
     }
 
 
-def probe_with_blip_atmosphere(image_path: str, answer: str, prompt_bundle: dict) -> dict:
+def probe_with_blip_atmosphere(
+    image_path: str, answer: str, prompt_bundle: dict
+) -> dict:
     """BLIP VQA로 분위기 미션을 검증한다 (파이프라인 인터페이스).
 
     Args:

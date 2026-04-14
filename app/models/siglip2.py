@@ -5,7 +5,6 @@
 
 from __future__ import annotations
 
-import os
 import traceback
 from typing import Any, Dict
 
@@ -89,9 +88,9 @@ def probe_with_siglip2(
     target_text = candidates[0]
 
     try:
-        pixel_values = _image_processor(
-            images=raw_image, return_tensors="pt"
-        )["pixel_values"].to(DEVICE)
+        pixel_values = _image_processor(images=raw_image, return_tensors="pt")[
+            "pixel_values"
+        ].to(DEVICE)
         input_ids = _tokenizer(
             candidates, return_tensors="pt", padding="max_length", max_length=64
         )["input_ids"].to(DEVICE)
@@ -117,8 +116,8 @@ def probe_with_siglip2(
 
     # 스코어 기반으로 Pass/Fail 결정
     pass_threshold = (
-        settings.LOCATION_PASS_THRESHOLD 
-        if mission_type == "location" 
+        settings.LOCATION_PASS_THRESHOLD
+        if mission_type == "location"
         else settings.ATMOSPHERE_PASS_THRESHOLD
     )
     label = "match" if score >= pass_threshold else "mismatch"

@@ -40,7 +40,5 @@ def council(state: Dict[str, Any]) -> Dict[str, Any]:
     approved = verdict.get("approved", False)
     return {
         "artifacts": artifacts,
-        "messages": [
-            f"council: tier={tier}, approved={approved}"
-        ],
+        "messages": [f"council: tier={tier}, approved={approved}"],
     }

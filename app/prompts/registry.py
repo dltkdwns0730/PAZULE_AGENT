@@ -5,7 +5,7 @@ from __future__ import annotations
 import functools
 import random
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
@@ -73,7 +73,9 @@ class PromptRegistry:
     def get_template(self, name: str) -> Dict[str, Any]:
         """이름으로 프롬프트 템플릿을 조회한다."""
         if name not in self._templates:
-            raise KeyError(f"Prompt template '{name}' not found. Loaded: {list(self._templates.keys())}")
+            raise KeyError(
+                f"Prompt template '{name}' not found. Loaded: {list(self._templates.keys())}"
+            )
         return self._templates[name]
 
     def select_variant(self, name: str) -> PromptVersion:

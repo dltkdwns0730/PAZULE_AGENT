@@ -7,7 +7,7 @@ import json
 import os
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from app.core.config import settings
 
@@ -26,6 +26,7 @@ class MissionSessionService:
     """Purpose: `MissionSessionService` ??? ??? ?? ??? ???
     Context: ?? ???? ?? ??? ??? ??
     Attrs: ?? ?? ???? ?? ??? ???"""
+
     def __init__(self):
         """Caller: ?? ?? ???? ???
         Purpose: `__init__` ?? ??? ????
@@ -140,7 +141,9 @@ class MissionSessionService:
             return False, "session_not_found"
         if _utcnow() > datetime.fromisoformat(session["expires_at"]):
             return False, "session_expired"
-        if len(session.get("submissions", [])) >= int(session.get("max_submissions", 0)):
+        if len(session.get("submissions", [])) >= int(
+            session.get("max_submissions", 0)
+        ):
             return False, "submission_limit_reached"
         return True, "ok"
 
@@ -156,6 +159,7 @@ class MissionSessionService:
         Deps: ?? ??? ??
         Args: mission_id: ???? ???? ??; image_hash: ???? ???? ??; result: ???? ???? ??
         Note: ?? ?? ?? ???? ???"""
+
         def mutate(session: Dict[str, Any]) -> Dict[str, Any]:
             session["status"] = "submitted"
             session.setdefault("submissions", []).append(
@@ -173,13 +177,16 @@ class MissionSessionService:
 
         return self._update_session(mission_id, mutate)
 
-    def mark_coupon_issued(self, mission_id: str, coupon_code: str) -> Optional[Dict[str, Any]]:
+    def mark_coupon_issued(
+        self, mission_id: str, coupon_code: str
+    ) -> Optional[Dict[str, Any]]:
         """Caller: ?? ?? ???? ???
         Purpose: `mark_coupon_issued` ?? ??? ????
         Returns: ?? ?? ?? ??
         Deps: ?? ??? ??
         Args: mission_id: ???? ???? ??; coupon_code: ???? ???? ??
         Note: ?? ?? ?? ???? ???"""
+
         def mutate(session: Dict[str, Any]) -> Dict[str, Any]:
             session["coupon_code"] = coupon_code
             session["status"] = "coupon_issued"

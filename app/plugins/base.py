@@ -9,11 +9,9 @@ from typing import Any, Dict
 class MissionPlugin(ABC):
     @property
     @abstractmethod
-    def mission_type(self) -> str:
-        ...
+    def mission_type(self) -> str: ...
 
     @abstractmethod
     def execute(
         self, image_path: str, answer: str, prompt_bundle: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        ...
+    ) -> Dict[str, Any]: ...

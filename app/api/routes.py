@@ -200,11 +200,15 @@ def mission_submit():
         }
         output = pipeline_app.invoke(initial_state)
         final_res = output.get("final_response", {})
-        final_data = final_res.get("data", {"success": False, "error": "pipeline_failed"})
+        final_data = final_res.get(
+            "data", {"success": False, "error": "pipeline_failed"}
+        )
 
         image_hash = output.get("request_context", {}).get("image_hash")
         if image_hash:
-            mission_session_service.record_submission(mission_id, image_hash, final_data)
+            mission_session_service.record_submission(
+                mission_id, image_hash, final_data
+            )
 
         final_data["mission_id"] = mission_id
         return jsonify(final_data)

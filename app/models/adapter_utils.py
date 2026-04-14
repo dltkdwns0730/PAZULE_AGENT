@@ -13,7 +13,9 @@ def normalize_score(score: float, min_val: float = 0.0, max_val: float = 1.0) ->
     return max(min_val, min(max_val, score))
 
 
-def build_vote(model: str, score: float, label: str, reason: str = "") -> Dict[str, Any]:
+def build_vote(
+    model: str, score: float, label: str, reason: str = ""
+) -> Dict[str, Any]:
     """표준 투표 결과 딕셔너리를 생성한다."""
     return {
         "model": model,

@@ -49,17 +49,23 @@ def validator(state: Dict[str, Any]) -> Dict[str, Any]:
     user_id = request_context.get("user_id", "guest")
     mission_type = request_context.get("mission_type", "?")
 
-    print(f"\n{'='*55}")
-    print(f"  [STEP 1] validator")
+    print(f"\n{'=' * 55}")
+    print("  [STEP 1] validator")
     print(f"  user={user_id}  mission_type={mission_type}")
     print(f"  image_path={image_path}")
-    print(f"{'-'*55}")
+    print(f"{'-' * 55}")
 
     if not image_path:
         print("  ✗ BLOCKED: image_path missing")
-        print(f"{'='*55}\n")
-        _append_error(errors, "MISSING_IMAGE", "image_path is required", "validator", False)
-        artifacts["gate_result"] = {"passed": False, "reason": "image_path_missing", "risk_flags": ["missing_image"]}
+        print(f"{'=' * 55}\n")
+        _append_error(
+            errors, "MISSING_IMAGE", "image_path is required", "validator", False
+        )
+        artifacts["gate_result"] = {
+            "passed": False,
+            "reason": "image_path_missing",
+            "risk_flags": ["missing_image"],
+        }
         control_flags["terminate"] = True
         return {
             "artifacts": artifacts,
@@ -77,11 +83,15 @@ def validator(state: Dict[str, Any]) -> Dict[str, Any]:
         print(f"  metadata_valid={metadata_valid}")
 
     image_hash = mission_session_service.hash_file(image_path)
-    is_duplicate = mission_session_service.is_duplicate_hash_for_user(user_id, image_hash)
+    is_duplicate = mission_session_service.is_duplicate_hash_for_user(
+        user_id, image_hash
+    )
     print(f"  image_hash={image_hash[:12]}...  is_duplicate={is_duplicate}")
 
     if settings.SKIP_METADATA_VALIDATION and is_duplicate:
-        print("  ⚙️  SKIP_METADATA_VALIDATION=true → 중복 이미지 제출 검증(duplicate) 건너뜀")
+        print(
+            "  ⚙️  SKIP_METADATA_VALIDATION=true → 중복 이미지 제출 검증(duplicate) 건너뜀"
+        )
         is_duplicate = False
 
     risk_flags: list[str] = []
@@ -98,8 +108,8 @@ def validator(state: Dict[str, Any]) -> Dict[str, Any]:
         _append_error(errors, "GATE_BLOCKED", reason, "validator", False)
         print(f"  ✗ BLOCKED: {reason}")
     else:
-        print(f"  ✓ PASSED")
-    print(f"{'='*55}\n")
+        print("  ✓ PASSED")
+    print(f"{'=' * 55}\n")
 
     request_context["image_hash"] = image_hash
     artifacts["gate_result"] = {
@@ -122,7 +132,9 @@ def validator(state: Dict[str, Any]) -> Dict[str, Any]:
 def router(state: Dict[str, Any]) -> Dict[str, Any]:
     """[분배기] 미션 종류에 따라 평가기(Evaluator)로 안전하게 트래픽을 분배할 준비를 합니다."""
     request_context = dict(state.get("request_context", {}))
-    mission_type = _normalize_mission_type(request_context.get("mission_type", "location"))
+    mission_type = _normalize_mission_type(
+        request_context.get("mission_type", "location")
+    )
     request_context["mission_type"] = mission_type
     route_decision = {
         "next_node": "model_fanout",
@@ -160,7 +172,9 @@ def _select_models(mission_type: str, override: str | None = None) -> list[str]:
     return [mode]
 
 
-def _invoke_model(model_name: str, mission_type: str, image_path: str, answer: str, prompt_bundle):
+def _invoke_model(
+    model_name: str, mission_type: str, image_path: str, answer: str, prompt_bundle
+):
     """ModelRegistry를 통해 모델 프로브를 조회하고 실행한다."""
     from app.models.model_registry import ModelRegistry
 
@@ -174,7 +188,9 @@ def evaluator(state: Dict[str, Any]) -> Dict[str, Any]:
     request_context = dict(state.get("request_context", {}))
     artifacts = dict(state.get("artifacts", {}))
     errors = list(state.get("errors", []))
-    mission_type = _normalize_mission_type(request_context.get("mission_type", "location"))
+    mission_type = _normalize_mission_type(
+        request_context.get("mission_type", "location")
+    )
     image_path = request_context.get("image_path")
     answer = request_context.get("answer")
 
@@ -188,7 +204,9 @@ def evaluator(state: Dict[str, Any]) -> Dict[str, Any]:
 
     # ── 개발용 우회 스위치 ─────────────────────────────────────
     if settings.BYPASS_MODEL_VALIDATION:
-        print("  ⚙️  [evaluator] BYPASS_MODEL_VALIDATION=true → 모델 추론 건너뜀, score=1.0 강제")
+        print(
+            "  ⚙️  [evaluator] BYPASS_MODEL_VALIDATION=true → 모델 추론 건너뜀, score=1.0 강제"
+        )
         votes = [
             {"model": m, "score": 1.0, "label": "match", "reason": "bypass_mode"}
             for m in selected_models
@@ -205,10 +223,21 @@ def evaluator(state: Dict[str, Any]) -> Dict[str, Any]:
 
     votes: list[Dict[str, Any]] = []
 
-    print(f"\n  --> [Agent: Evaluator] {len(selected_models)}개 모델 동시 평가 시작: {','.join(selected_models)}")
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(selected_models)) as executor:
+    print(
+        f"\n  --> [Agent: Evaluator] {len(selected_models)}개 모델 동시 평가 시작: {','.join(selected_models)}"
+    )
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=len(selected_models)
+    ) as executor:
         future_to_model = {
-            executor.submit(_invoke_model, model_name, mission_type, image_path, answer, prompt_bundle): model_name
+            executor.submit(
+                _invoke_model,
+                model_name,
+                mission_type,
+                image_path,
+                answer,
+                prompt_bundle,
+            ): model_name
             for model_name in selected_models
         }
 
@@ -219,7 +248,9 @@ def evaluator(state: Dict[str, Any]) -> Dict[str, Any]:
                 # 설정된 API_TIMEOUT_SECONDS보다 조금 더 여유를 두어 Python 수준의 Timeout 발생.
                 vote = future.result(timeout=settings.API_TIMEOUT_SECONDS + 5.0)
                 elapsed = time.time() - start_time
-                print(f"  --> [Agent: Evaluator / Model: {model_name}] 완료 ({elapsed:.2f}초)")
+                print(
+                    f"  --> [Agent: Evaluator / Model: {model_name}] 완료 ({elapsed:.2f}초)"
+                )
                 votes.append(vote)
             except concurrent.futures.TimeoutError:
                 _append_error(
@@ -230,7 +261,9 @@ def evaluator(state: Dict[str, Any]) -> Dict[str, Any]:
                     False,
                     model=model_name,
                 )
-                print(f"  ⚠️ [Agent: Evaluator / Model: {model_name}] 시간 초과 (Timeout)")
+                print(
+                    f"  ⚠️ [Agent: Evaluator / Model: {model_name}] 시간 초과 (Timeout)"
+                )
             except Exception as exc:
                 _append_error(
                     errors,
@@ -248,7 +281,9 @@ def evaluator(state: Dict[str, Any]) -> Dict[str, Any]:
     artifacts["model_votes"] = votes
 
     if not votes:
-        _append_error(errors, "NO_MODEL_VOTES", "No models produced output", "evaluator", False)
+        _append_error(
+            errors, "NO_MODEL_VOTES", "No models produced output", "evaluator", False
+        )
 
     return {
         "artifacts": artifacts,
@@ -262,7 +297,9 @@ def aggregator(state: Dict[str, Any]) -> Dict[str, Any]:
     모델 간 이견이 클 경우 충돌(Conflict) 플래그를 세웁니다."""
     request_context = dict(state.get("request_context", {}))
     artifacts = dict(state.get("artifacts", {}))
-    mission_type = _normalize_mission_type(request_context.get("mission_type", "location"))
+    mission_type = _normalize_mission_type(
+        request_context.get("mission_type", "location")
+    )
     votes = list(artifacts.get("model_votes", []))
 
     if mission_type == "location":
@@ -291,7 +328,9 @@ def aggregator(state: Dict[str, Any]) -> Dict[str, Any]:
         else settings.ATMOSPHERE_PASS_THRESHOLD
     )
     merged_label = "match" if merged_score >= threshold else "mismatch"
-    conflict = len(labels) > 1 and (max(scores) - min(scores) >= 0.35 if scores else False)
+    conflict = len(labels) > 1 and (
+        max(scores) - min(scores) >= 0.35 if scores else False
+    )
 
     artifacts["ensemble_result"] = {
         "mission_type": mission_type,
@@ -301,12 +340,17 @@ def aggregator(state: Dict[str, Any]) -> Dict[str, Any]:
         "conflict": conflict,
         "vote_count": len(votes),
     }
-    print(f"{'='*55}")
-    print(f"  [STEP 4] aggregator")
-    print(f"  votes={len(votes)}  merged_score={merged_score:.4f}  threshold={threshold}")
+    print(f"{'=' * 55}")
+    print("  [STEP 4] aggregator")
+    print(
+        f"  votes={len(votes)}  merged_score={merged_score:.4f}  threshold={threshold}"
+    )
     print(f"  merged_label={merged_label}  conflict={conflict}")
-    print(f"{'='*55}\n")
-    return {"artifacts": artifacts, "messages": [f"aggregator: score={merged_score:.2f}"]}
+    print(f"{'=' * 55}\n")
+    return {
+        "artifacts": artifacts,
+        "messages": [f"aggregator: score={merged_score:.2f}"],
+    }
 
 
 def judge(state: Dict[str, Any]) -> Dict[str, Any]:
@@ -318,15 +362,15 @@ def judge(state: Dict[str, Any]) -> Dict[str, Any]:
     gate_result = artifacts.get("gate_result", {})
     ensemble = artifacts.get("ensemble_result", {})
 
-    print(f"{'='*55}")
-    print(f"  [STEP 6] judge")
+    print(f"{'=' * 55}")
+    print("  [STEP 6] judge")
     merged_score = float(ensemble.get("merged_score", 0.0))
     threshold = float(ensemble.get("threshold", 1.0))
     conflict = bool(ensemble.get("conflict"))
 
     if not gate_result.get("passed"):
-        print(f"  ✗ gate not passed → forced fail")
-        print(f"{'='*55}\n")
+        print("  ✗ gate not passed → forced fail")
+        print(f"{'=' * 55}\n")
         judgment = {
             "success": False,
             "reason": gate_result.get("reason", "gate_blocked"),
@@ -345,7 +389,7 @@ def judge(state: Dict[str, Any]) -> Dict[str, Any]:
         reason = "model_conflict_requires_retry"
         control_flags["manual_review"] = True
         _append_error(errors, "MODEL_CONFLICT", reason, "judge", False)
-        print(f"  ✗ conflict detected → overridden to fail")
+        print("  ✗ conflict detected → overridden to fail")
 
     # Council verdict 교차 검증
     council_verdict = artifacts.get("council_verdict")
@@ -362,7 +406,7 @@ def judge(state: Dict[str, Any]) -> Dict[str, Any]:
 
     result_icon = "✓" if success else "✗"
     print(f"  {result_icon} FINAL: success={success}  reason={reason}")
-    print(f"{'='*55}\n")
+    print(f"{'=' * 55}\n")
 
     artifacts["judgment"] = {
         "success": success,
@@ -388,12 +432,20 @@ def policy(state: Dict[str, Any]) -> Dict[str, Any]:
     risk_flags = set(gate.get("risk_flags", []))
 
     eligible = bool(judgment.get("success")) and "duplicate_image" not in risk_flags
-    deny_reason = None if eligible else ("duplicate_image" if "duplicate_image" in risk_flags else judgment.get("reason"))
+    deny_reason = (
+        None
+        if eligible
+        else (
+            "duplicate_image"
+            if "duplicate_image" in risk_flags
+            else judgment.get("reason")
+        )
+    )
 
-    print(f"{'='*55}")
-    print(f"  [STEP 7] policy")
+    print(f"{'=' * 55}")
+    print("  [STEP 7] policy")
     print(f"  coupon_eligible={eligible}  deny={deny_reason}")
-    print(f"{'='*55}\n")
+    print(f"{'=' * 55}\n")
 
     artifacts["coupon_decision"] = {
         "eligible": eligible,
@@ -412,18 +464,20 @@ def responder(state: Dict[str, Any]) -> Dict[str, Any]:
     votes = artifacts.get("model_votes", [])
     ensemble = artifacts.get("ensemble_result", {})
     judgment = artifacts.get("judgment", {})
-    coupon_decision = artifacts.get("coupon_decision", {"eligible": False, "deny_reason": None})
+    coupon_decision = artifacts.get(
+        "coupon_decision", {"eligible": False, "deny_reason": None}
+    )
 
     mission_type = request_context.get("mission_type", "location")
     legacy_mission_type = "photo" if mission_type == "atmosphere" else mission_type
 
     success = bool(judgment.get("success")) if gate.get("passed") else False
     icon = "🎉" if success else "❌"
-    print(f"{'='*55}")
+    print(f"{'=' * 55}")
     print(f"  [STEP 8] responder  →  {icon} {'SUCCESS' if success else 'FAIL'}")
     if errors:
         print(f"  errors: {[e.get('code') for e in errors]}")
-    print(f"{'='*55}\n")
+    print(f"{'=' * 55}\n")
 
     if not gate.get("passed"):
         msg = "제출이 정책을 통과하지 못했습니다."
@@ -432,7 +486,10 @@ def responder(state: Dict[str, Any]) -> Dict[str, Any]:
             "error": gate.get("reason", "gate_blocked"),
             "message": msg,
             "missionType": legacy_mission_type,
-            "decision_trace": {"route_decision": state.get("route_decision"), "errors": errors},
+            "decision_trace": {
+                "route_decision": state.get("route_decision"),
+                "errors": errors,
+            },
             "confidence": 0.0,
             "model_votes": votes,
         }
@@ -457,7 +514,11 @@ def responder(state: Dict[str, Any]) -> Dict[str, Any]:
             "model_votes": votes,
         }
         return {
-            "final_response": {"ui_theme": "confetti", "message": message, "data": final_data},
+            "final_response": {
+                "ui_theme": "confetti",
+                "message": message,
+                "data": final_data,
+            },
             "messages": ["responder: success"],
         }
 
@@ -478,6 +539,10 @@ def responder(state: Dict[str, Any]) -> Dict[str, Any]:
         "model_votes": votes,
     }
     return {
-        "final_response": {"ui_theme": "encouragement", "message": message, "data": final_data},
+        "final_response": {
+            "ui_theme": "encouragement",
+            "message": message,
+            "data": final_data,
+        },
         "messages": ["responder: fail"],
     }

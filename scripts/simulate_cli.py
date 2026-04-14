@@ -1,17 +1,15 @@
 import os
 import sys
+
+from app.services.answer_service import get_today_answers
+from app.services.mission_service import run_mission1
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 """PAZULE 보물찾기 CLI 게임 루프.
 
 웹 서버 없이 터미널에서 플레이할 수 있는 진입점.
 AnswerService, MissionService를 통해 미션을 실행한다.
 """
-
-import os
-import sys
-
-from app.services.answer_service import get_today_answers
-from app.services.mission_service import run_mission1
 
 
 def print_header():
@@ -116,7 +114,7 @@ def main():
             print()
 
             coupon = result.get("coupon")
-            print(f"쿠폰 발급 완료!")
+            print("쿠폰 발급 완료!")
             print(f"   {coupon}")
             print()
             print(f"정답: {answer}")

@@ -1,0 +1,74 @@
+{
+  "coupons": [
+    {
+      "code": "R9TW4HFS",
+      "description": "로드킬 부엉이 장소 미션 완료 쿠폰",
+      "mission_type": "mission1",
+      "answer": "로드킬 부엉이",
+      "mission_id": "d116d364-86f9-40ea-a1bd-a53c47d61093",
+      "partner_id": null,
+      "discount_rule": "10%_OFF",
+      "status": "issued",
+      "issued_at": "2026-04-13T15:23:59.885571+00:00",
+      "expires_at": "2026-04-20T15:23:59.885571+00:00",
+      "redeemed_at": null,
+      "partner_pos_id": null
+    },
+    {
+      "code": "ZK9Q4F4C",
+      "description": "신비로운 분위기 미션 완료 쿠폰",
+      "mission_type": "mission2",
+      "answer": "신비로운",
+      "mission_id": "b8ffa972-e6f3-4e03-baf2-caaaccbec532",
+      "partner_id": null,
+      "discount_rule": "10%_OFF",
+      "status": "issued",
+      "issued_at": "2026-04-13T15:24:17.586984+00:00",
+      "expires_at": "2026-04-20T15:24:17.586984+00:00",
+      "redeemed_at": null,
+      "partner_pos_id": null
+    },
+    {
+      "code": "73ZXTQ9B",
+      "description": "신비로운 분위기 미션 완료 쿠폰",
+      "mission_type": "mission2",
+      "answer": "신비로운",
+      "mission_id": "9b67ac2c-fbf1-420e-90a8-d07039a52cc5",
+      "partner_id": null,
+      "discount_rule": "10%_OFF",
+      "status": "issued",
+      "issued_at": "2026-04-13T15:28:03.109689+00:00",
+      "expires_at": "2026-04-20T15:28:03.109689+00:00",
+      "redeemed_at": null,
+      "partner_pos_id": null
+    },
+    {
+      "code": "AMXQPJY2",
+      "description": "신비로운 분위기 미션 완료 쿠폰",
+      "mission_type": "mission2",
+      "answer": "신비로운",
+      "mission_id": "e3533e5a-963f-47b3-a4e7-f1f423115379",
+      "partner_id": null,
+      "discount_rule": "10%_OFF",
+      "status": "issued",
+      "issued_at": "2026-04-13T15:30:24.815722+00:00",
+      "expires_at": "2026-04-20T15:30:24.815722+00:00",
+      "redeemed_at": null,
+      "partner_pos_id": null
+    },
+    {
+      "code": "DOTNFAZ9",
+      "description": "로드킬 부엉이 장소 미션 완료 쿠폰",
+      "mission_type": "mission1",
+      "answer": "로드킬 부엉이",
+      "mission_id": "127d170f-7831-4c7e-a9ee-321fb6590b3f",
+      "partner_id": null,
+      "discount_rule": "10%_OFF",
+      "status": "issued",
+      "issued_at": "2026-04-14T14:15:27.638861+00:00",
+      "expires_at": "2026-04-21T14:15:27.638861+00:00",
+      "redeemed_at": null,
+      "partner_pos_id": null
+    }
+  ]
+}

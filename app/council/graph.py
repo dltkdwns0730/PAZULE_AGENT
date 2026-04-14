@@ -40,7 +40,9 @@ def build_pipeline():
     workflow.add_node("responder", responder)
 
     workflow.set_entry_point("validator")
-    workflow.add_conditional_edges("validator", _route_after_gate, ["router", "responder"])
+    workflow.add_conditional_edges(
+        "validator", _route_after_gate, ["router", "responder"]
+    )
     workflow.add_edge("router", "evaluator")
     workflow.add_edge("evaluator", "aggregator")
     workflow.add_edge("aggregator", "council")

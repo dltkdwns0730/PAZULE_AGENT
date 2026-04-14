@@ -9,7 +9,11 @@ keyword_mapping = {
         "dynamic and active",
     ],
     "자연적인": ["natural and scenic", "fresh and green", "serene and organic"],
-    "옛스러운": ["rural and rustic", "vintage and classic", "nostalgic and traditional"],
+    "옛스러운": [
+        "rural and rustic",
+        "vintage and classic",
+        "nostalgic and traditional",
+    ],
     "신비로운": ["mysterious and dreamy", "magical and surreal", "mystical"],
     "웅장한": ["majestic and grand", "imposing and magnificent"],
 }

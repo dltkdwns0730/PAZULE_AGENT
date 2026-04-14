@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, TypedDict
 
@@ -26,8 +25,7 @@ class JudgeVerdict(TypedDict):
 
 class BaseJudge(ABC):
     @abstractmethod
-    def evaluate(self, context: JudgeContext) -> JudgeVerdict:
-        ...
+    def evaluate(self, context: JudgeContext) -> JudgeVerdict: ...
 
 
 class ConsistencyJudge(BaseJudge):
@@ -120,27 +118,29 @@ class QwenFallbackJudge(BaseJudge):
     def evaluate(self, context: JudgeContext) -> JudgeVerdict:
         from app.models.model_registry import ModelRegistry
         from app.models.prompts import build_prompt_bundle
-        
+
         ensemble = context["ensemble_result"]
         req = context["request_context"]
         mission_type = req.get("mission_type", "location")
         image_path = req.get("image_path")
         answer = req.get("answer")
-        
+
         try:
-            print("\n🚨 [Council] SigLIP2의 1차 판단이 모호하여, Qwen-VL(LLM)을 추가 호출합니다...")
+            print(
+                "\n🚨 [Council] SigLIP2의 1차 판단이 모호하여, Qwen-VL(LLM)을 추가 호출합니다..."
+            )
             registry = ModelRegistry.get_instance()
             probe = registry.get("qwen")
             prompt_bundle = build_prompt_bundle(mission_type, answer)
-            
+
             # 무거운 VLM을 이 순간에만 호출함
             qwen_vote = probe.probe(mission_type, image_path, answer, prompt_bundle)
-            
-            # Qwen 결과를 바탕으로 최종 결론 
+
+            # Qwen 결과를 바탕으로 최종 결론
             qwen_score = qwen_vote.get("score", 0.0)
             threshold = float(ensemble.get("threshold", 1.0))
             approved = qwen_score >= threshold
-            
+
             print(f"✅ [Council] 추가 모델(Qwen) 판정 완료! Score: {qwen_score:.2f}")
 
             return JudgeVerdict(
@@ -171,4 +171,3 @@ class QwenFallbackJudge(BaseJudge):
                 f"label={v.get('label', '?')}, reason={v.get('reason', 'N/A')}"
             )
         return "\n".join(lines) if lines else "(투표 없음)"
-

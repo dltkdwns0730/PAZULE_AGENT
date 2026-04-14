@@ -68,7 +68,9 @@ SECTION_RULES: dict[str, list[tuple[str, list[str]]]] = {
     "changelog": [("version_entries", ["## v", "### v"])],
 }
 COMMON_META_PATTERNS = {
-    "doc_class": re.compile(r"\*\*(?:분류|classification)\*\*:\s*([^\n·|]+)", re.IGNORECASE),
+    "doc_class": re.compile(
+        r"\*\*(?:분류|classification)\*\*:\s*([^\n·|]+)", re.IGNORECASE
+    ),
     "version": re.compile(r"\*\*(?:버전|version)\*\*:\s*([^\n·|]+)", re.IGNORECASE),
     "last_updated": re.compile(
         r"\*\*(?:최종 수정|last updated)\*\*:\s*([^\n·|]+)", re.IGNORECASE
@@ -136,8 +138,12 @@ class AuditResult:
 
 def detect_profile(root: Path) -> str:
     has_pyproject = (root / "pyproject.toml").exists()
-    has_package_json = (root / "package.json").exists() or any(root.glob("**/package.json"))
-    has_benchmarks = any("benchmarks" in path.parts for path in root.rglob("*") if path.is_file())
+    has_package_json = (root / "package.json").exists() or any(
+        root.glob("**/package.json")
+    )
+    has_benchmarks = any(
+        "benchmarks" in path.parts for path in root.rglob("*") if path.is_file()
+    )
     has_pipeline_terms = any(
         term in str(path).lower()
         for term in ("pipeline", "architecture", "api_spec", "docs")
@@ -292,7 +298,9 @@ def write_templates(output_dir: str | Path) -> list[Path]:
     return written
 
 
-def scaffold_missing_documents(result: AuditResult, output_dir: str | Path) -> list[Path]:
+def scaffold_missing_documents(
+    result: AuditResult, output_dir: str | Path
+) -> list[Path]:
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     templates = {
@@ -402,8 +410,14 @@ def _extract_metadata(text: str) -> dict[str, str]:
 def _extract_links(path: Path, text: str) -> list[LinkRecord]:
     records: list[LinkRecord] = []
     for target in MARKDOWN_LINK_RE.findall(text):
-        if target.startswith(("http://", "https://", "mailto:")) or target.startswith("#"):
-            records.append(LinkRecord(target=target, resolved_path=None, is_relative=False, exists=True))
+        if target.startswith(("http://", "https://", "mailto:")) or target.startswith(
+            "#"
+        ):
+            records.append(
+                LinkRecord(
+                    target=target, resolved_path=None, is_relative=False, exists=True
+                )
+            )
             continue
         clean = target.split("#", 1)[0]
         resolved = (path.parent / clean).resolve()
@@ -421,10 +435,15 @@ def _extract_links(path: Path, text: str) -> list[LinkRecord]:
 def _has_purpose_near_top(text: str) -> bool:
     lines = [line.strip().lower() for line in text.splitlines()[:20] if line.strip()]
     sample = " ".join(lines)
-    return any(hint in sample for hint in ["목적", "purpose", "overview", "배경", "summary", "요약"])
+    return any(
+        hint in sample
+        for hint in ["목적", "purpose", "overview", "배경", "summary", "요약"]
+    )
 
 
-def _run_document_checks(root: Path, docs: list[DocumentRecord], profile: str) -> list[AuditFinding]:
+def _run_document_checks(
+    root: Path, docs: list[DocumentRecord], profile: str
+) -> list[AuditFinding]:
     findings: list[AuditFinding] = []
     doc_types = [doc.doc_type for doc in docs]
     if not docs:
@@ -447,7 +466,9 @@ def _run_document_checks(root: Path, docs: list[DocumentRecord], profile: str) -
                     path=doc.relative_path,
                 )
             )
-        if doc.doc_type not in {"readme", "other_doc"} and not doc.metadata.get("version"):
+        if doc.doc_type not in {"readme", "other_doc"} and not doc.metadata.get(
+            "version"
+        ):
             findings.append(
                 AuditFinding(
                     severity="low",
@@ -456,7 +477,9 @@ def _run_document_checks(root: Path, docs: list[DocumentRecord], profile: str) -
                     path=doc.relative_path,
                 )
             )
-        if doc.doc_type not in {"readme", "other_doc"} and not doc.metadata.get("last_updated"):
+        if doc.doc_type not in {"readme", "other_doc"} and not doc.metadata.get(
+            "last_updated"
+        ):
             findings.append(
                 AuditFinding(
                     severity="low",
@@ -536,13 +559,21 @@ def _check_doc_type_sections(doc: DocumentRecord) -> list[AuditFinding]:
 
 def _find_missing_docs(docs: list[DocumentRecord], profile: str) -> list[str]:
     present = {doc.doc_type for doc in docs}
-    return [doc_type for doc_type in PROFILE_REQUIRED_TYPES.get(profile, []) if doc_type not in present]
+    return [
+        doc_type
+        for doc_type in PROFILE_REQUIRED_TYPES.get(profile, [])
+        if doc_type not in present
+    ]
 
 
 def _find_missing_doc_findings(missing_docs: list[str]) -> list[AuditFinding]:
     findings: list[AuditFinding] = []
     for missing_doc in missing_docs:
-        severity = "high" if missing_doc in {"feature_spec", "pipeline_verification"} else "medium"
+        severity = (
+            "high"
+            if missing_doc in {"feature_spec", "pipeline_verification"}
+            else "medium"
+        )
         findings.append(
             AuditFinding(
                 severity=severity,
@@ -554,20 +585,34 @@ def _find_missing_doc_findings(missing_docs: list[str]) -> list[AuditFinding]:
     return findings
 
 
-def _recommend_actions(findings: list[AuditFinding], missing_docs: list[str]) -> list[str]:
+def _recommend_actions(
+    findings: list[AuditFinding], missing_docs: list[str]
+) -> list[str]:
     actions: list[str] = []
     if missing_docs:
-        actions.append("Create template-backed documents for the missing required types first.")
+        actions.append(
+            "Create template-backed documents for the missing required types first."
+        )
     if any(f.code == "broken_relative_link" for f in findings):
-        actions.append("Fix broken relative links so design and verification docs stay navigable.")
+        actions.append(
+            "Fix broken relative links so design and verification docs stay navigable."
+        )
     if any(f.code == "missing_feature_spec_workflow" for f in findings):
-        actions.append("Add a feature-spec workflow so changelog entries are backed by change design records.")
+        actions.append(
+            "Add a feature-spec workflow so changelog entries are backed by change design records."
+        )
     if any(f.code == "missing_end_to_end_pipeline_verification" for f in findings):
-        actions.append("Add an end-to-end pipeline verification doc that covers validator to responder outcomes.")
+        actions.append(
+            "Add an end-to-end pipeline verification doc that covers validator to responder outcomes."
+        )
     if any(f.code.startswith("missing_section_") for f in findings):
-        actions.append("Standardize document sections by type so benchmark, spec, and verification docs are comparable.")
+        actions.append(
+            "Standardize document sections by type so benchmark, spec, and verification docs are comparable."
+        )
     if not actions:
-        actions.append("Documentation structure is healthy; keep using the current templates and metadata header.")
+        actions.append(
+            "Documentation structure is healthy; keep using the current templates and metadata header."
+        )
     return actions
 
 
@@ -605,7 +650,9 @@ def _group_docs_by_type(docs: list[DocumentRecord]) -> dict[str, list[DocumentRe
     return grouped
 
 
-def _build_stats(docs: list[DocumentRecord], findings: list[AuditFinding]) -> dict[str, Any]:
+def _build_stats(
+    docs: list[DocumentRecord], findings: list[AuditFinding]
+) -> dict[str, Any]:
     penalty = sum(SEVERITY_WEIGHTS.get(finding.severity, 0) for finding in findings)
     severity_counts = {"high": 0, "medium": 0, "low": 0}
     for finding in findings:

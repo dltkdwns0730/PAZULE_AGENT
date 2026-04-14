@@ -33,7 +33,9 @@ def probe_with_qwen(
         }
 
     try:
-        print(f"  --> [Agent: Evaluator / Model: Qwen] API 통신 시작 (Timeout: {settings.API_TIMEOUT_SECONDS}s, Retries: {settings.API_MAX_RETRIES})")
+        print(
+            f"  --> [Agent: Evaluator / Model: Qwen] API 통신 시작 (Timeout: {settings.API_TIMEOUT_SECONDS}s, Retries: {settings.API_MAX_RETRIES})"
+        )
         llm = ChatOpenAI(
             api_key=settings.OPENROUTER_API_KEY,
             base_url="https://openrouter.ai/api/v1",
@@ -45,8 +47,10 @@ def probe_with_qwen(
         )
 
         base64_image = _encode_image_base64(image_path)
-        qwen_prompt = prompt_bundle.get("qwen_prompt", f"Does this image match the keyword: {answer}?")
-        
+        qwen_prompt = prompt_bundle.get(
+            "qwen_prompt", f"Does this image match the keyword: {answer}?"
+        )
+
         # JSON 포맷으로 출력하도록 명시적인 지시어 추가
         system_instruction = (
             "You are an AI assistant specialized in analyzing images. "
@@ -69,7 +73,9 @@ def probe_with_qwen(
         )
 
         response = llm.invoke([msg])
-        response_text = response.content.replace("```json", "").replace("```", "").strip()
+        response_text = (
+            response.content.replace("```json", "").replace("```", "").strip()
+        )
         parsed = json.loads(response_text)
 
         return {

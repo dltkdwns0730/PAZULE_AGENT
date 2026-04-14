@@ -19,6 +19,7 @@ class LLMService:
         if settings.GEMINI_API_KEY:
             try:
                 from langchain_google_genai import ChatGoogleGenerativeAI
+
                 self.llm = ChatGoogleGenerativeAI(
                     model=settings.LLM_MODEL_ID or "gemini-2.5-flash",
                     temperature=0.7,
@@ -74,9 +75,7 @@ class LLMService:
 
         try:
             response = chain.invoke({})
-            content = (
-                response.content.replace("```json", "").replace("```", "").strip()
-            )
+            content = response.content.replace("```json", "").replace("```", "").strip()
             return json.loads(content)
         except Exception as e:
             print(f"LLM 검증 오류: {e}")

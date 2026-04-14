@@ -12,6 +12,7 @@ load_dotenv()
 class Settings:
     """환경 변수 및 상수값을 로드하여 저장하는 데이터 인터페이스.
     LLM/VLM 모델명, 앙상블 조합, 미션 정책 임계값(Threshold) 등을 정의합니다."""
+
     PROJECT_NAME: str = "PAZULE"
     VERSION: str = "2.0.0"
 
@@ -27,16 +28,14 @@ class Settings:
     )
     QWEN_VL_MODEL_ID: str = os.getenv("QWEN_VL_MODEL_ID", "qwen/qwen3.6-plus:free")
     LLM_MODEL_ID: str = os.getenv("LLM_MODEL_ID", "")
-    
+
     # API Limits (Timeout & Retries)
     API_TIMEOUT_SECONDS: float = float(os.getenv("API_TIMEOUT_SECONDS", "60.0"))
     API_MAX_RETRIES: int = int(os.getenv("API_MAX_RETRIES", "2"))
 
     # Runtime model selection
     MODEL_SELECTION_LOCATION: str = os.getenv("MODEL_SELECTION_LOCATION", "siglip2")
-    MODEL_SELECTION_ATMOSPHERE: str = os.getenv(
-        "MODEL_SELECTION_ATMOSPHERE", "siglip2"
-    )
+    MODEL_SELECTION_ATMOSPHERE: str = os.getenv("MODEL_SELECTION_ATMOSPHERE", "siglip2")
     ENSEMBLE_MODELS_LOCATION: str = os.getenv(
         "ENSEMBLE_MODELS_LOCATION", "siglip2,blip"
     )
@@ -45,9 +44,7 @@ class Settings:
     )
 
     # Decision thresholds
-    LOCATION_PASS_THRESHOLD: float = float(
-        os.getenv("LOCATION_PASS_THRESHOLD", "0.70")
-    )
+    LOCATION_PASS_THRESHOLD: float = float(os.getenv("LOCATION_PASS_THRESHOLD", "0.70"))
     ATMOSPHERE_PASS_THRESHOLD: float = float(
         os.getenv("ATMOSPHERE_PASS_THRESHOLD", "0.62")
     )
@@ -69,23 +66,25 @@ class Settings:
 
     # Dev / Debug
     # true 로 설정하면 GPS·날짜 메타데이터 검증을 완전히 우회합니다 (로컬 테스트용).
-    SKIP_METADATA_VALIDATION: bool = os.getenv("SKIP_METADATA_VALIDATION", "false").lower() == "true"
+    SKIP_METADATA_VALIDATION: bool = (
+        os.getenv("SKIP_METADATA_VALIDATION", "false").lower() == "true"
+    )
     # true 로 설정하면 AI 모델 추론 없이 score=1.0 으로 항상 통과 처리합니다 (로컬 테스트용).
-    BYPASS_MODEL_VALIDATION: bool = os.getenv("BYPASS_MODEL_VALIDATION", "false").lower() == "true"
+    BYPASS_MODEL_VALIDATION: bool = (
+        os.getenv("BYPASS_MODEL_VALIDATION", "false").lower() == "true"
+    )
 
     # Path Configuration
     BASE_DIR: str = os.path.dirname(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     )
     DATA_DIR: str = os.path.join(BASE_DIR, "data")
-    PROMPT_TEMPLATES_DIR: str = os.path.join(
-        BASE_DIR, "app", "prompts", "templates"
-    )
+    PROMPT_TEMPLATES_DIR: str = os.path.join(BASE_DIR, "app", "prompts", "templates")
 
     @property
     def LANDMARK_QA_PATH(self):
         """로컬 테스트용 랜드마크 QA 데이터셋 파일의 절대 경로를 반환합니다.
-        
+
         Returns:
             str: landmark_qa_labeled.json 파일 경로
         """
@@ -97,7 +96,7 @@ class Settings:
 
         Args:
             value (str): 파싱할 CSV 형태의 문자열
-            
+
         Returns:
             list[str]: 공백이 제거된 소문자 토큰 리스트
         """
@@ -106,7 +105,7 @@ class Settings:
     @property
     def location_ensemble_models(self) -> list[str]:
         """위치(Location) 미션 앙상블에 참여할 모델 이름 리스트를 반환합니다.
-        
+
         Returns:
             list[str]: 앙상블 모델 식별자 리스트
         """
@@ -115,7 +114,7 @@ class Settings:
     @property
     def atmosphere_ensemble_models(self) -> list[str]:
         """분위기(Atmosphere) 미션 앙상블에 참여할 모델 이름 리스트를 반환합니다.
-        
+
         Returns:
             list[str]: 앙상블 모델 식별자 리스트
         """

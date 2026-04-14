@@ -22,5 +22,4 @@ class VLMProbe(ABC):
 
     @property
     @abstractmethod
-    def model_name(self) -> str:
-        ...
+    def model_name(self) -> str: ...
