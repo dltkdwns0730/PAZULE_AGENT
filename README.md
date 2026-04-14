@@ -40,10 +40,9 @@
 
 | | v1 · 수상작 | v2 · 현재 |
 |---|---|---|
-| 모델 | BLIP-VQA + CLIP (분리 실행) | SigLIP2 + BLIP + Qwen VL (앙상블 투표) |
+| 모델 | BLIP-VQA + CLIP (분리 실행) | SigLIP2 + BLIP (앙상블 투표) + Qwen VL (재검증) |
 | 파이프라인 | `mission_manager.py` 단일 호출 | LangGraph 8노드 오케스트레이션 |
 | API | `POST /mission` 1개 | `start / submit / issue / redeem` 4개 |
-| 프론트엔드 | 없음 | React 19 + Vite + Tailwind |
 | 레포 | [`PAZULE`](https://github.com/dltkdwns0730/PAZULE) | [`PAZULE_AGENT`](https://github.com/dltkdwns0730/PAZULE_AGENT) |
 
 ---
