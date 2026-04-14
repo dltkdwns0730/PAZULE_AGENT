@@ -1,6 +1,6 @@
 # Documentation Guide
 
-> **분류**: 가이드 · **버전**: v1 · **최종 수정**: 2026-04-07
+> **분류**: 가이드 · **버전**: v2 · **최종 수정**: 2026-04-14
 >
 > `docs/` 내 모든 문서의 작성 형식과 관리 규칙.
 
@@ -49,12 +49,11 @@
 docs/
 ├── doc-guide.md              ← 이 파일
 ├── changelog.md              ← 버전 이력
-├── architecture.md           ← 설계 문서
-├── api-specification.md      ← API 레퍼런스
-├── pipeline-visualization.md ← 파이프라인 다이어그램
+├── architecture.md           ← 설계 문서 (파이프라인 다이어그램 포함)
+├── bugfix-log.md             ← TDD 버그 수정 이력
 ├── commercialization-plan.md ← 전략 문서
 └── benchmarks/               ← 모델 벤치마크
-    └── <model>-<version>.md
+    └── <model>-<scope>.md
 ```
 
 **규칙:**
