@@ -1,6 +1,6 @@
 # PAZULE Changelog
 
-> **분류**: 레퍼런스 · **버전**: v2.5 · **최종 수정**: 2026-04-14
+> **분류**: 레퍼런스 · **버전**: v2.5.0 · **최종 수정**: 2026-04-14
 >
 > 프로젝트의 주요 변경 이력을 버전별로 정리합니다.
 
@@ -73,3 +73,16 @@
 - `fix(hooks)` — **BUG-002**: `fetchHint()`에 `setIsLoading(true/false)` 추가, 힌트 로딩 중 스피너 미표시 수정 (`3165017`)
 - `fix(pages)` — **BUG-003**: `PhotoSubmission.jsx` stale state race condition 수정, `newAttemptsLeft` 지역 변수로 navigate 조건 확정 (`f69d982`)
 - `fix(pages)` — **BUG-004**: `missionId` 없이 `/mission/submit` 직접 접근 시 `'/'`로 redirect하는 route guard 추가 (`f69d982`)
+
+---
+
+## v2.5.0 — CI/CD 자동화 파이프라인 구축 (2026-04-14)
+
+> 학습 목적의 클라우드 독립형(Cloud-less) 파이프라인. 로컬 훅부터 GitHub Actions까지 uv 100% 활용.
+
+- `feat(ci)`: `pyproject.toml` dev 의존성에 `ruff`, `pre-commit` 추가
+- `feat(ci)`: `.pre-commit-config.yaml` 훅 추가 (코드 커밋 전 ruff 검사 강제화)
+- `feat(ci)`: `.github/workflows/ci.yml` 구축 (uv 기반 초고속 테스트 및 린트 파이프라인)
+- `feat(cd)`: 멀티스테이지 `Dockerfile` 작성 (uv builder 활용 경량 이미지)
+- `feat(cd)`: `.github/workflows/cd.yml` 패키징 구축 (ghcr.io 자동 배포)
+- `docs(architecture)`: `ci-cd-architecture.md` 명세서 작성
