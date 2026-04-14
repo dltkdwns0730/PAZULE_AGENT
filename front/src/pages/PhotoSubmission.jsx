@@ -1,8 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMission } from '../hooks/useMission';
 import { useMissionStore } from '../store/useMissionStore';
 import AILoadingOverlay from '../components/AILoadingOverlay';
+
+const MAX_ATTEMPTS = 3;
 
 export default function PhotoSubmission() {
     const navigate = useNavigate();
@@ -12,8 +14,15 @@ export default function PhotoSubmission() {
     const [imageFile, setImageFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [retryError, setRetryError] = useState(null);
-    const [attemptsLeft, setAttemptsLeft] = useState(3);
+    const [attemptsLeft, setAttemptsLeft] = useState(MAX_ATTEMPTS);
     const fileInputRef = useRef(null);
+
+    // Route guard: 활성 mission 없이 접근 시 홈으로 redirect
+    useEffect(() => {
+        if (!store.missionId) {
+            navigate('/');
+        }
+    }, [store.missionId]);
 
     // Current Date formatting
     const today = new Date();
@@ -42,10 +51,11 @@ export default function PhotoSubmission() {
             if (result.success) {
                 navigate('/mission/result');
             } else {
-                setAttemptsLeft(prev => Math.max(0, prev - 1));
+                const newAttemptsLeft = Math.max(0, attemptsLeft - 1);
+                setAttemptsLeft(newAttemptsLeft);
                 setRetryError(result.error || result.message || 'Verification Failed. Target not found.');
 
-                if (attemptsLeft <= 1) {
+                if (newAttemptsLeft <= 0) {
                     navigate('/mission/result'); // Go to failure result if out of attempts
                 }
             }
