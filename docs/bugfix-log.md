@@ -16,6 +16,27 @@
 
 ---
 
+## 프로젝트 버전 대응표
+
+> 다른 컨텍스트/LLM에서 이 프로젝트를 파악할 때 참조하는 버전 기준표.
+> 버그 ID(`BUG-NNN`)는 이 문서에서만 사용하며, changelog의 버전(`v2.x`)과 독립적으로 관리됩니다.
+
+| 프로젝트 버전 | 기간 | 주요 내용 | 참조 문서 | 버그 ID 범위 |
+|--------------|------|-----------|-----------|-------------|
+| v1.0 | 팀 프로젝트 | 수상작 (파주시장상), BLIP+CLIP+GPT-4o-mini | `changelog.md#v1.0` | 없음 (체계 미도입) |
+| v2.0.0 ~ v2.0.x | 개인 고도화 시작 | LangGraph Council 아키텍처, 서비스 재설계 | `changelog.md#v2.0` | 없음 |
+| v2.1.0 ~ v2.1.x | API + CLI + Frontend | Flask API, React 19 SPA, CLI 게임 루프 | `changelog.md#v2.1` | 없음 |
+| v2.2.0 ~ v2.2.x | 멀티모델 앙상블 | SigLIP2, Qwen VL, ModelRegistry | `changelog.md#v2.2` | 없음 |
+| v2.3.0 ~ v2.3.x | 파이프라인 통합 | 3-Tier 에스컬레이션, UI 개선, 쿠폰 멱등성 | `changelog.md#v2.3` | 없음 |
+| v2.4.0 | 문서화 | architecture.md, commercialization-plan.md | `changelog.md#v2.4` | 없음 |
+| **v2.4.1** | **2026-04-14** | **TDD 도입 + 프론트엔드 버그 4건 수정** | **이 문서** | **ENV-001, BUG-001 ~ BUG-004** |
+
+**핵심 구분 원칙:**
+- `v2.4.0` 이전 — changelog에만 기록, 버그 ID 없음
+- `v2.4.1` 이후 — changelog(요약) + bugfix-log(상세 + ID) 병행 관리
+
+---
+
 ## 항목 템플릿
 
 > 새 버그 추가 시 아래 템플릿을 복사해 사용
