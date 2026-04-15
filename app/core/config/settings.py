@@ -1,6 +1,8 @@
 """PAZULE 애플리케이션의 핵심 설정을 관리하는 모듈.
+
 전역 환경 변수(.env)와 모델 선택, 디렉토리 경로 등을 중앙에서 통제합니다.
-의존성: python-dotenv"""
+의존성: python-dotenv
+"""
 
 import os
 
@@ -11,7 +13,9 @@ load_dotenv()
 
 class Settings:
     """환경 변수 및 상수값을 로드하여 저장하는 데이터 인터페이스.
-    LLM/VLM 모델명, 앙상블 조합, 미션 정책 임계값(Threshold) 등을 정의합니다."""
+
+    LLM/VLM 모델명, 앙상블 조합, 미션 정책 임계값(Threshold) 등을 정의합니다.
+    """
 
     PROJECT_NAME: str = "PAZULE"
     VERSION: str = "2.0.0"
@@ -76,13 +80,13 @@ class Settings:
 
     # Path Configuration
     BASE_DIR: str = os.path.dirname(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     )
     DATA_DIR: str = os.path.join(BASE_DIR, "data")
     PROMPT_TEMPLATES_DIR: str = os.path.join(BASE_DIR, "app", "prompts", "templates")
 
     @property
-    def LANDMARK_QA_PATH(self):
+    def LANDMARK_QA_PATH(self) -> str:
         """로컬 테스트용 랜드마크 QA 데이터셋 파일의 절대 경로를 반환합니다.
 
         Returns:
@@ -95,10 +99,10 @@ class Settings:
         """쉼표(,)로 구분된 환경 변수 문자열을 파싱하여 소문자 리스트로 반환합니다.
 
         Args:
-            value (str): 파싱할 CSV 형태의 문자열
+            value: 파싱할 CSV 형태의 문자열.
 
         Returns:
-            list[str]: 공백이 제거된 소문자 토큰 리스트
+            list[str]: 공백이 제거된 소문자 토큰 리스트.
         """
         return [token.strip().lower() for token in value.split(",") if token.strip()]
 
@@ -107,7 +111,7 @@ class Settings:
         """위치(Location) 미션 앙상블에 참여할 모델 이름 리스트를 반환합니다.
 
         Returns:
-            list[str]: 앙상블 모델 식별자 리스트
+            list[str]: 앙상블 모델 식별자 리스트.
         """
         return self.parse_csv(self.ENSEMBLE_MODELS_LOCATION)
 
@@ -116,7 +120,7 @@ class Settings:
         """분위기(Atmosphere) 미션 앙상블에 참여할 모델 이름 리스트를 반환합니다.
 
         Returns:
-            list[str]: 앙상블 모델 식별자 리스트
+            list[str]: 앙상블 모델 식별자 리스트.
         """
         return self.parse_csv(self.ENSEMBLE_MODELS_ATMOSPHERE)
 
