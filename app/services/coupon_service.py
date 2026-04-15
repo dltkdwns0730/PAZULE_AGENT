@@ -7,33 +7,25 @@ import os
 import random
 import string
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from typing import Any
 
-from app.core.config import settings
+from app.core.config import constants, settings
 
 
 class CouponService:
-    """Purpose: `CouponService` ??? ??? ?? ??? ???
-    Context: ?? ???? ?? ??? ??? ??
-    Attrs: ?? ?? ???? ?? ??? ???"""
+    """파일 기반 JSON 스토리지를 이용한 쿠폰 발급·조회·사용 서비스."""
 
-    def __init__(self):
-        """Caller: ?? ?? ???? ???
-        Purpose: `__init__` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: None
-        Note: ?? ?? ?? ???? ???"""
+    def __init__(self) -> None:
+        """쿠폰 저장 경로를 초기화하고 data 디렉터리를 생성한다."""
         self._path = os.path.join(settings.DATA_DIR, "coupons.json")
         os.makedirs(settings.DATA_DIR, exist_ok=True)
 
-    def _read_all(self) -> Dict[str, Any]:
-        """Caller: ?? ?? ???? ???
-        Purpose: `_read_all` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: None
-        Note: ?? ?? ?? ???? ???"""
+    def _read_all(self) -> dict[str, Any]:
+        """쿠폰 JSON 파일 전체를 읽어 반환한다.
+
+        Returns:
+            쿠폰 목록을 담은 딕셔너리. 파일이 없거나 오류 시 {"coupons": []}.
+        """
         if not os.path.exists(self._path):
             return {"coupons": []}
         try:
@@ -42,46 +34,53 @@ class CouponService:
         except Exception:
             return {"coupons": []}
 
-    def _write_all(self, payload: Dict[str, Any]) -> None:
-        """Caller: ?? ?? ???? ???
-        Purpose: `_write_all` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: payload: ???? ???? ??
-        Note: ?? ?? ?? ???? ???"""
+    def _write_all(self, payload: dict[str, Any]) -> None:
+        """쿠폰 데이터를 JSON 파일에 덮어쓴다.
+
+        Args:
+            payload: 저장할 쿠폰 데이터 딕셔너리.
+        """
         with open(self._path, "w", encoding="utf-8") as file:
             json.dump(payload, file, ensure_ascii=False, indent=2)
 
     @staticmethod
     def generate_coupon_code() -> str:
-        """Caller: ?? ?? ???? ???
-        Purpose: `generate_coupon_code` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: None
-        Note: ?? ?? ?? ???? ???"""
-        return "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
+        """COUPON_CODE_LENGTH 자리 영대문자+숫자 쿠폰 코드를 생성한다.
 
-    def _find_by_code(self, code: str) -> Optional[Dict[str, Any]]:
-        """Caller: ?? ?? ???? ???
-        Purpose: `_find_by_code` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: code: ???? ???? ??
-        Note: ?? ?? ?? ???? ???"""
+        Returns:
+            예: 'A3KX9PTM'
+        """
+        return "".join(
+            random.choices(
+                string.ascii_uppercase + string.digits,
+                k=constants.COUPON_CODE_LENGTH,
+            )
+        )
+
+    def _find_by_code(self, code: str) -> dict[str, Any] | None:
+        """코드로 쿠폰을 조회한다.
+
+        Args:
+            code: 조회할 쿠폰 코드.
+
+        Returns:
+            일치하는 쿠폰 딕셔너리, 없으면 None.
+        """
         data = self._read_all()
         for coupon in data.get("coupons", []):
             if coupon.get("code") == code:
                 return coupon
         return None
 
-    def _find_by_mission_id(self, mission_id: str) -> Optional[Dict[str, Any]]:
-        """Caller: ?? ?? ???? ???
-        Purpose: `_find_by_mission_id` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: mission_id: ???? ???? ??
-        Note: ?? ?? ?? ???? ???"""
+    def _find_by_mission_id(self, mission_id: str) -> dict[str, Any] | None:
+        """미션 ID로 기발급 쿠폰을 조회한다.
+
+        Args:
+            mission_id: 조회할 미션 세션 ID.
+
+        Returns:
+            일치하는 쿠폰 딕셔너리, 없으면 None.
+        """
         data = self._read_all()
         for coupon in data.get("coupons", []):
             if coupon.get("mission_id") == mission_id:
@@ -92,17 +91,22 @@ class CouponService:
         self,
         mission_type: str,
         answer: str,
-        mission_id: Optional[str] = None,
-        partner_id: Optional[str] = None,
-        discount_rule: str = "10%_OFF",
-    ) -> Dict[str, Any]:
-        # Idempotent path for mission-based issuance.
-        """Caller: ?? ?? ???? ???
-        Purpose: `issue_coupon` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: mission_type: ???? ???? ??; answer: ???? ???? ??; mission_id: ???? ???? ??; partner_id: ???? ???? ??; discount_rule: ???? ???? ??
-        Note: ?? ?? ?? ???? ???"""
+        mission_id: str | None = None,
+        partner_id: str | None = None,
+        discount_rule: str = constants.DEFAULT_DISCOUNT_RULE,
+    ) -> dict[str, Any]:
+        """쿠폰을 발급하고 저장한다. 동일 mission_id가 있으면 기존 쿠폰을 반환한다.
+
+        Args:
+            mission_type: 'mission1'(위치) 또는 'mission2'(분위기).
+            answer: 미션 정답 키워드.
+            mission_id: 미션 세션 ID (멱등성 키).
+            partner_id: 파트너 식별자.
+            discount_rule: 할인 규칙 문자열 (기본값: DEFAULT_DISCOUNT_RULE).
+
+        Returns:
+            발급된 쿠폰 딕셔너리.
+        """
         if mission_id:
             existing = self._find_by_mission_id(mission_id)
             if existing:
@@ -137,13 +141,17 @@ class CouponService:
         self._write_all(data)
         return coupon
 
-    def redeem_coupon(self, code: str, partner_pos_id: str) -> Dict[str, Any]:
-        """Caller: ?? ?? ???? ???
-        Purpose: `redeem_coupon` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: code: ???? ???? ??; partner_pos_id: ???? ???? ??
-        Note: ?? ?? ?? ???? ???"""
+    def redeem_coupon(self, code: str, partner_pos_id: str) -> dict[str, Any]:
+        """쿠폰을 사용 처리한다. 만료·중복·미존재 케이스를 구분해 반환한다.
+
+        Args:
+            code: 사용할 쿠폰 코드.
+            partner_pos_id: POS 단말 식별자.
+
+        Returns:
+            {redeem_status, message, coupon(선택)} 딕셔너리.
+            redeem_status: 'redeemed' | 'already_redeemed' | 'expired' | 'not_found'.
+        """
         data = self._read_all()
         target_idx = None
         target = None

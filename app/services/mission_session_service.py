@@ -7,43 +7,30 @@ import json
 import os
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Callable
 
 from app.core.config import settings
 
 
 def _utcnow() -> datetime:
-    """Caller: ?? ?? ???? ???
-    Purpose: `_utcnow` ?? ??? ????
-    Returns: ?? ?? ?? ??
-    Deps: ?? ??? ??
-    Args: None
-    Note: ?? ?? ?? ???? ???"""
+    """현재 UTC 시각을 반환한다."""
     return datetime.now(timezone.utc)
 
 
 class MissionSessionService:
-    """Purpose: `MissionSessionService` ??? ??? ?? ??? ???
-    Context: ?? ???? ?? ??? ??? ??
-    Attrs: ?? ?? ???? ?? ??? ???"""
+    """파일 기반 JSON 스토리지를 이용한 미션 세션 생성·조회·갱신 서비스."""
 
-    def __init__(self):
-        """Caller: ?? ?? ???? ???
-        Purpose: `__init__` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: None
-        Note: ?? ?? ?? ???? ???"""
+    def __init__(self) -> None:
+        """세션 저장 경로를 초기화하고 data 디렉터리를 생성한다."""
         self._path = os.path.join(settings.DATA_DIR, "mission_sessions.json")
         os.makedirs(settings.DATA_DIR, exist_ok=True)
 
-    def _read_all(self) -> Dict[str, Any]:
-        """Caller: ?? ?? ???? ???
-        Purpose: `_read_all` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: None
-        Note: ?? ?? ?? ???? ???"""
+    def _read_all(self) -> dict[str, Any]:
+        """세션 JSON 파일 전체를 읽어 반환한다.
+
+        Returns:
+            세션 목록을 담은 딕셔너리. 파일이 없거나 오류 시 {"sessions": []}.
+        """
         if not os.path.exists(self._path):
             return {"sessions": []}
         try:
@@ -52,13 +39,12 @@ class MissionSessionService:
         except Exception:
             return {"sessions": []}
 
-    def _write_all(self, payload: Dict[str, Any]) -> None:
-        """Caller: ?? ?? ???? ???
-        Purpose: `_write_all` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: payload: ???? ???? ??
-        Note: ?? ?? ?? ???? ???"""
+    def _write_all(self, payload: dict[str, Any]) -> None:
+        """세션 데이터를 JSON 파일에 덮어쓴다.
+
+        Args:
+            payload: 저장할 세션 데이터 딕셔너리.
+        """
         with open(self._path, "w", encoding="utf-8") as file:
             json.dump(payload, file, ensure_ascii=False, indent=2)
 
@@ -69,13 +55,19 @@ class MissionSessionService:
         mission_type: str,
         answer: str,
         hint: str,
-    ) -> Dict[str, Any]:
-        """Caller: ?? ?? ???? ???
-        Purpose: `create_session` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: user_id: ???? ???? ??; site_id: ???? ???? ??; mission_type: ???? ???? ??; answer: ???? ???? ??; hint: ???? ???? ??
-        Note: ?? ?? ?? ???? ???"""
+    ) -> dict[str, Any]:
+        """새 미션 세션을 생성하고 저장한다.
+
+        Args:
+            user_id: 사용자 식별자.
+            site_id: 사이트 식별자.
+            mission_type: 'location' | 'atmosphere'.
+            answer: 오늘의 미션 정답.
+            hint: 미션 힌트 문자열.
+
+        Returns:
+            생성된 세션 딕셔너리.
+        """
         now = _utcnow()
         expires = now + timedelta(minutes=settings.MISSION_SESSION_TTL_MINUTES)
         session = {
@@ -97,26 +89,35 @@ class MissionSessionService:
         self._write_all(data)
         return session
 
-    def get_session(self, mission_id: str) -> Optional[Dict[str, Any]]:
-        """Caller: ?? ?? ???? ???
-        Purpose: `get_session` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: mission_id: ???? ???? ??
-        Note: ?? ?? ?? ???? ???"""
+    def get_session(self, mission_id: str) -> dict[str, Any] | None:
+        """mission_id로 세션을 조회한다.
+
+        Args:
+            mission_id: 조회할 미션 세션 ID.
+
+        Returns:
+            일치하는 세션 딕셔너리, 없으면 None.
+        """
         data = self._read_all()
         for session in data.get("sessions", []):
             if session.get("mission_id") == mission_id:
                 return session
         return None
 
-    def _update_session(self, mission_id: str, mutate_fn):
-        """Caller: ?? ?? ???? ???
-        Purpose: `_update_session` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: mission_id: ???? ???? ??; mutate_fn: ???? ???? ??
-        Note: ?? ?? ?? ???? ???"""
+    def _update_session(
+        self,
+        mission_id: str,
+        mutate_fn: Callable[[dict[str, Any]], dict[str, Any]],
+    ) -> dict[str, Any] | None:
+        """세션을 읽어 mutate_fn으로 변경한 뒤 저장한다.
+
+        Args:
+            mission_id: 갱신할 미션 세션 ID.
+            mutate_fn: 세션 딕셔너리를 받아 수정된 딕셔너리를 반환하는 함수.
+
+        Returns:
+            갱신된 세션 딕셔너리, 세션이 없으면 None.
+        """
         data = self._read_all()
         updated = None
         for idx, session in enumerate(data.get("sessions", [])):
@@ -130,12 +131,15 @@ class MissionSessionService:
         return updated
 
     def can_submit(self, mission_id: str) -> tuple[bool, str]:
-        """Caller: ?? ?? ???? ???
-        Purpose: `can_submit` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: mission_id: ???? ???? ??
-        Note: ?? ?? ?? ???? ???"""
+        """미션 제출 가능 여부를 검사한다.
+
+        Args:
+            mission_id: 검사할 미션 세션 ID.
+
+        Returns:
+            (True, 'ok') 가능, (False, reason) 불가.
+            reason: 'session_not_found' | 'session_expired' | 'submission_limit_reached'.
+        """
         session = self.get_session(mission_id)
         if not session:
             return False, "session_not_found"
@@ -151,16 +155,20 @@ class MissionSessionService:
         self,
         mission_id: str,
         image_hash: str,
-        result: Dict[str, Any],
-    ) -> Optional[Dict[str, Any]]:
-        """Caller: ?? ?? ???? ???
-        Purpose: `record_submission` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: mission_id: ???? ???? ??; image_hash: ???? ???? ??; result: ???? ???? ??
-        Note: ?? ?? ?? ???? ???"""
+        result: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        """제출 기록과 최신 판정 결과를 세션에 저장한다.
 
-        def mutate(session: Dict[str, Any]) -> Dict[str, Any]:
+        Args:
+            mission_id: 미션 세션 ID.
+            image_hash: 제출 이미지의 SHA-256 해시.
+            result: AI 판정 결과 딕셔너리.
+
+        Returns:
+            갱신된 세션 딕셔너리, 세션이 없으면 None.
+        """
+
+        def mutate(session: dict[str, Any]) -> dict[str, Any]:
             session["status"] = "submitted"
             session.setdefault("submissions", []).append(
                 {
@@ -179,15 +187,18 @@ class MissionSessionService:
 
     def mark_coupon_issued(
         self, mission_id: str, coupon_code: str
-    ) -> Optional[Dict[str, Any]]:
-        """Caller: ?? ?? ???? ???
-        Purpose: `mark_coupon_issued` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: mission_id: ???? ???? ??; coupon_code: ???? ???? ??
-        Note: ?? ?? ?? ???? ???"""
+    ) -> dict[str, Any] | None:
+        """쿠폰 발급 완료 상태를 세션에 기록한다.
 
-        def mutate(session: Dict[str, Any]) -> Dict[str, Any]:
+        Args:
+            mission_id: 미션 세션 ID.
+            coupon_code: 발급된 쿠폰 코드.
+
+        Returns:
+            갱신된 세션 딕셔너리, 세션이 없으면 None.
+        """
+
+        def mutate(session: dict[str, Any]) -> dict[str, Any]:
             session["coupon_code"] = coupon_code
             session["status"] = "coupon_issued"
             return session
@@ -195,12 +206,15 @@ class MissionSessionService:
         return self._update_session(mission_id, mutate)
 
     def is_duplicate_hash_for_user(self, user_id: str, image_hash: str) -> bool:
-        """Caller: ?? ?? ???? ???
-        Purpose: `is_duplicate_hash_for_user` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: user_id: ???? ???? ??; image_hash: ???? ???? ??
-        Note: ?? ?? ?? ???? ???"""
+        """동일 사용자의 이전 제출 중 같은 이미지 해시가 있는지 검사한다.
+
+        Args:
+            user_id: 사용자 식별자.
+            image_hash: 검사할 이미지 SHA-256 해시.
+
+        Returns:
+            중복이면 True, 아니면 False.
+        """
         if not image_hash:
             return False
         data = self._read_all()
@@ -214,12 +228,14 @@ class MissionSessionService:
 
     @staticmethod
     def hash_file(file_path: str) -> str:
-        """Caller: ?? ?? ???? ???
-        Purpose: `hash_file` ?? ??? ????
-        Returns: ?? ?? ?? ??
-        Deps: ?? ??? ??
-        Args: file_path: ???? ???? ??
-        Note: ?? ?? ?? ???? ???"""
+        """파일을 SHA-256으로 해시하여 16진수 문자열을 반환한다.
+
+        Args:
+            file_path: 해시할 파일의 절대 경로.
+
+        Returns:
+            SHA-256 hex digest 문자열.
+        """
         hasher = hashlib.sha256()
         with open(file_path, "rb") as file:
             for chunk in iter(lambda: file.read(8192), b""):
