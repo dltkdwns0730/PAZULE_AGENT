@@ -18,6 +18,24 @@
 </div>
 
 ---
+
+## 📁 프로젝트 구조
+
+> 각 폴더 이름을 클릭하면 해당 폴더의 역할 설명 문서로 이동합니다.
+
+| 폴더 / 파일 | 역할 | 문서 |
+|---|---|---|
+| [`app/`](./app/README.md) | 핵심 백엔드 패키지 (API · 파이프라인 · 모델 · 서비스) | [→ app/README.md](./app/README.md) |
+| [`tests/`](./tests/README.md) | pytest 자동화 테스트 — CI에서 자동 실행 | [→ tests/README.md](./tests/README.md) |
+| [`scripts/`](./scripts/README.md) | 개발자용 수동 실행 스크립트 (벤치마크·시뮬레이션) | [→ scripts/README.md](./scripts/README.md) |
+| [`docs/`](./docs/README.md) | 아키텍처·CI/CD·변경 이력 문서 | [→ docs/README.md](./docs/README.md) |
+| [`front/`](./front/) | React 19 + Vite 프론트엔드 | |
+| `main.py` | Flask 앱 엔트리포인트 | |
+| `CONTRIBUTING.md` | **기여 가이드 — PR 전 필독** | [→ CONTRIBUTING.md](./CONTRIBUTING.md) |
+
+> **`tests/` vs `scripts/`**: 자동화 회귀 방지가 목적이면 `tests/`, 수동 탐색·디버깅이 목적이면 `scripts/`를 사용합니다. 자세한 차이는 각 폴더의 README를 참고하세요.
+
+---
 ## Front UI
 
 <div align="center">
@@ -287,9 +305,9 @@ cd front && npm install && npm run dev
 
 ## Contributing
 
-1. Fork → `feat/my-feature` 브랜치 생성
-2. 커밋 (`git commit -m 'feat: add my feature'`)
-3. Push → Pull Request
+자세한 기여 가이드는 **[CONTRIBUTING.md](./CONTRIBUTING.md)** 를 참고하세요.
+
+PR 전 체크리스트, 브랜치 전략, 커밋 메시지 형식, 코딩 규칙이 모두 정리되어 있습니다.
 
 ---
 
