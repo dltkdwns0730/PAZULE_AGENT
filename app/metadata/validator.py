@@ -23,7 +23,7 @@ def validate_metadata(image_path: str) -> bool:
     """
     logger.debug("[metadata] 메타데이터 검증 중: %s", image_path)
     try:
-        result = quick_photo_summary(image_path)
+        result = bool(quick_photo_summary(image_path))
         if not result:
             logger.warning("[metadata] 검증 실패 (오늘 촬영 or 위치 조건 불만족)")
         return result
