@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
 
 from app.core.config import settings
+from app.core.utils import normalize_mission_type
 
 
 def _utcnow() -> datetime:
@@ -74,7 +75,7 @@ class MissionSessionService:
             "mission_id": str(uuid.uuid4()),
             "user_id": user_id or "guest",
             "site_id": site_id or "pazule-default",
-            "mission_type": "atmosphere" if mission_type == "photo" else mission_type,
+            "mission_type": normalize_mission_type(mission_type),
             "answer": answer,
             "hint": hint,
             "status": "created",

@@ -9,6 +9,7 @@ import traceback
 from typing import Any
 
 from app.core.config import constants, settings
+from app.core.utils import normalize_mission_type
 from app.metadata.validator import validate_metadata
 from app.models.prompts import build_prompt_bundle
 from app.services.mission_session_service import mission_session_service
@@ -16,18 +17,7 @@ from app.services.mission_session_service import mission_session_service
 logger = logging.getLogger(__name__)
 
 
-def _normalize_mission_type(mission_type: str) -> str:
-    """미션 타입을 내부 표준값으로 정규화한다.
-
-    Args:
-        mission_type: 클라이언트 전달 미션 타입 문자열.
-
-    Returns:
-        'location' 또는 'atmosphere'.
-    """
-    if mission_type == "photo":
-        return "atmosphere"
-    return mission_type if mission_type in {"location", "atmosphere"} else "location"
+# Local helper _normalize_mission_type removed in favor of app.core.utils.normalize_mission_type
 
 
 def _append_error(
@@ -294,7 +284,7 @@ def router(state: dict[str, Any]) -> dict[str, Any]:
         갱신된 부분 상태 딕셔너리 (request_context, route_decision, messages).
     """
     request_context = dict(state.get("request_context", {}))
-    mission_type = _normalize_mission_type(
+    mission_type = normalize_mission_type(
         request_context.get("mission_type", "location")
     )
     request_context["mission_type"] = mission_type
@@ -380,7 +370,7 @@ def evaluator(state: dict[str, Any]) -> dict[str, Any]:
     request_context = dict(state.get("request_context", {}))
     artifacts = dict(state.get("artifacts", {}))
     errors = list(state.get("errors", []))
-    mission_type = _normalize_mission_type(
+    mission_type = normalize_mission_type(
         request_context.get("mission_type", "location")
     )
     image_path = request_context.get("image_path")
@@ -459,7 +449,7 @@ def aggregator(state: dict[str, Any]) -> dict[str, Any]:
     """
     request_context = dict(state.get("request_context", {}))
     artifacts = dict(state.get("artifacts", {}))
-    mission_type = _normalize_mission_type(
+    mission_type = normalize_mission_type(
         request_context.get("mission_type", "location")
     )
     votes = list(artifacts.get("model_votes", []))

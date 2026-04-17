@@ -12,6 +12,7 @@ from PIL import Image
 from pillow_heif import register_heif_opener
 
 from app.core.config import constants, settings
+from app.core.utils import normalize_mission_type, to_legacy_mission_type
 from app.council.graph import pipeline_app
 from app.services.answer_service import get_today_answers
 from app.services.coupon_service import coupon_service
@@ -22,32 +23,8 @@ logger = logging.getLogger(__name__)
 api = Blueprint("api", __name__)
 
 
-def _normalize_mission_type(mission_type: str) -> str:
-    """미션 타입을 내부 표준값으로 정규화한다.
-
-    'photo'는 'atmosphere'로, 미지원 값은 'location'으로 폴백한다.
-
-    Args:
-        mission_type: 클라이언트가 전달한 미션 타입 문자열.
-
-    Returns:
-        'location' 또는 'atmosphere'.
-    """
-    if mission_type == "photo":
-        return "atmosphere"
-    return mission_type if mission_type in {"location", "atmosphere"} else "location"
-
-
-def _legacy_mission_type(mission_type: str) -> str:
-    """내부 표준값을 레거시 프론트엔드 표현으로 변환한다.
-
-    Args:
-        mission_type: 내부 미션 타입 ('location' | 'atmosphere').
-
-    Returns:
-        레거시 표현 ('location' | 'photo').
-    """
-    return "photo" if mission_type == "atmosphere" else mission_type
+# Local helper functions _normalize_mission_type and _legacy_mission_type removed
+# and replaced by app.core.utils functions for consolidation.
 
 
 def _validate_upload(file_obj) -> tuple[bool, str]:
@@ -79,7 +56,7 @@ def get_today_hint() -> Response:
     Returns:
         JSON {"answer": str, "hint": str} 또는 {"error": str} (500).
     """
-    mission_type = _normalize_mission_type(request.args.get("mission_type", "location"))
+    mission_type = normalize_mission_type(request.args.get("mission_type", "location"))
     try:
         a1, a2, h1, h2 = get_today_answers()
         if mission_type == "atmosphere":
@@ -137,7 +114,7 @@ def mission_start() -> Response:
         JSON {mission_id, mission_type, eligibility, constraints, hint}.
     """
     payload = request.get_json(silent=True) or {}
-    mission_type = _normalize_mission_type(payload.get("mission_type", "location"))
+    mission_type = normalize_mission_type(payload.get("mission_type", "location"))
     user_id = payload.get("user_id", "guest")
     site_id = payload.get("site_id", "pazule-default")
 
@@ -158,7 +135,7 @@ def mission_start() -> Response:
     return jsonify(
         {
             "mission_id": session["mission_id"],
-            "mission_type": _legacy_mission_type(session["mission_type"]),
+            "mission_type": to_legacy_mission_type(session["mission_type"]),
             "eligibility": {"allowed": True},
             "constraints": {
                 "max_submissions": session["max_submissions"],
