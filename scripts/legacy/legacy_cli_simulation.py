@@ -2,13 +2,16 @@ import os
 import sys
 
 from app.services.answer_service import get_today_answers
-from app.services.mission_service import run_mission1
+from app.legacy.mission_service import run_mission1
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-"""PAZULE 보물찾기 CLI 게임 루프.
+sys.path.append(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
+"""PAZULE 보물찾기 레거시 CLI 게임 루프.
 
-웹 서버 없이 터미널에서 플레이할 수 있는 진입점.
-AnswerService, MissionService를 통해 미션을 실행한다.
+웹 서버 없이 터미널에서 과거 미션 서비스 경로를 확인하는 진입점.
+현재 운영 경로는 Flask API + LangGraph 파이프라인이며, 이 스크립트는
+`app/legacy/mission_service.py` 호환 검증용으로만 유지된다.
 """
 
 
@@ -33,7 +36,7 @@ def _init_registries():
     from app.core.config import settings
     from app.prompts.registry import PromptRegistry
     from app.models.model_registry import register_default_models
-    from app.plugins.registry import register_default_plugins
+    from app.legacy.plugins.registry import register_default_plugins
 
     PromptRegistry.get_instance().load_all(settings.PROMPT_TEMPLATES_DIR)
     register_default_models()
@@ -45,7 +48,7 @@ def main():
 
     1. 오늘의 정답 로드
     2. 사용자 이미지 경로 입력 대기
-    3. MissionService로 검증
+    3. LegacyMissionService로 검증
     4. 성공 시 쿠폰 발급, 실패 시 LLM 힌트 제공
     """
     _init_registries()

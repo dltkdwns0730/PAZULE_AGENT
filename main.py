@@ -63,9 +63,9 @@
 #   #     "traces":         [...],
 #   #   }
 #
-#   ※ CLI 시뮬레이션 스크립트: uv run scripts/simulate_cli.py
-#   ※ 실제 모델 성능 테스트:   uv run scripts/test_real_models.py
-#   ※ 목 파이프라인 테스트:    uv run scripts/test_pipeline_mock.py
+#   ※ 레거시 CLI 시뮬레이션:    uv run scripts/legacy/legacy_cli_simulation.py
+#   ※ 구성요소 검증:            uv run scripts/verify_components.py
+#   ※ 목 파이프라인 테스트:     uv run scripts/test_pipeline_mock.py
 #
 # =============================================================================
 
@@ -88,8 +88,8 @@ def create_app():
 
     register_default_models()
 
-    # 3. 미션 플러그인 등록
-    from app.plugins.registry import register_default_plugins
+    # 3. 미션 플러그인 등록 (레거시 CLI/호환 경로용)
+    from app.legacy.plugins.registry import register_default_plugins
 
     register_default_plugins()
 

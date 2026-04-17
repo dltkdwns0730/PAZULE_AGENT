@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
-import LegacyApp from "./LegacyApp";
 import MissionHome from "./pages/MissionHome";
 import WalletOverview from "./pages/WalletOverview";
 import Scan from "./pages/Scan";
@@ -32,7 +31,6 @@ export default function App() {
             <div className="flex flex-col items-center justify-center min-h-[50vh] text-slate-500">
               <span className="material-symbols-outlined text-4xl mb-2">person</span>
               <p>Profile Page (In Progress)</p>
-              <a href="/legacy" className="mt-4 text-primary text-sm underline">Go to Legacy App</a>
             </div>
           } />
         </Route>
@@ -40,9 +38,6 @@ export default function App() {
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/log" element={<AdminMissionDetail />} />
-
-        {/* Legacy Route */}
-        <Route path="/legacy" element={<LegacyApp />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,4 +1,8 @@
-"""미션 서비스 모듈: 장소 찾기 및 감성 촬영 미션 실행 로직."""
+"""레거시 미션 서비스 모듈.
+
+현재 운영 API 경로는 LangGraph 파이프라인(`app.council.graph`)을 사용한다.
+이 모듈은 CLI/플러그인 호환 경로를 위해 유지되는 레거시 서비스다.
+"""
 
 from __future__ import annotations
 

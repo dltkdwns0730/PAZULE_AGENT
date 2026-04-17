@@ -4,7 +4,7 @@
 **사진 한 장으로 장소와 분위기를 검증하는 AI 미션 플랫폼**
 
 [![Python](https://img.shields.io/badge/Python-3.12%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-latest-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Flask](https://img.shields.io/badge/Flask-3.x-000000?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
 [![LangGraph](https://img.shields.io/badge/LangGraph-Orchestration-FF6B35?style=flat-square)](https://langchain-ai.github.io/langgraph/)
 [![CI/CD](https://github.com/dltkdwns0730/PAZULE_AGENT/actions/workflows/ci.yml/badge.svg)](https://github.com/dltkdwns0730/PAZULE_AGENT/actions)
@@ -34,6 +34,8 @@
 | `CONTRIBUTING.md` | **기여 가이드 — PR 전 필독** | [→ CONTRIBUTING.md](./CONTRIBUTING.md) |
 
 > **`tests/` vs `scripts/`**: 자동화 회귀 방지가 목적이면 `tests/`, 수동 탐색·디버깅이 목적이면 `scripts/`를 사용합니다. 자세한 차이는 각 폴더의 README를 참고하세요.
+>
+> 현재 서비스 구조와 레거시 삭제 후보 검토는 [`docs/refactor-audit.md`](./docs/refactor-audit.md)에 정리되어 있습니다.
 
 ---
 ## Front UI
@@ -197,7 +199,7 @@ flowchart TB
 | 분류 | 기술 |
 |---|---|
 | Language | Python 3.12+ |
-| Framework | FastAPI + Uvicorn |
+| Framework | Flask + Flask-CORS |
 | Orchestration | LangGraph (StateGraph) |
 | Vision Models | SigLIP2, BLIP-VQA, Qwen VL |
 | LLM | OpenAI / OpenRouter / Gemini |

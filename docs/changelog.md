@@ -38,7 +38,7 @@
 ### v2.1.0 — API + CLI + Frontend (PR #7 ~ #9)
 
 - `feat(api)`: Flask Blueprint 엔드포인트 (`/api/mission/start`, `/submit`, `/coupon/issue`, `/redeem`)
-- `feat(cli)`: 터미널 기반 게임 루프 (`scripts/simulate_cli.py`)
+- `feat(cli)`: 터미널 기반 게임 루프 (`scripts/legacy/legacy_cli_simulation.py`)
 - `feat(front)`: React 19 + Vite SPA (인트로 → 미션 선택 → 업로드 → 결과 → 쿠폰)
 
 ### v2.2.0 — 멀티모델 + 앙상블 (PR #10 ~ #11)

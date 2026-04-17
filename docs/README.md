@@ -9,6 +9,7 @@
 | 파일 | 대상 독자 | 내용 |
 |---|---|---|
 | [`architecture.md`](./architecture.md) | 개발자 | 시스템 아키텍처, LangGraph 파이프라인 설계, 상태 흐름, Council 3-Tier 에스컬레이션 |
+| [`refactor-audit.md`](./refactor-audit.md) | 개발자 / 리뷰어 | 현재 운영 구조, 데이터 파이프라인, 레거시 후보와 삭제 전 검증 포인트 |
 | [`ci-cd-architecture.md`](./ci-cd-architecture.md) | DevOps / 개발자 | GitHub Actions CI/CD 파이프라인 설계, Docker 멀티스테이지 빌드, ghcr.io 배포 |
 | [`changelog.md`](./changelog.md) | 전체 | 버전별 변경 이력 |
 | [`bugfix-log.md`](./bugfix-log.md) | 개발자 | 버그 수정 명세서 (발견 경위, 원인, 해결 방법) |

@@ -20,14 +20,16 @@
 
 ## 스크립트 목록
 
-### `simulate_cli.py` — CLI 게임 시뮬레이션
-웹 서버 없이 터미널에서 미션 플로우를 직접 체험한다.
+### `legacy/legacy_cli_simulation.py` — 레거시 CLI 게임 시뮬레이션
+웹 서버 없이 터미널에서 과거 미션 서비스 경로를 직접 체험한다.
 
 ```bash
-uv run scripts/simulate_cli.py
+uv run scripts/legacy/legacy_cli_simulation.py
 ```
 
-**언제 쓰나**: 새 미션 플로우를 개발했을 때 E2E 동작을 빠르게 눈으로 확인할 때.
+**언제 쓰나**: 레거시 `app/legacy/mission_service.py` / `app/legacy/plugins/` 경로를 확인할 때.
+
+> 현재 운영 경로(`api/routes.py -> council/graph.py`)와는 다르다. 현행 파이프라인 확인은 `test_pipeline_mock.py` 또는 `verify_components.py`를 우선 사용한다.
 
 ---
 
