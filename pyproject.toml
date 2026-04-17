@@ -47,6 +47,15 @@ dev = [
   "pytest>=8.0.0",
 ]
 
+[[tool.uv.index]]
+# PyTorch CPU-only index to reduce build size (from ~2GB to ~200MB)
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
 [tool.setuptools.packages.find]
 # Include the application package tree
 where = ["."]
