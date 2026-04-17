@@ -50,6 +50,8 @@ class TestPipelineIntegration:
             "app.council.nodes.mission_session_service.is_duplicate_hash_for_user",
             return_value=False,
         )
+        # Force validation to be active during test, regardless of .env settings
+        mocker.patch("app.council.nodes.settings.SKIP_METADATA_VALIDATION", False)
 
         # 2. Mock Model Invocations
         mock_invoke = mocker.patch("app.council.nodes._invoke_model")
@@ -105,6 +107,8 @@ class TestPipelineIntegration:
             "app.council.nodes.mission_session_service.is_duplicate_hash_for_user",
             return_value=True,
         )
+        # Force validation to be active during test, regardless of .env settings
+        mocker.patch("app.council.nodes.settings.SKIP_METADATA_VALIDATION", False)
 
         # 3. Initial State
         initial_state = {
