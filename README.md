@@ -33,9 +33,11 @@
 | `main.py` | Flask 앱 엔트리포인트 | |
 | `CONTRIBUTING.md` | **기여 가이드 — PR 전 필독** | [→ CONTRIBUTING.md](./CONTRIBUTING.md) |
 
-> **`tests/` vs `scripts/`**: 자동화 회귀 방지가 목적이면 `tests/`, 수동 탐색·디버깅이 목적이면 `scripts/`를 사용합니다. 자세한 차이는 각 폴더의 README를 참고하세요.
->
-> 현재 서비스 구조와 레거시 삭제 후보 검토는 [`docs/refactor-audit.md`](./docs/refactor-audit.md)에 정리되어 있습니다.
+- **`tests/`**: 자동화된 회귀 방지(Regression Test) 및 CI 환경에서의 검증이 목적인 경우에 사용합니다.
+- **`scripts/`**: 수동 탐색, 특정 모듈 디버깅, 혹은 일회성 벤치마크 수행이 목적인 경우에 사용합니다.
+- **참고 문서**:
+    - 상세한 전략 차이는 각 폴더의 `README`를 참고하세요.
+    - 현재 서비스 구조 및 레거시 삭제 후보 검토는 [`docs/refactor-audit.md`](./docs/refactor-audit.md)에 정리되어 있습니다.
 
 ---
 ## Front UI
@@ -168,8 +170,8 @@ flowchart TB
 
 **선택:**
 - SigLIP2(로컬) + BLIP(로컬)로 앙상블 투표, Qwen VL(API)은 Council 에스컬레이션 시 재호출
-- 미션 타입별 가중치 차등: Location(SigLIP2 60% · BLIP 40%) / Atmosphere(SigLIP2 75% · BLIP 25%)
-- 단일 모델 오탐을 다른 모델이 보정 — score 차이 ≥0.35 시 conflict 플래그
+- 미션 타입별 가중치 차등: Location(SigLIP2 30% · BLIP 70%) / Atmosphere(SigLIP2 80% · BLIP 20%)
+- 단일 모델 오탐을 다른 모델이 보정 — score 차이 ≥0.35 시 conflict 플래그 및 Qwen VL 재검증 강제 수행
 
 ### 2. 함수 체이닝 → LangGraph
 
@@ -273,7 +275,7 @@ uv run pre-commit install
 OPENAI_API_KEY=...
 OPENROUTER_API_KEY=...
 GEMINI_API_KEY=...
-MODEL_SELECTION_LOCATION=siglip2
+MODEL_SELECTION_LOCATION=ensemble
 MODEL_SELECTION_ATMOSPHERE=ensemble
 ```
 
