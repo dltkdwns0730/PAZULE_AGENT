@@ -9,11 +9,15 @@ from typing import Any
 
 import torch
 from PIL import Image
-from transformers import BlipForQuestionAnswering, BlipProcessor
 
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
+# ── 전역 캐시 ─────────────────────────────────────────────────────────────
+_processor = None
+_model = None
+_landmark_qa_data = None
 
 # ── 디바이스 및 전역 설정 ──────────────────────────────────────────────────
 DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
@@ -25,21 +29,27 @@ DATA_DIR: str = settings.DATA_DIR
 SUCCESS_THRESHOLD: float = 0.75
 
 
-def load_model() -> tuple[BlipProcessor | None, BlipForQuestionAnswering | None]:
-    """BLIP VQA 모델과 프로세서를 로드한다.
+def _load_blip() -> None:
+    """BLIP VQA 모델과 프로세서를 지연 로드한다."""
+    global _processor, _model
+    if _model is not None:
+        return
 
-    Returns:
-        (processor, model) 튜플. 로드 실패 시 (None, None).
-    """
-    logger.info("BLIP VQA 모델 로딩 중: '%s'...", MODEL_NAME)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model_name = settings.BLIP_MODEL_ID
+    logger.info("BLIP VQA 모델 로딩 중: '%s' on %s...", model_name, device)
     try:
-        processor = BlipProcessor.from_pretrained(MODEL_NAME)
-        model = BlipForQuestionAnswering.from_pretrained(MODEL_NAME).to(DEVICE)
+        from transformers import BlipForQuestionAnswering, BlipProcessor
+
+        _processor = BlipProcessor.from_pretrained(model_name)
+        _model = BlipForQuestionAnswering.from_pretrained(model_name).to(device)
         logger.info("BLIP VQA 모델 로드 완료.")
-        return processor, model
+    except ImportError as exc:
+        logger.error("BLIP 모델 임포트 실패 (AutoModel 클래스 확인 필요): %s", exc)
+        raise
     except Exception as exc:
         logger.error("BLIP 모델 로드 오류: %s", exc)
-        return None, None
+        raise
 
 
 def load_landmark_qa() -> dict[str, Any]:
@@ -74,8 +84,7 @@ def load_landmark_qa() -> dict[str, Any]:
         return {}
 
 
-# ── 전역 모델/데이터 로드 (성능 최적화) ────────────────────────────────────
-processor, model = load_model()
+# load_landmark_qa() 호출은 데이터만 로딩하므로 유지하되 필요 시 지연 로딩 가능
 landmark_qa_data = load_landmark_qa()
 
 
@@ -94,7 +103,10 @@ def check_with_blip(
         is_success: 미션 성공 여부 (정답률 ≥ SUCCESS_THRESHOLD).
         hint_payload: 오답 질문 목록 (LLM 힌트 생성용). 성공 시 [].
     """
-    if not processor or not model:
+    _load_blip()
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    if not _processor or not _model:
         logger.error("BLIP 모델 미로드 상태")
         return False, []
 
@@ -117,9 +129,9 @@ def check_with_blip(
         return False, []
 
     try:
-        pixel_values = processor(images=raw_image, return_tensors="pt").pixel_values.to(
-            DEVICE
-        )
+        pixel_values = _processor(
+            images=raw_image, return_tensors="pt"
+        ).pixel_values.to(device)
     except Exception as exc:
         logger.error("이미지 전처리 오류: %s", exc)
         return False, []
@@ -132,15 +144,15 @@ def check_with_blip(
     for item in question_list:
         question, expected_answer = item[0], item[1]
         try:
-            inputs = processor(text=question, return_tensors="pt").to(DEVICE)
-            out = model.generate(
+            inputs = _processor(text=question, return_tensors="pt").to(device)
+            out = _model.generate(
                 pixel_values=pixel_values,
                 input_ids=inputs.input_ids,
                 attention_mask=inputs.attention_mask,
                 max_new_tokens=10,
             )
             model_answer = (
-                processor.decode(out[0], skip_special_tokens=True).strip().lower()
+                _processor.decode(out[0], skip_special_tokens=True).strip().lower()
             )
             if model_answer == expected_answer:
                 correct_count += 1
@@ -189,14 +201,14 @@ def get_visual_context(user_image_path: str) -> str:
         질문별 BLIP 답변을 줄바꿈으로 연결한 컨텍스트 문자열.
         모델 미로드 또는 이미지 오류 시 에러 메시지 문자열.
     """
-    if not processor or not model:
-        return "모델 미로드 상태"
+    _load_blip()
+    device = "cuda" if torch.cuda.is_available() else "cpu"
 
     try:
         raw_image = Image.open(user_image_path).convert("RGB")
-        pixel_values = processor(images=raw_image, return_tensors="pt").pixel_values.to(
-            DEVICE
-        )
+        pixel_values = _processor(
+            images=raw_image, return_tensors="pt"
+        ).pixel_values.to(device)
     except Exception as exc:
         return f"이미지 로드 오류: {exc}"
 
@@ -214,14 +226,14 @@ def get_visual_context(user_image_path: str) -> str:
 
     for question in probes:
         try:
-            inputs = processor(text=question, return_tensors="pt").to(DEVICE)
-            out = model.generate(
+            inputs = _processor(text=question, return_tensors="pt").to(device)
+            out = _model.generate(
                 pixel_values=pixel_values,
                 input_ids=inputs.input_ids,
                 attention_mask=inputs.attention_mask,
                 max_new_tokens=20,
             )
-            answer = processor.decode(out[0], skip_special_tokens=True).strip()
+            answer = _processor.decode(out[0], skip_special_tokens=True).strip()
             context_parts.append(f"- {question} -> {answer}")
         except Exception as exc:
             logger.warning("VQA 오류 ('%s'): %s", question, exc)
