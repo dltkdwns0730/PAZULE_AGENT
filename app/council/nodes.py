@@ -2,32 +2,59 @@
 
 from __future__ import annotations
 
+import concurrent.futures
+import logging
+import time
 import traceback
-from typing import Any, Dict, List
+from typing import Any
 
-from app.core.config import settings
+from app.core.config import constants, settings
+from app.core.utils import normalize_mission_type
 from app.metadata.validator import validate_metadata
 from app.models.prompts import build_prompt_bundle
 from app.services.mission_session_service import mission_session_service
 
+logger = logging.getLogger(__name__)
 
-def _normalize_mission_type(mission_type: str) -> str:
-    """미션 타입을 내부 시스템에서 다루기 편한 표준 형식으로 정규화합니다."""
-    if mission_type == "photo":
-        return "atmosphere"
-    return mission_type if mission_type in {"location", "atmosphere"} else "location"
+# 멀티스레딩 환경(ThreadPoolExecutor)에서 transformers 라이브러리의 지연 로딩 이슈를 방지하기 위해
+# 메인 스레드에서 주요 클래스들을 미리 임포트하여 캐싱한다.
+try:
+    from transformers import (  # noqa: F401
+        AutoModel,
+        AutoProcessor,
+        BlipForQuestionAnswering,
+        BlipProcessor,
+    )
+
+    logger.debug("Transformers core classes pre-loaded in main thread.")
+except ImportError:
+    logger.warning(
+        "Transformers classes not pre-loaded; might cause issues in sub-threads."
+    )
+
+
+# Local helper _normalize_mission_type removed in favor of app.core.utils.normalize_mission_type
 
 
 def _append_error(
-    errors: List[Dict[str, Any]],
+    errors: list[dict[str, Any]],
     code: str,
     message: str,
     node: str,
     retryable: bool,
     model: str | None = None,
 ) -> None:
-    """파이프라인 실행 중 발생한 오류나 거절 사유를 state의 errors 배열에 안전하게 추가합니다."""
-    payload = {
+    """파이프라인 실행 중 발생한 오류를 state errors 배열에 추가한다.
+
+    Args:
+        errors: 누적 오류 리스트 (in-place 수정).
+        code: 에러 코드 문자열.
+        message: 사람이 읽을 수 있는 에러 메시지.
+        node: 오류가 발생한 노드 이름.
+        retryable: 재시도 가능 여부.
+        model: (선택) 오류를 발생시킨 모델 이름.
+    """
+    payload: dict[str, Any] = {
         "code": code,
         "message": message,
         "node": node,
@@ -38,8 +65,171 @@ def _append_error(
     errors.append(payload)
 
 
-def validator(state: Dict[str, Any]) -> Dict[str, Any]:
-    """[검증기] 이미지 업로드 누락, 메타데이터 유효성, 유저 어뷰징(중복 해시) 등을 1차 방어합니다."""
+# ── validator 헬퍼 ──────────────────────────────────────────────────────────
+
+
+def _check_image_presence(
+    image_path: str | None,
+    artifacts: dict[str, Any],
+    errors: list[dict[str, Any]],
+    control_flags: dict[str, Any],
+) -> bool:
+    """이미지 경로 존재 여부를 확인한다. 누락 시 terminate 플래그를 설정한다.
+
+    Args:
+        image_path: 검사할 이미지 경로 (None이면 실패).
+        artifacts: 파이프라인 artifacts dict (in-place 수정).
+        errors: 누적 에러 리스트 (in-place 수정).
+        control_flags: 파이프라인 제어 플래그 dict (in-place 수정).
+
+    Returns:
+        이미지 경로가 유효하면 True, 없으면 False.
+    """
+    if image_path:
+        return True
+    logger.warning("[validator] BLOCKED: image_path missing")
+    _append_error(errors, "MISSING_IMAGE", "image_path is required", "validator", False)
+    artifacts["gate_result"] = {
+        "passed": False,
+        "reason": "image_path_missing",
+        "risk_flags": ["missing_image"],
+    }
+    control_flags["terminate"] = True
+    return False
+
+
+def _check_metadata(
+    image_path: str,
+    artifacts: dict[str, Any],
+) -> bool:
+    """EXIF/GPS 메타데이터 유효성을 검증한다. SKIP_METADATA_VALIDATION 설정을 반영한다.
+
+    Args:
+        image_path: 검사할 이미지 파일 경로.
+        artifacts: 파이프라인 artifacts dict (메타데이터 skip 여부 기록용).
+
+    Returns:
+        검증 통과 또는 skip 시 True, 실패 시 False.
+    """
+    if settings.SKIP_METADATA_VALIDATION:
+        logger.debug("[validator] SKIP_METADATA_VALIDATION=true → GPS·날짜 검증 건너뜀")
+        artifacts["metadata_check_skipped"] = True
+        return True
+    logger.debug("[validator] GPS·날짜 EXIF 검증 중...")
+    result = validate_metadata(image_path)
+    logger.debug("[validator] metadata_valid=%s", result)
+    artifacts["metadata_check_skipped"] = False
+    return result
+
+
+def _check_duplicate(
+    user_id: str,
+    image_path: str,
+    request_context: dict[str, Any],
+) -> tuple[str, bool]:
+    """이미지 해시를 계산하고 동일 사용자의 중복 제출 여부를 검사한다.
+
+    Args:
+        user_id: 사용자 식별자.
+        image_path: 해시를 계산할 이미지 파일 경로.
+        request_context: 파이프라인 request context dict (image_hash 기록용).
+
+    Returns:
+        (image_hash, is_duplicate) 튜플.
+    """
+    image_hash = mission_session_service.hash_file(image_path)
+    is_duplicate = mission_session_service.is_duplicate_hash_for_user(
+        user_id, image_hash
+    )
+    logger.debug(
+        "[validator] image_hash=%s...  is_duplicate=%s", image_hash[:12], is_duplicate
+    )
+    request_context["image_hash"] = image_hash
+    if settings.SKIP_METADATA_VALIDATION and is_duplicate:
+        logger.debug(
+            "[validator] SKIP_METADATA_VALIDATION=true → 중복 이미지 제출 검증 건너뜀"
+        )
+        is_duplicate = False
+    return image_hash, is_duplicate
+
+
+# ── evaluator 헬퍼 ─────────────────────────────────────────────────────────
+
+
+def _build_bypass_votes(selected_models: list[str]) -> list[dict[str, Any]]:
+    """BYPASS_MODEL_VALIDATION 모드 전용: score=1.0 가짜 투표 목록을 반환한다.
+
+    Args:
+        selected_models: 우회 처리할 모델 이름 리스트.
+
+    Returns:
+        각 모델에 대해 score=1.0인 투표 딕셔너리 리스트.
+    """
+    return [
+        {"model": m, "score": 1.0, "label": "match", "reason": "bypass_mode"}
+        for m in selected_models
+    ]
+
+
+def _process_model_future(
+    future: concurrent.futures.Future,
+    model_name: str,
+    errors: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    """단일 모델 future 결과를 처리하고 에러 시 None을 반환한다.
+
+    Args:
+        future: 모델 추론 Future 객체.
+        model_name: 모델 식별자 (로그·에러 기록용).
+        errors: 누적 에러 리스트 (in-place 수정).
+
+    Returns:
+        모델 투표 딕셔너리, 실패 또는 타임아웃 시 None.
+    """
+    timeout = settings.API_TIMEOUT_SECONDS + constants.MODEL_TIMEOUT_BUFFER_SECONDS
+    try:
+        start = time.time()
+        vote = future.result(timeout=timeout)
+        elapsed = time.time() - start
+        logger.info("[Evaluator/%s] 완료 (%.2f초)", model_name, elapsed)
+        return vote
+    except concurrent.futures.TimeoutError:
+        _append_error(
+            errors,
+            "MODEL_TIMEOUT",
+            f"{model_name} execution timed out",
+            "evaluator",
+            False,
+            model=model_name,
+        )
+        logger.warning("[Evaluator/%s] 시간 초과 (Timeout)", model_name)
+        return None
+    except Exception as exc:
+        _append_error(
+            errors,
+            "MODEL_FAILURE",
+            f"{model_name}: {exc}",
+            "evaluator",
+            True,
+            model=model_name,
+        )
+        logger.warning("[Evaluator/%s] 실패: %s", model_name, exc)
+        traceback.print_exc()
+        return None
+
+
+# ── 노드 함수 ──────────────────────────────────────────────────────────────
+
+
+def validator(state: dict[str, Any]) -> dict[str, Any]:
+    """[검증기] 이미지 누락·메타데이터 유효성·중복 제출을 1차 방어한다.
+
+    Args:
+        state: 파이프라인 상태 딕셔너리.
+
+    Returns:
+        갱신된 부분 상태 딕셔너리 (request_context, artifacts, errors, control_flags, messages).
+    """
     request_context = dict(state.get("request_context", {}))
     artifacts = dict(state.get("artifacts", {}))
     errors = list(state.get("errors", []))
@@ -49,18 +239,14 @@ def validator(state: Dict[str, Any]) -> Dict[str, Any]:
     user_id = request_context.get("user_id", "guest")
     mission_type = request_context.get("mission_type", "?")
 
-    print(f"\n{'='*55}")
-    print(f"  [STEP 1] validator")
-    print(f"  user={user_id}  mission_type={mission_type}")
-    print(f"  image_path={image_path}")
-    print(f"{'-'*55}")
+    logger.info(
+        "[validator] user=%s  mission_type=%s  image_path=%s",
+        user_id,
+        mission_type,
+        image_path,
+    )
 
-    if not image_path:
-        print("  ✗ BLOCKED: image_path missing")
-        print(f"{'='*55}\n")
-        _append_error(errors, "MISSING_IMAGE", "image_path is required", "validator", False)
-        artifacts["gate_result"] = {"passed": False, "reason": "image_path_missing", "risk_flags": ["missing_image"]}
-        control_flags["terminate"] = True
+    if not _check_image_presence(image_path, artifacts, errors, control_flags):
         return {
             "artifacts": artifacts,
             "errors": errors,
@@ -68,21 +254,8 @@ def validator(state: Dict[str, Any]) -> Dict[str, Any]:
             "messages": ["validator: missing image_path"],
         }
 
-    metadata_valid = True  # 기본값: 통과
-    if settings.SKIP_METADATA_VALIDATION:
-        print("  ⚙️  SKIP_METADATA_VALIDATION=true → GPS·날짜 검증 건너뜀")
-    else:
-        print("  ... GPS·날짜 EXIF 검증 중...")
-        metadata_valid = validate_metadata(image_path)
-        print(f"  metadata_valid={metadata_valid}")
-
-    image_hash = mission_session_service.hash_file(image_path)
-    is_duplicate = mission_session_service.is_duplicate_hash_for_user(user_id, image_hash)
-    print(f"  image_hash={image_hash[:12]}...  is_duplicate={is_duplicate}")
-
-    if settings.SKIP_METADATA_VALIDATION and is_duplicate:
-        print("  ⚙️  SKIP_METADATA_VALIDATION=true → 중복 이미지 제출 검증(duplicate) 건너뜀")
-        is_duplicate = False
+    metadata_valid = _check_metadata(image_path, artifacts)
+    image_hash, is_duplicate = _check_duplicate(user_id, image_path, request_context)
 
     risk_flags: list[str] = []
     if not metadata_valid:
@@ -91,17 +264,15 @@ def validator(state: Dict[str, Any]) -> Dict[str, Any]:
         risk_flags.append("duplicate_image")
 
     passed = metadata_valid and not is_duplicate
-    reason = "passed" if passed else ",".join(risk_flags) if risk_flags else "blocked"
+    reason = "passed" if passed else (",".join(risk_flags) if risk_flags else "blocked")
 
     if not passed:
         control_flags["terminate"] = True
         _append_error(errors, "GATE_BLOCKED", reason, "validator", False)
-        print(f"  ✗ BLOCKED: {reason}")
+        logger.warning("[validator] BLOCKED: %s", reason)
     else:
-        print(f"  ✓ PASSED")
-    print(f"{'='*55}\n")
+        logger.info("[validator] PASSED")
 
-    request_context["image_hash"] = image_hash
     artifacts["gate_result"] = {
         "passed": passed,
         "reason": reason,
@@ -119,10 +290,19 @@ def validator(state: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def router(state: Dict[str, Any]) -> Dict[str, Any]:
-    """[분배기] 미션 종류에 따라 평가기(Evaluator)로 안전하게 트래픽을 분배할 준비를 합니다."""
+def router(state: dict[str, Any]) -> dict[str, Any]:
+    """[분배기] 미션 종류에 따라 평가기(Evaluator)로 트래픽을 분배할 준비를 한다.
+
+    Args:
+        state: 파이프라인 상태 딕셔너리.
+
+    Returns:
+        갱신된 부분 상태 딕셔너리 (request_context, route_decision, messages).
+    """
     request_context = dict(state.get("request_context", {}))
-    mission_type = _normalize_mission_type(request_context.get("mission_type", "location"))
+    mission_type = normalize_mission_type(
+        request_context.get("mission_type", "location")
+    )
     request_context["mission_type"] = mission_type
     route_decision = {
         "next_node": "model_fanout",
@@ -138,7 +318,15 @@ def router(state: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _select_models(mission_type: str, override: str | None = None) -> list[str]:
-    """미션 유형과 커스텀 오버라이드 값에 기반하여 투입할 비전 모델 리스트를 산출합니다."""
+    """미션 유형과 커스텀 오버라이드 값에 기반하여 투입할 비전 모델 리스트를 반환한다.
+
+    Args:
+        mission_type: 'location' | 'atmosphere'.
+        override: 클라이언트 지정 모델 오버라이드 문자열 (선택).
+
+    Returns:
+        사용할 모델 이름 리스트.
+    """
     if override:
         mode = override.lower().strip()
         if mode == "ensemble":
@@ -160,8 +348,25 @@ def _select_models(mission_type: str, override: str | None = None) -> list[str]:
     return [mode]
 
 
-def _invoke_model(model_name: str, mission_type: str, image_path: str, answer: str, prompt_bundle):
-    """ModelRegistry를 통해 모델 프로브를 조회하고 실행한다."""
+def _invoke_model(
+    model_name: str,
+    mission_type: str,
+    image_path: str,
+    answer: str,
+    prompt_bundle: Any,
+) -> dict[str, Any]:
+    """ModelRegistry를 통해 모델 프로브를 조회하고 실행한다.
+
+    Args:
+        model_name: 실행할 모델 식별자.
+        mission_type: 'location' | 'atmosphere'.
+        image_path: 평가할 이미지 파일 경로.
+        answer: 오늘의 정답 키워드.
+        prompt_bundle: 모델에 전달할 프롬프트 번들.
+
+    Returns:
+        모델 투표 딕셔너리 (score, label, reason 포함).
+    """
     from app.models.model_registry import ModelRegistry
 
     registry = ModelRegistry.get_instance()
@@ -169,86 +374,76 @@ def _invoke_model(model_name: str, mission_type: str, image_path: str, answer: s
     return probe.probe(mission_type, image_path, answer, prompt_bundle)
 
 
-def evaluator(state: Dict[str, Any]) -> Dict[str, Any]:
-    """[평가기] 선택된 모델 조합(Ensemble/가벼운 단일 모델)에 이미지를 투입하고 각 AI의 점수를 받아옵니다."""
+def evaluator(state: dict[str, Any]) -> dict[str, Any]:
+    """[평가기] 선택된 모델 앙상블을 병렬 실행하고 각 AI 투표를 수집한다.
+
+    Args:
+        state: 파이프라인 상태 딕셔너리.
+
+    Returns:
+        갱신된 부분 상태 딕셔너리 (artifacts, errors, messages).
+    """
     request_context = dict(state.get("request_context", {}))
     artifacts = dict(state.get("artifacts", {}))
     errors = list(state.get("errors", []))
-    mission_type = _normalize_mission_type(request_context.get("mission_type", "location"))
+    mission_type = normalize_mission_type(
+        request_context.get("mission_type", "location")
+    )
     image_path = request_context.get("image_path")
     answer = request_context.get("answer")
-
-    import concurrent.futures
-    import time
 
     selected_models = _select_models(
         mission_type, request_context.get("model_selection")
     )
     prompt_bundle = build_prompt_bundle(mission_type, answer)
 
-    # ── 개발용 우회 스위치 ─────────────────────────────────────
     if settings.BYPASS_MODEL_VALIDATION:
-        print("  ⚙️  [evaluator] BYPASS_MODEL_VALIDATION=true → 모델 추론 건너뜀, score=1.0 강제")
-        votes = [
-            {"model": m, "score": 1.0, "label": "match", "reason": "bypass_mode"}
-            for m in selected_models
-        ]
+        logger.info(
+            "[evaluator] BYPASS_MODEL_VALIDATION=true → 모델 추론 건너뜀, score=1.0 강제"
+        )
         artifacts["prompt_bundle"] = prompt_bundle
         artifacts["selected_models"] = selected_models
-        artifacts["model_votes"] = votes
+        artifacts["model_votes"] = _build_bypass_votes(selected_models)
         return {
             "artifacts": artifacts,
             "errors": errors,
             "messages": [f"evaluator: bypass ({','.join(selected_models)})"],
         }
-    # ─────────────────────────────────────────────────────────────
 
-    votes: list[Dict[str, Any]] = []
-
-    print(f"\n  --> [Agent: Evaluator] {len(selected_models)}개 모델 동시 평가 시작: {','.join(selected_models)}")
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(selected_models)) as executor:
+    logger.info(
+        "[evaluator] %d개 모델 동시 평가 시작: %s",
+        len(selected_models),
+        ",".join(selected_models),
+    )
+    votes: list[dict[str, Any]] = []
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=len(selected_models)
+    ) as executor:
         future_to_model = {
-            executor.submit(_invoke_model, model_name, mission_type, image_path, answer, prompt_bundle): model_name
+            executor.submit(
+                _invoke_model,
+                model_name,
+                mission_type,
+                image_path,
+                answer,
+                prompt_bundle,
+            ): model_name
             for model_name in selected_models
         }
-
         for future in concurrent.futures.as_completed(future_to_model):
             model_name = future_to_model[future]
-            try:
-                start_time = time.time()
-                # 설정된 API_TIMEOUT_SECONDS보다 조금 더 여유를 두어 Python 수준의 Timeout 발생.
-                vote = future.result(timeout=settings.API_TIMEOUT_SECONDS + 5.0)
-                elapsed = time.time() - start_time
-                print(f"  --> [Agent: Evaluator / Model: {model_name}] 완료 ({elapsed:.2f}초)")
+            vote = _process_model_future(future, model_name, errors)
+            if vote is not None:
                 votes.append(vote)
-            except concurrent.futures.TimeoutError:
-                _append_error(
-                    errors,
-                    "MODEL_TIMEOUT",
-                    f"{model_name} execution timed out",
-                    "evaluator",
-                    False,
-                    model=model_name,
-                )
-                print(f"  ⚠️ [Agent: Evaluator / Model: {model_name}] 시간 초과 (Timeout)")
-            except Exception as exc:
-                _append_error(
-                    errors,
-                    "MODEL_FAILURE",
-                    f"{model_name}: {exc}",
-                    "evaluator",
-                    True,
-                    model=model_name,
-                )
-                print(f"  ⚠️ [Agent: Evaluator / Model: {model_name}] 실패: {exc}")
-                traceback.print_exc()
 
     artifacts["prompt_bundle"] = prompt_bundle
     artifacts["selected_models"] = selected_models
     artifacts["model_votes"] = votes
 
     if not votes:
-        _append_error(errors, "NO_MODEL_VOTES", "No models produced output", "evaluator", False)
+        _append_error(
+            errors, "NO_MODEL_VOTES", "No models produced output", "evaluator", False
+        )
 
     return {
         "artifacts": artifacts,
@@ -257,28 +452,39 @@ def evaluator(state: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def aggregator(state: Dict[str, Any]) -> Dict[str, Any]:
-    """[취합기] 다수의 모델 의견(Score)을 미션 가중치 스펙에 맞춰 하나의 대표 점수(Merged Score)로 병합합니다.
-    모델 간 이견이 클 경우 충돌(Conflict) 플래그를 세웁니다."""
+def aggregator(state: dict[str, Any]) -> dict[str, Any]:
+    """[취합기] 다수의 모델 점수를 가중치 스펙에 맞춰 대표 점수로 병합한다.
+
+    모델 간 이견이 ENSEMBLE_CONFLICT_THRESHOLD 이상이면 conflict 플래그를 설정한다.
+
+    Args:
+        state: 파이프라인 상태 딕셔너리.
+
+    Returns:
+        갱신된 부분 상태 딕셔너리 (artifacts, messages).
+    """
     request_context = dict(state.get("request_context", {}))
     artifacts = dict(state.get("artifacts", {}))
-    mission_type = _normalize_mission_type(request_context.get("mission_type", "location"))
+    mission_type = normalize_mission_type(
+        request_context.get("mission_type", "location")
+    )
     votes = list(artifacts.get("model_votes", []))
 
-    if mission_type == "location":
-        weights = {"siglip2": 0.60, "blip": 0.40}
-    else:
-        weights = {"siglip2": 0.75, "blip": 0.25}
+    weights = (
+        constants.LOCATION_MODEL_WEIGHTS
+        if mission_type == "location"
+        else constants.ATMOSPHERE_MODEL_WEIGHTS
+    )
 
     weighted_sum = 0.0
     total_weight = 0.0
-    labels = set()
-    scores = []
+    labels: set[str] = set()
+    scores: list[float] = []
 
     for vote in votes:
         model = vote.get("model")
         score = float(vote.get("score", 0.0))
-        weight = weights.get(model, 0.1)
+        weight = weights.get(model, constants.DEFAULT_MODEL_WEIGHT)
         weighted_sum += score * weight
         total_weight += weight
         labels.add(vote.get("label"))
@@ -291,7 +497,20 @@ def aggregator(state: Dict[str, Any]) -> Dict[str, Any]:
         else settings.ATMOSPHERE_PASS_THRESHOLD
     )
     merged_label = "match" if merged_score >= threshold else "mismatch"
-    conflict = len(labels) > 1 and (max(scores) - min(scores) >= 0.35 if scores else False)
+    conflict = len(labels) > 1 and (
+        max(scores) - min(scores) >= constants.ENSEMBLE_CONFLICT_THRESHOLD
+        if scores
+        else False
+    )
+
+    logger.info(
+        "[aggregator] votes=%d  merged_score=%.4f  threshold=%s  label=%s  conflict=%s",
+        len(votes),
+        merged_score,
+        threshold,
+        merged_label,
+        conflict,
+    )
 
     artifacts["ensemble_result"] = {
         "mission_type": mission_type,
@@ -301,16 +520,23 @@ def aggregator(state: Dict[str, Any]) -> Dict[str, Any]:
         "conflict": conflict,
         "vote_count": len(votes),
     }
-    print(f"{'='*55}")
-    print(f"  [STEP 4] aggregator")
-    print(f"  votes={len(votes)}  merged_score={merged_score:.4f}  threshold={threshold}")
-    print(f"  merged_label={merged_label}  conflict={conflict}")
-    print(f"{'='*55}\n")
-    return {"artifacts": artifacts, "messages": [f"aggregator: score={merged_score:.2f}"]}
+    return {
+        "artifacts": artifacts,
+        "messages": [f"aggregator: score={merged_score:.2f}"],
+    }
 
 
-def judge(state: Dict[str, Any]) -> Dict[str, Any]:
-    """[심판] 최종 산출된 통과/실패 기준을 적용하여 사진의 제출 스코어가 미션 합격을 달성했는지 확정합니다."""
+def judge(state: dict[str, Any]) -> dict[str, Any]:
+    """[심판] 앙상블 점수를 기반으로 미션 합격 여부를 최종 확정한다.
+
+    conflict가 있고 점수가 COUNCIL_BORDERLINE_MARGIN 이내이면 council 검토를 요청한다.
+
+    Args:
+        state: 파이프라인 상태 딕셔너리.
+
+    Returns:
+        갱신된 부분 상태 딕셔너리 (artifacts, errors, control_flags, messages).
+    """
     artifacts = dict(state.get("artifacts", {}))
     control_flags = dict(state.get("control_flags", {}))
     errors = list(state.get("errors", []))
@@ -318,15 +544,12 @@ def judge(state: Dict[str, Any]) -> Dict[str, Any]:
     gate_result = artifacts.get("gate_result", {})
     ensemble = artifacts.get("ensemble_result", {})
 
-    print(f"{'='*55}")
-    print(f"  [STEP 6] judge")
     merged_score = float(ensemble.get("merged_score", 0.0))
     threshold = float(ensemble.get("threshold", 1.0))
     conflict = bool(ensemble.get("conflict"))
 
     if not gate_result.get("passed"):
-        print(f"  ✗ gate not passed → forced fail")
-        print(f"{'='*55}\n")
+        logger.info("[judge] gate not passed → forced fail")
         judgment = {
             "success": False,
             "reason": gate_result.get("reason", "gate_blocked"),
@@ -338,16 +561,18 @@ def judge(state: Dict[str, Any]) -> Dict[str, Any]:
 
     success = merged_score >= threshold
     reason = "score_passed" if success else "score_below_threshold"
-    print(f"  score={merged_score:.4f}  threshold={threshold}  pass={success}")
+    logger.info(
+        "[judge] score=%.4f  threshold=%s  pass=%s", merged_score, threshold, success
+    )
 
-    if conflict and merged_score < (threshold + 0.08):
+    borderline = threshold + settings.COUNCIL_BORDERLINE_MARGIN
+    if conflict and merged_score < borderline:
         success = False
         reason = "model_conflict_requires_retry"
         control_flags["manual_review"] = True
         _append_error(errors, "MODEL_CONFLICT", reason, "judge", False)
-        print(f"  ✗ conflict detected → overridden to fail")
+        logger.warning("[judge] conflict detected → overridden to fail")
 
-    # Council verdict 교차 검증
     council_verdict = artifacts.get("council_verdict")
     council_override = False
     if council_verdict:
@@ -356,13 +581,11 @@ def judge(state: Dict[str, Any]) -> Dict[str, Any]:
             council_override = True
             success = council_approved
             reason = f"council_override: {council_verdict.get('reason', 'N/A')}"
-            print(f"  ⚠️  council override → success={success}")
+            logger.warning("[judge] council override → success=%s", success)
         if council_verdict.get("escalated"):
             control_flags["manual_review"] = True
 
-    result_icon = "✓" if success else "✗"
-    print(f"  {result_icon} FINAL: success={success}  reason={reason}")
-    print(f"{'='*55}\n")
+    logger.info("[judge] FINAL: success=%s  reason=%s", success, reason)
 
     artifacts["judgment"] = {
         "success": success,
@@ -380,31 +603,50 @@ def judge(state: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def policy(state: Dict[str, Any]) -> Dict[str, Any]:
-    """[정책] AI 판단을 통과했더라도 비즈니스 정책(어뷰징, 이벤트 중단 등)상 쿠폰 지급 요건이 되는지 조사합니다."""
+def policy(state: dict[str, Any]) -> dict[str, Any]:
+    """[정책] AI 판단 통과 여부와 리스크 플래그를 종합해 쿠폰 지급 자격을 결정한다.
+
+    Args:
+        state: 파이프라인 상태 딕셔너리.
+
+    Returns:
+        갱신된 부분 상태 딕셔너리 (artifacts, messages).
+    """
     artifacts = dict(state.get("artifacts", {}))
     judgment = artifacts.get("judgment", {})
     gate = artifacts.get("gate_result", {})
     risk_flags = set(gate.get("risk_flags", []))
 
     eligible = bool(judgment.get("success")) and "duplicate_image" not in risk_flags
-    deny_reason = None if eligible else ("duplicate_image" if "duplicate_image" in risk_flags else judgment.get("reason"))
+    deny_reason = (
+        None
+        if eligible
+        else (
+            "duplicate_image"
+            if "duplicate_image" in risk_flags
+            else judgment.get("reason")
+        )
+    )
 
-    print(f"{'='*55}")
-    print(f"  [STEP 7] policy")
-    print(f"  coupon_eligible={eligible}  deny={deny_reason}")
-    print(f"{'='*55}\n")
+    logger.info("[policy] coupon_eligible=%s  deny=%s", eligible, deny_reason)
 
     artifacts["coupon_decision"] = {
         "eligible": eligible,
         "deny_reason": deny_reason,
-        "discount_rule": "10%_OFF",
+        "discount_rule": constants.DEFAULT_DISCOUNT_RULE,
     }
     return {"artifacts": artifacts, "messages": [f"policy: eligible={eligible}"]}
 
 
-def responder(state: Dict[str, Any]) -> Dict[str, Any]:
-    """[응답기] 파이프라인에서 누적된 방대한 State 데이터를 프론트엔드가 파싱하기 편한 API DTO 포맷으로 조립합니다."""
+def responder(state: dict[str, Any]) -> dict[str, Any]:
+    """[응답기] 파이프라인 State를 프론트엔드 API DTO 포맷으로 조립한다.
+
+    Args:
+        state: 파이프라인 상태 딕셔너리.
+
+    Returns:
+        갱신된 부분 상태 딕셔너리 (final_response, messages).
+    """
     request_context = dict(state.get("request_context", {}))
     artifacts = dict(state.get("artifacts", {}))
     errors = list(state.get("errors", []))
@@ -412,18 +654,18 @@ def responder(state: Dict[str, Any]) -> Dict[str, Any]:
     votes = artifacts.get("model_votes", [])
     ensemble = artifacts.get("ensemble_result", {})
     judgment = artifacts.get("judgment", {})
-    coupon_decision = artifacts.get("coupon_decision", {"eligible": False, "deny_reason": None})
+    coupon_decision = artifacts.get(
+        "coupon_decision", {"eligible": False, "deny_reason": None}
+    )
 
     mission_type = request_context.get("mission_type", "location")
     legacy_mission_type = "photo" if mission_type == "atmosphere" else mission_type
 
     success = bool(judgment.get("success")) if gate.get("passed") else False
     icon = "🎉" if success else "❌"
-    print(f"{'='*55}")
-    print(f"  [STEP 8] responder  →  {icon} {'SUCCESS' if success else 'FAIL'}")
+    logger.info("[responder] %s %s", icon, "SUCCESS" if success else "FAIL")
     if errors:
-        print(f"  errors: {[e.get('code') for e in errors]}")
-    print(f"{'='*55}\n")
+        logger.debug("[responder] errors: %s", [e.get("code") for e in errors])
 
     if not gate.get("passed"):
         msg = "제출이 정책을 통과하지 못했습니다."
@@ -432,7 +674,10 @@ def responder(state: Dict[str, Any]) -> Dict[str, Any]:
             "error": gate.get("reason", "gate_blocked"),
             "message": msg,
             "missionType": legacy_mission_type,
-            "decision_trace": {"route_decision": state.get("route_decision"), "errors": errors},
+            "decision_trace": {
+                "route_decision": state.get("route_decision"),
+                "errors": errors,
+            },
             "confidence": 0.0,
             "model_votes": votes,
         }
@@ -457,7 +702,11 @@ def responder(state: Dict[str, Any]) -> Dict[str, Any]:
             "model_votes": votes,
         }
         return {
-            "final_response": {"ui_theme": "confetti", "message": message, "data": final_data},
+            "final_response": {
+                "ui_theme": "confetti",
+                "message": message,
+                "data": final_data,
+            },
             "messages": ["responder: success"],
         }
 
@@ -478,6 +727,10 @@ def responder(state: Dict[str, Any]) -> Dict[str, Any]:
         "model_votes": votes,
     }
     return {
-        "final_response": {"ui_theme": "encouragement", "message": message, "data": final_data},
+        "final_response": {
+            "ui_theme": "encouragement",
+            "message": message,
+            "data": final_data,
+        },
         "messages": ["responder: fail"],
     }

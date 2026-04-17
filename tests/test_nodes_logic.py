@@ -1,12 +1,17 @@
 import unittest
 
-from app.council.nodes import coupon_policy_engine, decision_engine, evidence_aggregator, task_router
+from app.council.nodes import (
+    aggregator,
+    judge,
+    policy,
+    router,
+)
 
 
 class NodesLogicTest(unittest.TestCase):
     def test_task_router_normalizes_photo_to_atmosphere(self):
         state = {"request_context": {"mission_type": "photo"}}
-        out = task_router(state)
+        out = router(state)
         self.assertEqual(out["request_context"]["mission_type"], "atmosphere")
 
     def test_aggregator_creates_merged_score(self):
@@ -20,7 +25,7 @@ class NodesLogicTest(unittest.TestCase):
                 ]
             },
         }
-        out = evidence_aggregator(state)
+        out = aggregator(state)
         merged = out["artifacts"]["ensemble_result"]["merged_score"]
         self.assertGreater(merged, 0.0)
         self.assertLessEqual(merged, 1.0)
@@ -39,7 +44,7 @@ class NodesLogicTest(unittest.TestCase):
             "errors": [],
             "control_flags": {},
         }
-        out = decision_engine(state)
+        out = judge(state)
         self.assertFalse(out["artifacts"]["judgment"]["success"])
 
     def test_coupon_policy_checks_success(self):
@@ -49,7 +54,7 @@ class NodesLogicTest(unittest.TestCase):
                 "judgment": {"success": True},
             }
         }
-        out = coupon_policy_engine(state)
+        out = policy(state)
         self.assertTrue(out["artifacts"]["coupon_decision"]["eligible"])
 
 

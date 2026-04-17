@@ -6,10 +6,13 @@ VLM 프롬프트는 영어로 작성 — 한국어 프롬프트 대비 score 3~4
 
 from __future__ import annotations
 
-from typing import Any, Dict
+import logging
+from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # 한국어 랜드마크명 → 영어 descriptive 프롬프트 변환
-LANDMARK_EN: Dict[str, str] = {
+LANDMARK_EN: dict[str, str] = {
     "활판공방 인쇄기": "an outdoor sculpture of a vintage printing press covered in metal type blocks",
     "활돌이": "a pink cartoon character mascot statue",
     "마법천자문 손오공": "a colorful monkey boy statue with spiky red hair in purple clothes",
@@ -24,7 +27,7 @@ LANDMARK_EN: Dict[str, str] = {
 }
 
 # 한국어 분위기 키워드 → 영어 변환
-ATMOSPHERE_EN: Dict[str, str] = {
+ATMOSPHERE_EN: dict[str, str] = {
     "차분한": "calm and peaceful",
     "화사한": "bright and colorful",
     "활기찬": "lively and energetic",
@@ -36,13 +39,21 @@ ATMOSPHERE_EN: Dict[str, str] = {
 
 
 def _to_english(answer: str, mission_type: str) -> str:
-    """한국어 answer를 영어로 변환한다. 매핑에 없으면 원본 반환."""
+    """한국어 answer를 영어로 변환한다. 매핑에 없으면 원본 반환.
+
+    Args:
+        answer: 한국어 정답 키워드.
+        mission_type: 미션 유형 ('location' | 'atmosphere').
+
+    Returns:
+        영어로 변환된 정답 문자열. 매핑에 없으면 원본 반환.
+    """
     if mission_type == "location":
         return LANDMARK_EN.get(answer, answer)
     return ATMOSPHERE_EN.get(answer, answer)
 
 
-def build_prompt_bundle(mission_type: str, answer: str | None = None) -> Dict[str, Any]:
+def build_prompt_bundle(mission_type: str, answer: str | None = None) -> dict[str, Any]:
     """미션 유형과 정답 기반으로 프롬프트 번들을 생성한다.
 
     Args:

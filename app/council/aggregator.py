@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+import logging
+from typing import Any
 
 from app.council.judges import (
     BaseJudge,
@@ -13,20 +14,25 @@ from app.council.judges import (
     ThresholdJudge,
 )
 
+logger = logging.getLogger(__name__)
 
-def tiered_evaluate(context: JudgeContext) -> Dict[str, Any]:
+
+def tiered_evaluate(context: JudgeContext) -> dict[str, Any]:
     """Tier 1 → 2 → 3 순차 실행. needs_escalation=False면 조기 종료.
 
+    Args:
+        context: Judge 평가 컨텍스트.
+
     Returns:
-        {approved, confidence, reason, escalated, votes}
+        {approved, confidence, reason, escalated, tier_reached, votes} 딕셔너리.
     """
-    tiers: List[BaseJudge] = [
+    tiers: list[BaseJudge] = [
         ConsistencyJudge(),
         ThresholdJudge(),
         QwenFallbackJudge(),
     ]
 
-    verdicts: List[JudgeVerdict] = []
+    verdicts: list[JudgeVerdict] = []
     escalated = False
 
     for judge in tiers:

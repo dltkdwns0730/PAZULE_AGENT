@@ -209,6 +209,697 @@
       "max_submissions": 3,
       "submissions": [],
       "latest_judgment": null
+    },
+    {
+      "mission_id": "17010562-832f-4f02-b280-f19ba6c1acc4",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "location",
+      "answer": "로드킬 부엉이",
+      "hint": "로드킬 붱철이",
+      "status": "submitted",
+      "created_at": "2026-04-13T15:03:13.269848+00:00",
+      "expires_at": "2026-04-13T16:03:13.269848+00:00",
+      "max_submissions": 3,
+      "submissions": [
+        {
+          "submitted_at": "2026-04-13T15:03:23.238373+00:00",
+          "image_hash": "8c88b17a8a1b55d934dbda0ea1018e15ef17aa402ecb2e17eca557b6f64fde80",
+          "result_summary": {
+            "success": false,
+            "confidence": 0.0
+          }
+        },
+        {
+          "submitted_at": "2026-04-13T15:03:29.060363+00:00",
+          "image_hash": "8c88b17a8a1b55d934dbda0ea1018e15ef17aa402ecb2e17eca557b6f64fde80",
+          "result_summary": {
+            "success": false,
+            "confidence": 0.0
+          }
+        },
+        {
+          "submitted_at": "2026-04-13T15:03:40.141120+00:00",
+          "image_hash": "8c88b17a8a1b55d934dbda0ea1018e15ef17aa402ecb2e17eca557b6f64fde80",
+          "result_summary": {
+            "success": false,
+            "confidence": 0.0
+          }
+        }
+      ],
+      "latest_judgment": {
+        "success": false,
+        "error": "metadata_invalid,duplicate_image",
+        "message": "제출이 정책을 통과하지 못했습니다.",
+        "missionType": "location",
+        "decision_trace": {
+          "route_decision": null,
+          "errors": [
+            {
+              "code": "GATE_BLOCKED",
+              "message": "metadata_invalid,duplicate_image",
+              "node": "validator",
+              "retryable": false
+            }
+          ]
+        },
+        "confidence": 0.0,
+        "model_votes": []
+      }
+    },
+    {
+      "mission_id": "0dee6571-d80a-48ba-8fc4-57ada331645e",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "location",
+      "answer": "로드킬 부엉이",
+      "hint": "로드킬 붱철이",
+      "status": "created",
+      "created_at": "2026-04-13T15:03:56.881763+00:00",
+      "expires_at": "2026-04-13T16:03:56.881763+00:00",
+      "max_submissions": 3,
+      "submissions": [],
+      "latest_judgment": null
+    },
+    {
+      "mission_id": "d9fed181-bbdc-4eac-aba2-d775b39b1cc7",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "atmosphere",
+      "answer": "신비로운",
+      "hint": "신비로운 느낌이 나는 사진을 찍어보세요.",
+      "status": "created",
+      "created_at": "2026-04-13T15:05:33.706344+00:00",
+      "expires_at": "2026-04-13T16:05:33.706344+00:00",
+      "max_submissions": 3,
+      "submissions": [],
+      "latest_judgment": null
+    },
+    {
+      "mission_id": "bcda07de-7c07-41fa-8803-263d2b0865f6",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "location",
+      "answer": "로드킬 부엉이",
+      "hint": "로드킬 붱철이",
+      "status": "submitted",
+      "created_at": "2026-04-13T15:08:19.171749+00:00",
+      "expires_at": "2026-04-13T16:08:19.171749+00:00",
+      "max_submissions": 3,
+      "submissions": [
+        {
+          "submitted_at": "2026-04-13T15:08:22.972631+00:00",
+          "image_hash": "8c88b17a8a1b55d934dbda0ea1018e15ef17aa402ecb2e17eca557b6f64fde80",
+          "result_summary": {
+            "success": false,
+            "confidence": 0.0
+          }
+        },
+        {
+          "submitted_at": "2026-04-13T15:08:36.415549+00:00",
+          "image_hash": "8c88b17a8a1b55d934dbda0ea1018e15ef17aa402ecb2e17eca557b6f64fde80",
+          "result_summary": {
+            "success": false,
+            "confidence": 0.0
+          }
+        }
+      ],
+      "latest_judgment": {
+        "success": false,
+        "error": "duplicate_image",
+        "message": "제출이 정책을 통과하지 못했습니다.",
+        "missionType": "location",
+        "decision_trace": {
+          "route_decision": null,
+          "errors": [
+            {
+              "code": "GATE_BLOCKED",
+              "message": "duplicate_image",
+              "node": "validator",
+              "retryable": false
+            }
+          ]
+        },
+        "confidence": 0.0,
+        "model_votes": []
+      }
+    },
+    {
+      "mission_id": "f6f9e006-78b3-44bf-8843-d15d003767d0",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "location",
+      "answer": "로드킬 부엉이",
+      "hint": "로드킬 붱철이",
+      "status": "submitted",
+      "created_at": "2026-04-13T15:11:27.873514+00:00",
+      "expires_at": "2026-04-13T16:11:27.873514+00:00",
+      "max_submissions": 3,
+      "submissions": [
+        {
+          "submitted_at": "2026-04-13T15:11:31.484494+00:00",
+          "image_hash": "8c88b17a8a1b55d934dbda0ea1018e15ef17aa402ecb2e17eca557b6f64fde80",
+          "result_summary": {
+            "success": false,
+            "confidence": 0.0
+          }
+        }
+      ],
+      "latest_judgment": {
+        "success": false,
+        "error": "duplicate_image",
+        "message": "제출이 정책을 통과하지 못했습니다.",
+        "missionType": "location",
+        "decision_trace": {
+          "route_decision": null,
+          "errors": [
+            {
+              "code": "GATE_BLOCKED",
+              "message": "duplicate_image",
+              "node": "validator",
+              "retryable": false
+            }
+          ]
+        },
+        "confidence": 0.0,
+        "model_votes": []
+      }
+    },
+    {
+      "mission_id": "fcf7db99-b141-4129-9043-7bfd29341b0d",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "location",
+      "answer": "로드킬 부엉이",
+      "hint": "로드킬 붱철이",
+      "status": "submitted",
+      "created_at": "2026-04-13T15:11:55.879793+00:00",
+      "expires_at": "2026-04-13T16:11:55.879793+00:00",
+      "max_submissions": 3,
+      "submissions": [
+        {
+          "submitted_at": "2026-04-13T15:12:02.639524+00:00",
+          "image_hash": "8c88b17a8a1b55d934dbda0ea1018e15ef17aa402ecb2e17eca557b6f64fde80",
+          "result_summary": {
+            "success": false,
+            "confidence": 0.0
+          }
+        }
+      ],
+      "latest_judgment": {
+        "success": false,
+        "error": "duplicate_image",
+        "message": "제출이 정책을 통과하지 못했습니다.",
+        "missionType": "location",
+        "decision_trace": {
+          "route_decision": null,
+          "errors": [
+            {
+              "code": "GATE_BLOCKED",
+              "message": "duplicate_image",
+              "node": "validator",
+              "retryable": false
+            }
+          ]
+        },
+        "confidence": 0.0,
+        "model_votes": []
+      }
+    },
+    {
+      "mission_id": "1687fed1-d7ec-4331-9ad9-9bcc9a9ee052",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "atmosphere",
+      "answer": "신비로운",
+      "hint": "신비로운 느낌이 나는 사진을 찍어보세요.",
+      "status": "created",
+      "created_at": "2026-04-13T15:12:08.017199+00:00",
+      "expires_at": "2026-04-13T16:12:08.017199+00:00",
+      "max_submissions": 3,
+      "submissions": [],
+      "latest_judgment": null
+    },
+    {
+      "mission_id": "5e8f31f2-57e7-4ebd-8aa4-86e3b3577af0",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "location",
+      "answer": "로드킬 부엉이",
+      "hint": "로드킬 붱철이",
+      "status": "created",
+      "created_at": "2026-04-13T15:12:09.834596+00:00",
+      "expires_at": "2026-04-13T16:12:09.834596+00:00",
+      "max_submissions": 3,
+      "submissions": [],
+      "latest_judgment": null
+    },
+    {
+      "mission_id": "4df03a34-e519-457b-a3d1-007237fc47ec",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "location",
+      "answer": "로드킬 부엉이",
+      "hint": "로드킬 붱철이",
+      "status": "created",
+      "created_at": "2026-04-13T15:12:13.810152+00:00",
+      "expires_at": "2026-04-13T16:12:13.810152+00:00",
+      "max_submissions": 3,
+      "submissions": [],
+      "latest_judgment": null
+    },
+    {
+      "mission_id": "11c4f22f-aea1-449f-9d13-ea9a31588096",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "location",
+      "answer": "로드킬 부엉이",
+      "hint": "로드킬 붱철이",
+      "status": "created",
+      "created_at": "2026-04-13T15:12:22.121828+00:00",
+      "expires_at": "2026-04-13T16:12:22.121828+00:00",
+      "max_submissions": 3,
+      "submissions": [],
+      "latest_judgment": null
+    },
+    {
+      "mission_id": "d537545c-b22b-4e8a-8b24-c1296a70e12c",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "atmosphere",
+      "answer": "신비로운",
+      "hint": "신비로운 느낌이 나는 사진을 찍어보세요.",
+      "status": "created",
+      "created_at": "2026-04-13T15:12:24.864097+00:00",
+      "expires_at": "2026-04-13T16:12:24.864097+00:00",
+      "max_submissions": 3,
+      "submissions": [],
+      "latest_judgment": null
+    },
+    {
+      "mission_id": "6557071c-fc6b-4eed-9f86-e707bed69845",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "location",
+      "answer": "로드킬 부엉이",
+      "hint": "로드킬 붱철이",
+      "status": "submitted",
+      "created_at": "2026-04-13T15:12:29.640502+00:00",
+      "expires_at": "2026-04-13T16:12:29.640502+00:00",
+      "max_submissions": 3,
+      "submissions": [
+        {
+          "submitted_at": "2026-04-13T15:12:42.322888+00:00",
+          "image_hash": "8c88b17a8a1b55d934dbda0ea1018e15ef17aa402ecb2e17eca557b6f64fde80",
+          "result_summary": {
+            "success": false,
+            "confidence": 0.0
+          }
+        }
+      ],
+      "latest_judgment": {
+        "success": false,
+        "error": "duplicate_image",
+        "message": "제출이 정책을 통과하지 못했습니다.",
+        "missionType": "location",
+        "decision_trace": {
+          "route_decision": null,
+          "errors": [
+            {
+              "code": "GATE_BLOCKED",
+              "message": "duplicate_image",
+              "node": "validator",
+              "retryable": false
+            }
+          ]
+        },
+        "confidence": 0.0,
+        "model_votes": []
+      }
+    },
+    {
+      "mission_id": "aede2c01-a034-44c7-979b-b25a16741300",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "location",
+      "answer": "로드킬 부엉이",
+      "hint": "로드킬 붱철이",
+      "status": "submitted",
+      "created_at": "2026-04-13T15:20:03.256876+00:00",
+      "expires_at": "2026-04-13T16:20:03.256876+00:00",
+      "max_submissions": 3,
+      "submissions": [
+        {
+          "submitted_at": "2026-04-13T15:20:08.064739+00:00",
+          "image_hash": "8c88b17a8a1b55d934dbda0ea1018e15ef17aa402ecb2e17eca557b6f64fde80",
+          "result_summary": {
+            "success": false,
+            "confidence": 0.0
+          }
+        }
+      ],
+      "latest_judgment": {
+        "success": false,
+        "error": "duplicate_image",
+        "message": "제출이 정책을 통과하지 못했습니다.",
+        "missionType": "location",
+        "decision_trace": {
+          "route_decision": null,
+          "errors": [
+            {
+              "code": "GATE_BLOCKED",
+              "message": "duplicate_image",
+              "node": "validator",
+              "retryable": false
+            }
+          ]
+        },
+        "confidence": 0.0,
+        "model_votes": []
+      }
+    },
+    {
+      "mission_id": "d116d364-86f9-40ea-a1bd-a53c47d61093",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "location",
+      "answer": "로드킬 부엉이",
+      "hint": "로드킬 붱철이",
+      "status": "coupon_issued",
+      "created_at": "2026-04-13T15:22:08.306057+00:00",
+      "expires_at": "2026-04-13T16:22:08.306057+00:00",
+      "max_submissions": 3,
+      "submissions": [
+        {
+          "submitted_at": "2026-04-13T15:22:12.241553+00:00",
+          "image_hash": "93939c961653e31b8385baa045ddcf5c0e7cd0cff3fbe9e30a9dbd8ba581419b",
+          "result_summary": {
+            "success": true,
+            "confidence": 1.0
+          }
+        }
+      ],
+      "latest_judgment": {
+        "success": true,
+        "message": "미션 성공! 쿠폰 발급 단계로 이동할 수 있습니다.",
+        "missionType": "location",
+        "couponEligible": true,
+        "confidence": 1.0,
+        "decision_trace": {
+          "route_decision": {
+            "next_node": "model_fanout",
+            "reason": "mission_type=location",
+            "confidence": 1.0,
+            "fallback": "finalizer"
+          },
+          "judgment": {
+            "success": true,
+            "reason": "score_passed",
+            "confidence": 1.0,
+            "mission_type": "location",
+            "conflict": false,
+            "council_override": false
+          },
+          "coupon_decision": {
+            "eligible": true,
+            "deny_reason": null,
+            "discount_rule": "10%_OFF"
+          }
+        },
+        "model_votes": [
+          {
+            "model": "siglip2",
+            "score": 1.0,
+            "label": "match",
+            "reason": "bypass_mode"
+          }
+        ]
+      },
+      "coupon_code": "R9TW4HFS"
+    },
+    {
+      "mission_id": "b8ffa972-e6f3-4e03-baf2-caaaccbec532",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "atmosphere",
+      "answer": "신비로운",
+      "hint": "신비로운 느낌이 나는 사진을 찍어보세요.",
+      "status": "coupon_issued",
+      "created_at": "2026-04-13T15:24:11.471373+00:00",
+      "expires_at": "2026-04-13T16:24:11.471373+00:00",
+      "max_submissions": 3,
+      "submissions": [
+        {
+          "submitted_at": "2026-04-13T15:24:15.054789+00:00",
+          "image_hash": "93939c961653e31b8385baa045ddcf5c0e7cd0cff3fbe9e30a9dbd8ba581419b",
+          "result_summary": {
+            "success": true,
+            "confidence": 1.0
+          }
+        }
+      ],
+      "latest_judgment": {
+        "success": true,
+        "message": "미션 성공! 쿠폰 발급 단계로 이동할 수 있습니다.",
+        "missionType": "photo",
+        "couponEligible": true,
+        "confidence": 1.0,
+        "decision_trace": {
+          "route_decision": {
+            "next_node": "model_fanout",
+            "reason": "mission_type=atmosphere",
+            "confidence": 1.0,
+            "fallback": "finalizer"
+          },
+          "judgment": {
+            "success": true,
+            "reason": "score_passed",
+            "confidence": 1.0,
+            "mission_type": "atmosphere",
+            "conflict": false,
+            "council_override": false
+          },
+          "coupon_decision": {
+            "eligible": true,
+            "deny_reason": null,
+            "discount_rule": "10%_OFF"
+          }
+        },
+        "model_votes": [
+          {
+            "model": "siglip2",
+            "score": 1.0,
+            "label": "match",
+            "reason": "bypass_mode"
+          }
+        ]
+      },
+      "coupon_code": "ZK9Q4F4C"
+    },
+    {
+      "mission_id": "9b67ac2c-fbf1-420e-90a8-d07039a52cc5",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "atmosphere",
+      "answer": "신비로운",
+      "hint": "신비로운 느낌이 나는 사진을 찍어보세요.",
+      "status": "coupon_issued",
+      "created_at": "2026-04-13T15:27:57.882523+00:00",
+      "expires_at": "2026-04-13T16:27:57.882523+00:00",
+      "max_submissions": 3,
+      "submissions": [
+        {
+          "submitted_at": "2026-04-13T15:28:01.959960+00:00",
+          "image_hash": "93939c961653e31b8385baa045ddcf5c0e7cd0cff3fbe9e30a9dbd8ba581419b",
+          "result_summary": {
+            "success": true,
+            "confidence": 1.0
+          }
+        }
+      ],
+      "latest_judgment": {
+        "success": true,
+        "message": "미션 성공! 쿠폰 발급 단계로 이동할 수 있습니다.",
+        "missionType": "photo",
+        "couponEligible": true,
+        "confidence": 1.0,
+        "decision_trace": {
+          "route_decision": {
+            "next_node": "model_fanout",
+            "reason": "mission_type=atmosphere",
+            "confidence": 1.0,
+            "fallback": "finalizer"
+          },
+          "judgment": {
+            "success": true,
+            "reason": "score_passed",
+            "confidence": 1.0,
+            "mission_type": "atmosphere",
+            "conflict": false,
+            "council_override": false
+          },
+          "coupon_decision": {
+            "eligible": true,
+            "deny_reason": null,
+            "discount_rule": "10%_OFF"
+          }
+        },
+        "model_votes": [
+          {
+            "model": "siglip2",
+            "score": 1.0,
+            "label": "match",
+            "reason": "bypass_mode"
+          }
+        ]
+      },
+      "coupon_code": "73ZXTQ9B"
+    },
+    {
+      "mission_id": "e3533e5a-963f-47b3-a4e7-f1f423115379",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "atmosphere",
+      "answer": "신비로운",
+      "hint": "신비로운 느낌이 나는 사진을 찍어보세요.",
+      "status": "coupon_issued",
+      "created_at": "2026-04-13T15:30:20.711026+00:00",
+      "expires_at": "2026-04-13T16:30:20.711026+00:00",
+      "max_submissions": 3,
+      "submissions": [
+        {
+          "submitted_at": "2026-04-13T15:30:23.768689+00:00",
+          "image_hash": "93939c961653e31b8385baa045ddcf5c0e7cd0cff3fbe9e30a9dbd8ba581419b",
+          "result_summary": {
+            "success": true,
+            "confidence": 1.0
+          }
+        }
+      ],
+      "latest_judgment": {
+        "success": true,
+        "message": "미션 성공! 쿠폰 발급 단계로 이동할 수 있습니다.",
+        "missionType": "photo",
+        "couponEligible": true,
+        "confidence": 1.0,
+        "decision_trace": {
+          "route_decision": {
+            "next_node": "model_fanout",
+            "reason": "mission_type=atmosphere",
+            "confidence": 1.0,
+            "fallback": "finalizer"
+          },
+          "judgment": {
+            "success": true,
+            "reason": "score_passed",
+            "confidence": 1.0,
+            "mission_type": "atmosphere",
+            "conflict": false,
+            "council_override": false
+          },
+          "coupon_decision": {
+            "eligible": true,
+            "deny_reason": null,
+            "discount_rule": "10%_OFF"
+          }
+        },
+        "model_votes": [
+          {
+            "model": "siglip2",
+            "score": 1.0,
+            "label": "match",
+            "reason": "bypass_mode"
+          }
+        ]
+      },
+      "coupon_code": "AMXQPJY2"
+    },
+    {
+      "mission_id": "5d0ff326-39b3-49c2-9ff1-be53fc99e0ce",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "location",
+      "answer": "로드킬 부엉이",
+      "hint": "로드킬 붱철이",
+      "status": "created",
+      "created_at": "2026-04-13T15:36:33.206819+00:00",
+      "expires_at": "2026-04-13T16:36:33.206819+00:00",
+      "max_submissions": 3,
+      "submissions": [],
+      "latest_judgment": null
+    },
+    {
+      "mission_id": "9979c807-7f7e-44e8-9f0d-8126169efaa2",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "atmosphere",
+      "answer": "신비로운",
+      "hint": "신비로운 느낌이 나는 사진을 찍어보세요.",
+      "status": "created",
+      "created_at": "2026-04-13T15:36:35.217384+00:00",
+      "expires_at": "2026-04-13T16:36:35.217384+00:00",
+      "max_submissions": 3,
+      "submissions": [],
+      "latest_judgment": null
+    },
+    {
+      "mission_id": "127d170f-7831-4c7e-a9ee-321fb6590b3f",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "location",
+      "answer": "로드킬 부엉이",
+      "hint": "로드킬 붱철이",
+      "status": "coupon_issued",
+      "created_at": "2026-04-14T14:15:21.224400+00:00",
+      "expires_at": "2026-04-14T15:15:21.224400+00:00",
+      "max_submissions": 3,
+      "submissions": [
+        {
+          "submitted_at": "2026-04-14T14:15:25.717708+00:00",
+          "image_hash": "93939c961653e31b8385baa045ddcf5c0e7cd0cff3fbe9e30a9dbd8ba581419b",
+          "result_summary": {
+            "success": true,
+            "confidence": 1.0
+          }
+        }
+      ],
+      "latest_judgment": {
+        "success": true,
+        "message": "미션 성공! 쿠폰 발급 단계로 이동할 수 있습니다.",
+        "missionType": "location",
+        "couponEligible": true,
+        "confidence": 1.0,
+        "decision_trace": {
+          "route_decision": {
+            "next_node": "model_fanout",
+            "reason": "mission_type=location",
+            "confidence": 1.0,
+            "fallback": "finalizer"
+          },
+          "judgment": {
+            "success": true,
+            "reason": "score_passed",
+            "confidence": 1.0,
+            "mission_type": "location",
+            "conflict": false,
+            "council_override": false
+          },
+          "coupon_decision": {
+            "eligible": true,
+            "deny_reason": null,
+            "discount_rule": "10%_OFF"
+          }
+        },
+        "model_votes": [
+          {
+            "model": "siglip2",
+            "score": 1.0,
+            "label": "match",
+            "reason": "bypass_mode"
+          }
+        ]
+      },
+      "coupon_code": "DOTNFAZ9"
     }
   ]
 }

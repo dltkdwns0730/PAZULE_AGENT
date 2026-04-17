@@ -1,8 +1,15 @@
+"""사진 메타데이터(EXIF) 추출 및 위치·날짜 검증 모듈."""
+
+from __future__ import annotations
+
+import logging
 import os
 from datetime import datetime
 
 from PIL import Image
 from pillow_heif import register_heif_opener
+
+logger = logging.getLogger(__name__)
 
 # HEIC 포맷 지원 등록
 register_heif_opener()
@@ -14,11 +21,14 @@ MIN_LON = 126.683397
 MAX_LON = 126.690022
 
 
-def extract_gps_coordinates(file_path):
+def extract_gps_coordinates(file_path: str) -> tuple[float, float] | None:
     """HEIC/JPEG 파일에서 GPS 좌표를 추출한다.
 
+    Args:
+        file_path: 이미지 파일 경로.
+
     Returns:
-        (latitude, longitude) 튜플 또는 좌표가 없으면 None
+        (latitude, longitude) 튜플 또는 좌표가 없으면 None.
     """
     try:
         img = Image.open(file_path)
@@ -30,8 +40,15 @@ def extract_gps_coordinates(file_path):
         if not gps_info:
             return None
 
-        def convert_to_degrees(value):
-            """DMS(도/분/초)를 십진수 좌표로 변환"""
+        def convert_to_degrees(value: tuple[float, float, float]) -> float:
+            """DMS(도/분/초)를 십진수 좌표로 변환한다.
+
+            Args:
+                value: (도, 분, 초) 튜플.
+
+            Returns:
+                십진수 좌표값.
+            """
             d, m, s = value
             return d + (m / 60.0) + (s / 3600.0)
 
@@ -52,28 +69,38 @@ def extract_gps_coordinates(file_path):
             return (latitude, longitude)
 
         return None
-    except Exception as e:
-        print(f"GPS 추출 오류: {e}")
+    except Exception as exc:
+        logger.error("GPS 추출 오류: %s", exc)
         return None
 
 
-def is_in_bbox(lat, lon):
-    """주어진 좌표가 파주출판단지 BBox 내부에 있으면 True"""
+def is_in_bbox(lat: float, lon: float) -> bool:
+    """주어진 좌표가 파주출판단지 BBox 내부에 있는지 확인한다.
+
+    Args:
+        lat: 위도.
+        lon: 경도.
+
+    Returns:
+        BBox 내부이면 True.
+    """
     return (MIN_LAT <= lat <= MAX_LAT) and (MIN_LON <= lon <= MAX_LON)
 
 
-def quick_photo_summary(file_path):
-    """사진의 촬영 시각 + GPS + BBox 유효성 + 오늘 촬영 여부를 검사한다.
+def quick_photo_summary(file_path: str) -> bool:
+    """사진의 촬영 시각·GPS·BBox 유효성·오늘 촬영 여부를 검사한다.
+
+    Args:
+        file_path: 검사할 이미지 파일 경로.
 
     Returns:
-        오늘 촬영 AND 출판단지 내부일 때 True
+        오늘 촬영 AND 출판단지 내부일 때 True.
     """
     try:
         img = Image.open(file_path)
         exif = img.getexif()
 
-        # 촬영 날짜 추출
-        date_str = None
+        date_str: str | None = None
         if exif:
             from PIL.ExifTags import TAGS
 
@@ -83,33 +110,32 @@ def quick_photo_summary(file_path):
                     date_str = value
                     break
 
-        # GPS 좌표 추출
         coords = extract_gps_coordinates(file_path)
         if not coords:
-            print("\n⚠️ GPS 정보 없음 (좌표 없음)")
+            logger.warning("GPS 정보 없음 (좌표 없음): %s", os.path.basename(file_path))
             return False
 
         lat, lon = coords
         inside = is_in_bbox(lat, lon)
 
-        # 오늘 날짜 비교
         today_str = datetime.now().strftime("%Y:%m:%d")
-        is_today = date_str and date_str.startswith(today_str)
+        is_today = bool(date_str and date_str.startswith(today_str))
 
-        # 결과 출력
-        print("\n" + "=" * 60)
-        print(f"📸 파일명: {os.path.basename(file_path)}")
-        print(f"🕒 촬영 시각: {date_str if date_str else '(정보 없음)'}")
-        print(f"📅 오늘 여부: {'✅ 오늘 촬영' if is_today else '❌ 오늘 아님'}")
-        print(f"📍 좌표: {lat:.6f}, {lon:.6f}")
-        print(f"📦 위치 판정: {'✅ 출판단지 내부' if inside else '❌ 출판단지 외부'}")
-        print("=" * 60)
+        logger.info(
+            "파일명: %s | 촬영 시각: %s | 오늘 여부: %s | 좌표: %.6f, %.6f | 위치 판정: %s",
+            os.path.basename(file_path),
+            date_str or "(정보 없음)",
+            "오늘 촬영" if is_today else "오늘 아님",
+            lat,
+            lon,
+            "출판단지 내부" if inside else "출판단지 외부",
+        )
 
         passed = is_today and inside
         if passed:
-            print("✅ 메타데이터 조건 통과")
+            logger.info("메타데이터 조건 통과: %s", file_path)
 
         return passed
-    except Exception as e:
-        print(f"❌ 처리 중 오류: {e}")
+    except Exception as exc:
+        logger.error("처리 중 오류: %s", exc)
         return False

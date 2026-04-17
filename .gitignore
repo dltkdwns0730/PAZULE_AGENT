@@ -54,3 +54,6 @@ ENV/
 # Node
 node_modules/
 front/dist/
+
+# AI Agents
+.claude/

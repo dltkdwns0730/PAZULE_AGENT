@@ -5,9 +5,8 @@
 
 from __future__ import annotations
 
-import os
-import traceback
-from typing import Any, Dict
+import logging
+from typing import Any
 
 import torch
 from PIL import Image
@@ -15,69 +14,74 @@ from transformers import AutoImageProcessor, AutoModel, GemmaTokenizerFast
 
 from app.core.config import settings
 
+logger = logging.getLogger(__name__)
+
 # 디바이스 설정 (사용 가능한 경우 GPU, 아니면 CPU)
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-MODEL_NAME = settings.SIGLIP2_MODEL_ID
+DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
+MODEL_NAME: str = settings.SIGLIP2_MODEL_ID
 
 _image_processor = None
 _tokenizer = None
 _model = None
 
 
-def _load_siglip2():
-    """SigLIP2 기반 모델과 프로세서를 지연(lazy) 로드한다."""
+def _load_siglip2() -> None:
+    """SigLIP2 기반 모델과 프로세서를 지연(lazy) 로드한다.
+
+    Raises:
+        Exception: 모델 로드 실패 시 예외를 그대로 전파한다.
+    """
     global _image_processor, _tokenizer, _model
     if _model is None:
-        print(f"SigLIP2 모델 로딩 중: '{MODEL_NAME}' on {DEVICE}...")
+        logger.info("SigLIP2 모델 로딩 중: '%s' on %s...", MODEL_NAME, DEVICE)
         try:
             _image_processor = AutoImageProcessor.from_pretrained(MODEL_NAME)
             _tokenizer = GemmaTokenizerFast.from_pretrained(MODEL_NAME)
             _model = AutoModel.from_pretrained(MODEL_NAME).to(DEVICE)
             _model.eval()
-            print("SigLIP2 모델 로드 완료.")
-        except Exception as e:
-            print(f"SigLIP2 모델 로드 중 오류 발생: {e}")
-            raise e
+            logger.info("SigLIP2 모델 로드 완료.")
+        except Exception as exc:
+            logger.error("SigLIP2 모델 로드 중 오류 발생: %s", exc)
+            raise
 
 
 def probe_with_siglip2(
     mission_type: str,
     image_path: str,
     answer: str,
-    prompt_bundle: Dict[str, Any],
-) -> Dict[str, Any]:
+    prompt_bundle: dict[str, Any],
+) -> dict[str, Any]:
     """SigLIP2 모델로 이미지-텍스트 유사도를 측정한다.
 
     Args:
-        mission_type: 미션 유형 ("location", "atmosphere" 등)
-        image_path: 이미지 파일 경로
-        answer: 미션 정답 키워드 (제출되어야 하는 목표)
-        prompt_bundle: 프롬프트 번들
+        mission_type: 미션 유형 ('location' | 'atmosphere' 등).
+        image_path: 이미지 파일 경로.
+        answer: 미션 정답 키워드 (목표).
+        prompt_bundle: 프롬프트 번들 (siglip2_candidates 포함).
 
     Returns:
-        모델 투표 결과 딕셔너리
+        모델 투표 결과 딕셔너리 (model, score, label, reason).
     """
     try:
         _load_siglip2()
-    except Exception as e:
+    except Exception as exc:
         return {
             "model": "siglip2",
             "score": 0.0,
             "label": "mismatch",
-            "reason": f"Model load failed: {e}",
+            "reason": f"Model load failed: {exc}",
         }
 
     try:
         raw_image = Image.open(image_path).convert("RGB")
-    except Exception as e:
+    except Exception as exc:
         return {
             "model": "siglip2",
             "score": 0.0,
             "label": "mismatch",
-            "reason": f"Image load failed: {str(e)}",
+            "reason": f"Image load failed: {str(exc)}",
         }
 
-    # prompt_bundle의 영어 후보 텍스트 사용 (한국어 → 영어 변환 완료 상태)
     candidates = prompt_bundle.get("siglip2_candidates")
     if not candidates:
         if mission_type == "atmosphere":
@@ -89,9 +93,9 @@ def probe_with_siglip2(
     target_text = candidates[0]
 
     try:
-        pixel_values = _image_processor(
-            images=raw_image, return_tensors="pt"
-        )["pixel_values"].to(DEVICE)
+        pixel_values = _image_processor(images=raw_image, return_tensors="pt")[
+            "pixel_values"
+        ].to(DEVICE)
         input_ids = _tokenizer(
             candidates, return_tensors="pt", padding="max_length", max_length=64
         )["input_ids"].to(DEVICE)
@@ -103,22 +107,19 @@ def probe_with_siglip2(
         logits_per_image = outputs.logits_per_image
         probs = torch.sigmoid(logits_per_image)  # shape: (1, 1)
 
-        # numpy float로 변환
         score = float(probs[0][0].cpu().numpy())
-    except Exception as e:
-        print(f"[SigLIP2 Inference Error] {e}")
-        traceback.print_exc()
+    except Exception as exc:
+        logger.error("[SigLIP2 Inference Error] %s", exc, exc_info=True)
         return {
             "model": "siglip2",
             "score": 0.0,
             "label": "mismatch",
-            "reason": f"Inference failed: {e}",
+            "reason": f"Inference failed: {exc}",
         }
 
-    # 스코어 기반으로 Pass/Fail 결정
     pass_threshold = (
-        settings.LOCATION_PASS_THRESHOLD 
-        if mission_type == "location" 
+        settings.LOCATION_PASS_THRESHOLD
+        if mission_type == "location"
         else settings.ATMOSPHERE_PASS_THRESHOLD
     )
     label = "match" if score >= pass_threshold else "mismatch"

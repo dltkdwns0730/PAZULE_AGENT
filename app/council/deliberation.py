@@ -2,21 +2,31 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict
+import logging
+from typing import Any
 
 from app.core.config import settings
 from app.council.aggregator import tiered_evaluate
 from app.council.judges import JudgeContext
 
+logger = logging.getLogger(__name__)
 
-def council(state: Dict[str, Any]) -> Dict[str, Any]:
-    """[위원회] tiered_evaluate 실행 → artifacts에 council_verdict 저장.
 
-    config.COUNCIL_ENABLED=False이면 패스스루 (verdict 없이 다음 노드로).
+def council(state: dict[str, Any]) -> dict[str, Any]:
+    """위원회 판정 노드: tiered_evaluate 실행 후 artifacts에 council_verdict를 저장한다.
+
+    config.COUNCIL_ENABLED=False이면 패스스루 (verdict 없이 다음 노드로 진행).
+
+    Args:
+        state: 파이프라인 전체 상태 딕셔너리.
+
+    Returns:
+        artifacts와 messages가 갱신된 상태 딕셔너리.
     """
     artifacts = dict(state.get("artifacts", {}))
 
     if not getattr(settings, "COUNCIL_ENABLED", True):
+        logger.debug("council: disabled (passthrough)")
         return {
             "artifacts": artifacts,
             "messages": ["council: disabled (passthrough)"],
@@ -38,9 +48,8 @@ def council(state: Dict[str, Any]) -> Dict[str, Any]:
 
     tier = verdict.get("tier_reached", 0)
     approved = verdict.get("approved", False)
+    logger.debug("council: tier=%s, approved=%s", tier, approved)
     return {
         "artifacts": artifacts,
-        "messages": [
-            f"council: tier={tier}, approved={approved}"
-        ],
+        "messages": [f"council: tier={tier}, approved={approved}"],
     }

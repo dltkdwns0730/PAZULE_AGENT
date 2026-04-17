@@ -28,7 +28,7 @@ dependencies = [
 ]
 
 [project.scripts]
-docs-audit = "app.docs_audit.cli:main"
+docs-audit = "app.legacy.docs_audit.cli:main"
 
 [project.optional-dependencies]
 # Model inference and orchestration stack
@@ -47,6 +47,15 @@ dev = [
   "pytest>=8.0.0",
 ]
 
+[[tool.uv.index]]
+# PyTorch CPU-only index to reduce build size (from ~2GB to ~200MB)
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
 [tool.setuptools.packages.find]
 # Include the application package tree
 where = ["."]
@@ -56,4 +65,6 @@ include = ["app*"]
 dev = [
     "pytest>=9.0.2",
     "pytest-mock>=3.15.1",
+    "ruff>=0.3.0",
+    "pre-commit>=3.5.0",
 ]

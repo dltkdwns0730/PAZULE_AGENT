@@ -1,16 +1,19 @@
-"""Prompt registry with AOP decorator for automatic prompt injection and logging."""
+"""프롬프트 레지스트리: AOP 데코레이터 기반 자동 프롬프트 주입 및 실행 로깅 모듈."""
 
 from __future__ import annotations
 
 import functools
+import logging
 import random
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from app.prompts.loader import load_prompt_yaml
 from app.prompts.middleware import sanitize_input, validate_template_vars
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -30,54 +33,88 @@ class PromptRecord:
 
     prompt_name: str
     variant: str
-    inputs: Dict[str, Any]
-    output: Optional[str] = None
+    inputs: dict[str, Any]
+    output: str | None = None
     latency_ms: float = 0.0
 
 
 class PromptRegistry:
     """싱글턴 프롬프트 레지스트리: YAML 로드, variant 선택, 실행 기록."""
 
-    _instance: Optional[PromptRegistry] = None
+    _instance: PromptRegistry | None = None
     _initialized: bool = False
 
     def __new__(cls) -> PromptRegistry:
+        """싱글턴 인스턴스를 반환한다."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
     def __init__(self) -> None:
+        """레지스트리를 초기화한다 (최초 1회만 실행)."""
         if self._initialized:
             return
-        self._templates: Dict[str, Dict[str, Any]] = {}
-        self._records: List[PromptRecord] = []
+        self._templates: dict[str, dict[str, Any]] = {}
+        self._records: list[PromptRecord] = []
         self._initialized = True
 
     @classmethod
     def get_instance(cls) -> PromptRegistry:
+        """싱글턴 인스턴스를 반환한다.
+
+        Returns:
+            PromptRegistry 싱글턴 인스턴스.
+        """
         return cls()
 
     def load(self, path: str | Path) -> None:
-        """단일 YAML 프롬프트 파일을 로드한다."""
+        """단일 YAML 프롬프트 파일을 로드한다.
+
+        Args:
+            path: 로드할 YAML 프롬프트 파일 경로.
+        """
         data = load_prompt_yaml(path)
         self._templates[data["name"]] = data
 
     def load_all(self, directory: str | Path) -> None:
-        """디렉토리 내 모든 YAML 프롬프트 파일을 로드한다."""
+        """디렉토리 내 모든 YAML 프롬프트 파일을 로드한다.
+
+        Args:
+            directory: YAML 파일이 있는 디렉토리 경로.
+        """
         directory = Path(directory)
         if not directory.exists():
             return
         for yaml_path in sorted(directory.glob("*.yaml")):
             self.load(yaml_path)
 
-    def get_template(self, name: str) -> Dict[str, Any]:
-        """이름으로 프롬프트 템플릿을 조회한다."""
+    def get_template(self, name: str) -> dict[str, Any]:
+        """이름으로 프롬프트 템플릿을 조회한다.
+
+        Args:
+            name: 프롬프트 템플릿 이름.
+
+        Returns:
+            프롬프트 템플릿 데이터 딕셔너리.
+
+        Raises:
+            KeyError: 해당 이름의 템플릿이 로드되지 않은 경우.
+        """
         if name not in self._templates:
-            raise KeyError(f"Prompt template '{name}' not found. Loaded: {list(self._templates.keys())}")
+            raise KeyError(
+                f"Prompt template '{name}' not found. Loaded: {list(self._templates.keys())}"
+            )
         return self._templates[name]
 
     def select_variant(self, name: str) -> PromptVersion:
-        """가중 랜덤으로 variant를 선택한다."""
+        """가중 랜덤으로 variant를 선택한다.
+
+        Args:
+            name: 프롬프트 템플릿 이름.
+
+        Returns:
+            선택된 PromptVersion 인스턴스.
+        """
         template = self.get_template(name)
         variants = template["variants"]
 
@@ -108,8 +145,16 @@ class PromptRegistry:
             user=chosen_data["user"],
         )
 
-    def render(self, name: str, inputs: Dict[str, Any]) -> PromptVersion:
-        """variant를 선택하고 입력값을 sanitize하여 렌더링한다."""
+    def render(self, name: str, inputs: dict[str, Any]) -> PromptVersion:
+        """variant를 선택하고 입력값을 sanitize하여 렌더링한다.
+
+        Args:
+            name: 프롬프트 템플릿 이름.
+            inputs: 렌더링에 사용할 입력 딕셔너리.
+
+        Returns:
+            렌더링된 PromptVersion 인스턴스.
+        """
         pv = self.select_variant(name)
 
         sanitized = {k: sanitize_input(str(v)) for k, v in inputs.items()}
@@ -122,11 +167,20 @@ class PromptRegistry:
         return pv
 
     def record(self, rec: PromptRecord) -> None:
-        """실행 기록을 저장한다."""
+        """실행 기록을 저장한다.
+
+        Args:
+            rec: 저장할 PromptRecord 인스턴스.
+        """
         self._records.append(rec)
 
     @property
-    def records(self) -> List[PromptRecord]:
+    def records(self) -> list[PromptRecord]:
+        """저장된 실행 기록 목록을 반환한다.
+
+        Returns:
+            PromptRecord 인스턴스 목록.
+        """
         return list(self._records)
 
 
@@ -135,6 +189,12 @@ def with_prompt(prompt_name: str) -> Callable:
 
     데코레이트된 함수는 keyword argument로 `prompt: PromptVersion`을 받는다.
     함수의 다른 kwargs는 프롬프트 템플릿 렌더링에 사용된다.
+
+    Args:
+        prompt_name: 주입할 프롬프트 템플릿 이름.
+
+    Returns:
+        데코레이터 함수.
     """
 
     def decorator(func: Callable) -> Callable:

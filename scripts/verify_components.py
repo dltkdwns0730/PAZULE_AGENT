@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import threading
 import time
 import traceback
 from datetime import datetime
@@ -33,9 +34,6 @@ SKIP = "⏭️  SKIP"
 
 results: list[dict] = []
 
-
-import threading
-import sys
 
 def _record(section: str, item: str, passed: bool, detail: str = ""):
     status = PASS if passed else FAIL
@@ -59,10 +57,12 @@ class ProgressLogger:
         while not self._stop_event.is_set():
             elapsed = time.time() - self.start_time
             now = datetime.now().strftime("%H:%M:%S")
-            sys.stdout.write(f"\r  [{now}] ⏳ {self.msg} (시간: {elapsed:.1f}s 진행중...)")
+            sys.stdout.write(
+                f"\r  [{now}] ⏳ {self.msg} (시간: {elapsed:.1f}s 진행중...)"
+            )
             sys.stdout.flush()
             self._stop_event.wait(0.5)
-            
+
     def __enter__(self):
         self.start_time = time.time()
         now = datetime.now().strftime("%H:%M:%S")
@@ -92,6 +92,7 @@ def _section(num: int, total: int, title: str):
 
 # ── 1. GPS 메타데이터 검증 ─────────────────────────────────────
 
+
 def verify_gps(image_path: str):
     """GPS 좌표 추출 및 BBox 범위 검증."""
     section = "GPS 메타데이터"
@@ -106,8 +107,12 @@ def verify_gps(image_path: str):
             lat, lon = coords
             _record(section, "GPS 추출", True, f"lat={lat:.6f}, lon={lon:.6f}")
             inside = is_in_bbox(lat, lon)
-            _record(section, "BBox 판정 (실제 좌표)", inside,
-                    f"{'출판단지 내부' if inside else '출판단지 외부'}")
+            _record(
+                section,
+                "BBox 판정 (실제 좌표)",
+                inside,
+                f"{'출판단지 내부' if inside else '출판단지 외부'}",
+            )
         else:
             _record(section, "GPS 추출", True, "GPS 데이터 없음 — None 반환 (정상)")
     except Exception as e:
@@ -168,7 +173,7 @@ def verify_models(image_path: str, answer: str, mission_type: str):
         with ProgressLogger("Qwen (OpenRouter API) 비전 검증") as p:
             vote = probe_with_qwen(mission_type, image_path, answer, prompt_bundle)
             elapsed = time.time() - p.start_time
-            
+
         ok, detail = _validate_vote(vote)
         _record(section, f"Qwen (OpenRouter API, {elapsed:.1f}s)", ok, detail)
         all_votes.append(vote)
@@ -186,7 +191,7 @@ def verify_models(image_path: str, answer: str, mission_type: str):
             else:
                 vote = probe_with_blip_atmosphere(image_path, answer, prompt_bundle)
             elapsed = time.time() - p.start_time
-            
+
         ok, detail = _validate_vote(vote)
         _record(section, f"BLIP (HuggingFace VQA, {elapsed:.1f}s)", ok, detail)
         all_votes.append(vote)
@@ -201,7 +206,7 @@ def verify_models(image_path: str, answer: str, mission_type: str):
         with ProgressLogger("SigLIP2 로컬 모델 매칭 검증") as p:
             vote = probe_with_siglip2(mission_type, image_path, answer, prompt_bundle)
             elapsed = time.time() - p.start_time
-            
+
         ok, detail = _validate_vote(vote)
         _record(section, f"SigLIP2 (Image-Text, {elapsed:.1f}s)", ok, detail)
         all_votes.append(vote)
@@ -213,6 +218,7 @@ def verify_models(image_path: str, answer: str, mission_type: str):
 
 
 # ── 3. 앙상블 취합 + 판정 ──────────────────────────────────────
+
 
 def verify_aggregation(model_votes: list[dict], mission_type: str):
     """aggregator + judge 노드 검증."""
@@ -239,7 +245,9 @@ def verify_aggregation(model_votes: list[dict], mission_type: str):
         conflict = ensemble.get("conflict", None)
 
         ok = merged >= 0 and threshold >= 0 and conflict is not None
-        detail = f"merged_score={merged:.4f}, threshold={threshold}, conflict={conflict}"
+        detail = (
+            f"merged_score={merged:.4f}, threshold={threshold}, conflict={conflict}"
+        )
         _record(section, "Aggregator", ok, detail)
     except Exception as e:
         _record(section, "Aggregator", False, str(e))
@@ -271,6 +279,7 @@ def verify_aggregation(model_votes: list[dict], mission_type: str):
 
 # ── 4. LLM 힌트 생성 ──────────────────────────────────────────
 
+
 def verify_llm_hint(answer: str):
     """오답 시나리오에서 LLM 힌트 생성 API 호출 검증."""
     section = "LLM 힌트 생성"
@@ -294,7 +303,9 @@ def verify_llm_hint(answer: str):
         ]
 
         with ProgressLogger("Gemini API 힌트 생성 요청") as p:
-            hint = llm_service.generate_blip_hint_from_questions(answer, mock_failed_questions)
+            hint = llm_service.generate_blip_hint_from_questions(
+                answer, mock_failed_questions
+            )
             elapsed = time.time() - p.start_time
 
         ok = isinstance(hint, str) and len(hint) > 0
@@ -311,6 +322,7 @@ def verify_llm_hint(answer: str):
 
 # ── 메인 실행 ─────────────────────────────────────────────────
 
+
 def main():
     parser = argparse.ArgumentParser(description="PAZULE 파이프라인 컴포넌트 검증")
     parser.add_argument(
@@ -318,7 +330,9 @@ def main():
         default=os.path.join(PROJECT_ROOT, "docs", "assets", "test_sample.png"),
         help="검증에 사용할 이미지 경로",
     )
-    parser.add_argument("--answer", default=None, help="미션 정답 키워드 (기본값: current_answer.json)")
+    parser.add_argument(
+        "--answer", default=None, help="미션 정답 키워드 (기본값: current_answer.json)"
+    )
     parser.add_argument(
         "--mission-type",
         default="location",
@@ -332,6 +346,7 @@ def main():
     if not answer:
         try:
             from app.services.answer_service import get_today_answers
+
             a1, a2, _, _ = get_today_answers()
             answer = a1 if args.mission_type == "location" else a2
         except Exception:
@@ -339,13 +354,16 @@ def main():
 
     # 프롬프트 레지스트리 + 모델 레지스트리 초기화
     from app.core.config import settings
+
     try:
         from app.prompts.registry import PromptRegistry
+
         PromptRegistry.get_instance().load_all(settings.PROMPT_TEMPLATES_DIR)
     except Exception:
         pass  # 프롬프트 없어도 기본값으로 동작
 
     from app.models.model_registry import register_default_models
+
     register_default_models()
 
     # 헤더
@@ -363,13 +381,14 @@ def main():
         print(f"\n  {WARN} 이미지 없음 — 테스트용 이미지를 자동 생성합니다...")
         try:
             from PIL import Image as PILImage
+
             os.makedirs(os.path.dirname(args.image), exist_ok=True)
             test_img = PILImage.new("RGB", (640, 480), (100, 150, 200))
             test_img.save(args.image)
             print(f"  → 생성 완료: {args.image}")
         except Exception as e:
             print(f"\n{FAIL} 테스트 이미지 자동 생성 실패: {e}")
-            print(f"  --image 옵션으로 직접 이미지 경로를 지정해주세요.")
+            print("  --image 옵션으로 직접 이미지 경로를 지정해주세요.")
             sys.exit(1)
 
     # 실행

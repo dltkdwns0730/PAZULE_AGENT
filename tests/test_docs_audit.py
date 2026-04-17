@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from app.docs_audit.audit import (
+from app.legacy.docs_audit.audit import (
     audit_project,
     render_report_markdown,
     scaffold_missing_documents,
@@ -46,17 +46,25 @@ class DocsAuditTest(unittest.TestCase):
             self.assertIn("feature_spec", result.missing_docs)
             self.assertIn("pipeline_verification", result.missing_docs)
             self.assertTrue(
-                any(f.code == "missing_end_to_end_pipeline_verification" for f in result.findings)
+                any(
+                    f.code == "missing_end_to_end_pipeline_verification"
+                    for f in result.findings
+                )
             )
 
     def test_audit_detects_broken_relative_links(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            _write(root / "README.md", "# Demo\n\n## Overview\n\nSee [spec](./docs/missing.md).\n")
+            _write(
+                root / "README.md",
+                "# Demo\n\n## Overview\n\nSee [spec](./docs/missing.md).\n",
+            )
 
             result = audit_project(root, profile="generic")
 
-            self.assertTrue(any(f.code == "broken_relative_link" for f in result.findings))
+            self.assertTrue(
+                any(f.code == "broken_relative_link" for f in result.findings)
+            )
 
     def test_report_and_template_writers_generate_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -67,15 +75,26 @@ class DocsAuditTest(unittest.TestCase):
             report_dir = root / "generated"
             write_report_files(result, report_dir)
             written_templates = write_templates(report_dir / "templates")
-            written_scaffolds = scaffold_missing_documents(result, report_dir / "scaffold")
+            written_scaffolds = scaffold_missing_documents(
+                result, report_dir / "scaffold"
+            )
 
             self.assertTrue((report_dir / "docs-audit-report.md").exists())
             self.assertTrue((report_dir / "docs-audit-report.json").exists())
             self.assertTrue((report_dir / "docs-index.generated.md").exists())
-            self.assertTrue(any(path.name == "feature-spec.template.md" for path in written_templates))
-            self.assertTrue(any(path.name == "feature-spec.todo.md" for path in written_scaffolds))
+            self.assertTrue(
+                any(
+                    path.name == "feature-spec.template.md"
+                    for path in written_templates
+                )
+            )
+            self.assertTrue(
+                any(path.name == "feature-spec.todo.md" for path in written_scaffolds)
+            )
 
-            payload = json.loads((report_dir / "docs-audit-report.json").read_text(encoding="utf-8"))
+            payload = json.loads(
+                (report_dir / "docs-audit-report.json").read_text(encoding="utf-8")
+            )
             self.assertEqual(payload["stats"]["document_count"], 1)
             self.assertIn("## Summary", render_report_markdown(result))
 
