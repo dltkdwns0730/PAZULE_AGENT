@@ -1,21 +1,28 @@
-"""Council Judge implementations: Consistency, Threshold, LLMReview."""
+"""Council Judge 구현체: ConsistencyJudge, ThresholdJudge, QwenFallbackJudge."""
 
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, TypedDict
+from typing import Any, TypedDict
 
 from app.core.config import settings
 
+logger = logging.getLogger(__name__)
+
 
 class JudgeContext(TypedDict):
+    """Judge 평가에 필요한 컨텍스트 정보."""
+
     mission_type: str
-    ensemble_result: Dict[str, Any]
-    model_votes: List[Dict[str, Any]]
-    request_context: Dict[str, Any]
+    ensemble_result: dict[str, Any]
+    model_votes: list[dict[str, Any]]
+    request_context: dict[str, Any]
 
 
 class JudgeVerdict(TypedDict):
+    """Judge 평가 결과."""
+
     judge: str
     approved: bool
     confidence: float
@@ -24,14 +31,33 @@ class JudgeVerdict(TypedDict):
 
 
 class BaseJudge(ABC):
+    """추상 Judge 기반 클래스."""
+
     @abstractmethod
-    def evaluate(self, context: JudgeContext) -> JudgeVerdict: ...
+    def evaluate(self, context: JudgeContext) -> JudgeVerdict:
+        """평가를 수행하고 판정 결과를 반환한다.
+
+        Args:
+            context: Judge 평가 컨텍스트.
+
+        Returns:
+            판정 결과 딕셔너리.
+        """
+        ...
 
 
 class ConsistencyJudge(BaseJudge):
     """Tier 1: 규칙 기반 필드 일관성 검증 (API 호출 없음)."""
 
     def evaluate(self, context: JudgeContext) -> JudgeVerdict:
+        """ensemble_result와 model_votes의 일관성을 검증한다.
+
+        Args:
+            context: Judge 평가 컨텍스트.
+
+        Returns:
+            일관성 검증 판정 결과.
+        """
         ensemble = context["ensemble_result"]
         votes = context["model_votes"]
 
@@ -41,13 +67,10 @@ class ConsistencyJudge(BaseJudge):
 
         issues: list[str] = []
 
-        # success/label 일관성: score >= threshold인데 label이 mismatch이면 모순
         if merged_score >= threshold and merged_label == "mismatch":
             issues.append("score >= threshold but label is mismatch")
         if merged_score < threshold and merged_label == "match":
             issues.append("score < threshold but label is match")
-
-        # 투표 없이 결과가 있으면 모순
         if not votes and merged_score > 0:
             issues.append("no model votes but score > 0")
 
@@ -73,6 +96,14 @@ class ThresholdJudge(BaseJudge):
     """Tier 2: 규칙 기반 경계값/충돌 검증 (API 호출 없음)."""
 
     def evaluate(self, context: JudgeContext) -> JudgeVerdict:
+        """점수 경계값과 모델 충돌 여부를 검증한다.
+
+        Args:
+            context: Judge 평가 컨텍스트.
+
+        Returns:
+            경계값/충돌 검증 판정 결과.
+        """
         ensemble = context["ensemble_result"]
         margin = getattr(settings, "COUNCIL_BORDERLINE_MARGIN", 0.08)
 
@@ -101,7 +132,6 @@ class ThresholdJudge(BaseJudge):
                 needs_escalation=True,
             )
 
-        # 명확한 성공 또는 실패
         approved = merged_score >= threshold
         return JudgeVerdict(
             judge="ThresholdJudge",
@@ -116,6 +146,14 @@ class QwenFallbackJudge(BaseJudge):
     """Tier 3: 조건부 Qwen-VL 심사 (borderline/conflict일 때만 무거운 VLM 단발 호출)."""
 
     def evaluate(self, context: JudgeContext) -> JudgeVerdict:
+        """Qwen-VL을 호출해 최종 판정을 수행한다.
+
+        Args:
+            context: Judge 평가 컨텍스트.
+
+        Returns:
+            Qwen-VL 기반 판정 결과. 호출 실패 시 ensemble 결과로 폴백.
+        """
         from app.models.model_registry import ModelRegistry
         from app.models.prompts import build_prompt_bundle
 
@@ -126,22 +164,20 @@ class QwenFallbackJudge(BaseJudge):
         answer = req.get("answer")
 
         try:
-            print(
-                "\n🚨 [Council] SigLIP2의 1차 판단이 모호하여, Qwen-VL(LLM)을 추가 호출합니다..."
+            logger.info(
+                "[Council] SigLIP2의 1차 판단이 모호하여, Qwen-VL(LLM)을 추가 호출합니다..."
             )
             registry = ModelRegistry.get_instance()
             probe = registry.get("qwen")
             prompt_bundle = build_prompt_bundle(mission_type, answer)
 
-            # 무거운 VLM을 이 순간에만 호출함
             qwen_vote = probe.probe(mission_type, image_path, answer, prompt_bundle)
 
-            # Qwen 결과를 바탕으로 최종 결론
             qwen_score = qwen_vote.get("score", 0.0)
             threshold = float(ensemble.get("threshold", 1.0))
             approved = qwen_score >= threshold
 
-            print(f"✅ [Council] 추가 모델(Qwen) 판정 완료! Score: {qwen_score:.2f}")
+            logger.info("[Council] 추가 모델(Qwen) 판정 완료. Score: %.2f", qwen_score)
 
             return JudgeVerdict(
                 judge="QwenFallbackJudge",
@@ -150,20 +186,27 @@ class QwenFallbackJudge(BaseJudge):
                 reason=f"Qwen-VL Fallback Override (Original score was borderline): {qwen_vote.get('reason', '')}",
                 needs_escalation=False,
             )
-        except Exception as e:
-            print(f"[QwenFallbackJudge] Error: {e}")
-            # Qwen 통신 실패 시 기존 ensemble(기존 Siglip2) 결과로 안전하게 fallback
+        except Exception as exc:
+            logger.error("[QwenFallbackJudge] Error: %s", exc)
             merged_score = float(ensemble.get("merged_score", 0.0))
             threshold = float(ensemble.get("threshold", 1.0))
             return JudgeVerdict(
                 judge="QwenFallbackJudge",
                 approved=merged_score >= threshold,
                 confidence=0.5,
-                reason=f"Qwen fallback failed, keeping original judgment: {e}",
+                reason=f"Qwen fallback failed, keeping original judgment: {exc}",
                 needs_escalation=False,
             )
 
-    def _format_votes(self, votes: List[Dict[str, Any]]) -> str:
+    def _format_votes(self, votes: list[dict[str, Any]]) -> str:
+        """투표 목록을 사람이 읽기 좋은 문자열로 포맷한다.
+
+        Args:
+            votes: 모델 투표 결과 목록.
+
+        Returns:
+            포맷된 투표 정보 문자열.
+        """
         lines = []
         for v in votes:
             lines.append(

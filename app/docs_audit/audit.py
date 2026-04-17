@@ -1,11 +1,15 @@
+"""프로젝트 문서 감사(audit) 핵심 로직 모듈."""
+
 from __future__ import annotations
 
 import json
+import logging
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
+logger = logging.getLogger(__name__)
 
 DOC_SUFFIXES = {".md", ".mdx", ".rst", ".txt"}
 SKIP_DIR_NAMES = {
@@ -81,6 +85,8 @@ MARKDOWN_LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 
 @dataclass
 class LinkRecord:
+    """문서 내 링크 정보."""
+
     target: str
     resolved_path: str | None
     is_relative: bool
@@ -89,6 +95,8 @@ class LinkRecord:
 
 @dataclass
 class DocumentRecord:
+    """감사 대상 문서의 메타데이터 및 내용 요약."""
+
     path: str
     relative_path: str
     doc_type: str
@@ -103,6 +111,8 @@ class DocumentRecord:
 
 @dataclass
 class AuditFinding:
+    """감사 결과 발견 항목."""
+
     severity: str
     code: str
     message: str
@@ -112,6 +122,8 @@ class AuditFinding:
 
 @dataclass
 class AuditResult:
+    """전체 감사 결과."""
+
     root_path: str
     profile: str
     detected_profile: str
@@ -123,6 +135,11 @@ class AuditResult:
     stats: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        """감사 결과를 직렬화 가능한 딕셔너리로 변환한다.
+
+        Returns:
+            감사 결과 딕셔너리.
+        """
         return {
             "root_path": self.root_path,
             "profile": self.profile,
@@ -137,6 +154,14 @@ class AuditResult:
 
 
 def detect_profile(root: Path) -> str:
+    """프로젝트 루트를 분석해 적합한 프로파일을 자동 감지한다.
+
+    Args:
+        root: 프로젝트 루트 경로.
+
+    Returns:
+        'ml-pipeline' | 'python-service' | 'frontend' | 'generic'.
+    """
     has_pyproject = (root / "pyproject.toml").exists()
     has_package_json = (root / "package.json").exists() or any(
         root.glob("**/package.json")
@@ -160,6 +185,18 @@ def detect_profile(root: Path) -> str:
 
 
 def audit_project(root_path: str | Path, profile: str = "auto") -> AuditResult:
+    """프로젝트 문서를 감사하고 결과를 반환한다.
+
+    Args:
+        root_path: 감사할 프로젝트 루트 경로.
+        profile: 감사 프로파일 ('auto' | 'generic' | 'python-service' | 'frontend' | 'ml-pipeline').
+
+    Returns:
+        전체 감사 결과 객체.
+
+    Raises:
+        FileNotFoundError: root_path가 존재하지 않을 때.
+    """
     root = Path(root_path).resolve()
     if not root.exists():
         raise FileNotFoundError(f"Root path does not exist: {root}")
@@ -188,6 +225,14 @@ def audit_project(root_path: str | Path, profile: str = "auto") -> AuditResult:
 
 
 def render_report_markdown(result: AuditResult) -> str:
+    """감사 결과를 마크다운 형식의 리포트 문자열로 렌더링한다.
+
+    Args:
+        result: 감사 결과 객체.
+
+    Returns:
+        마크다운 형식의 리포트 문자열.
+    """
     lines: list[str] = []
     lines.append("# Documentation Audit Report")
     lines.append("")
@@ -252,6 +297,14 @@ def render_report_markdown(result: AuditResult) -> str:
 
 
 def render_docs_index(result: AuditResult) -> str:
+    """감사 결과에서 문서 인덱스 마크다운을 생성한다.
+
+    Args:
+        result: 감사 결과 객체.
+
+    Returns:
+        마크다운 형식의 문서 인덱스 문자열.
+    """
     lines: list[str] = []
     lines.append("# Generated Documentation Index")
     lines.append("")
@@ -268,6 +321,15 @@ def render_docs_index(result: AuditResult) -> str:
 
 
 def write_report_files(result: AuditResult, output_dir: str | Path) -> list[Path]:
+    """감사 결과를 마크다운, JSON, 인덱스 파일로 저장한다.
+
+    Args:
+        result: 감사 결과 객체.
+        output_dir: 출력 디렉터리 경로.
+
+    Returns:
+        저장된 파일 경로 목록.
+    """
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     md_path = out_dir / "docs-audit-report.md"
@@ -282,6 +344,14 @@ def write_report_files(result: AuditResult, output_dir: str | Path) -> list[Path
 
 
 def write_templates(output_dir: str | Path) -> list[Path]:
+    """문서 템플릿 파일들을 지정된 디렉터리에 생성한다.
+
+    Args:
+        output_dir: 출력 디렉터리 경로.
+
+    Returns:
+        생성된 템플릿 파일 경로 목록.
+    """
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     files = {
@@ -301,6 +371,15 @@ def write_templates(output_dir: str | Path) -> list[Path]:
 def scaffold_missing_documents(
     result: AuditResult, output_dir: str | Path
 ) -> list[Path]:
+    """누락된 필수 문서 유형에 대한 스캐폴딩 파일을 생성한다.
+
+    Args:
+        result: 감사 결과 객체.
+        output_dir: 출력 디렉터리 경로.
+
+    Returns:
+        생성된 스캐폴딩 파일 경로 목록.
+    """
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     templates = {
@@ -325,6 +404,14 @@ def scaffold_missing_documents(
 
 
 def _collect_documents(root: Path) -> list[DocumentRecord]:
+    """루트 경로를 재귀 탐색하여 문서 레코드 목록을 수집한다.
+
+    Args:
+        root: 탐색할 루트 경로.
+
+    Returns:
+        DocumentRecord 목록.
+    """
     records: list[DocumentRecord] = []
     for path in sorted(root.rglob("*")):
         if not path.is_file():
@@ -341,6 +428,16 @@ def _collect_documents(root: Path) -> list[DocumentRecord]:
 
 
 def _build_document_record(root: Path, path: Path, text: str) -> DocumentRecord:
+    """단일 문서 파일에서 DocumentRecord를 생성한다.
+
+    Args:
+        root: 프로젝트 루트 경로.
+        path: 문서 파일 경로.
+        text: 문서 텍스트 내용.
+
+    Returns:
+        생성된 DocumentRecord.
+    """
     return DocumentRecord(
         path=str(path),
         relative_path=path.relative_to(root).as_posix(),
@@ -356,6 +453,15 @@ def _build_document_record(root: Path, path: Path, text: str) -> DocumentRecord:
 
 
 def _classify_document(path: Path, text: str) -> str:
+    """파일 경로와 내용을 기반으로 문서 유형을 분류한다.
+
+    Args:
+        path: 문서 파일 경로.
+        text: 문서 텍스트 내용.
+
+    Returns:
+        분류된 문서 유형 문자열.
+    """
     rel = path.as_posix().lower()
     name = path.name.lower()
     title = (_extract_title(text) or "").lower()
@@ -383,6 +489,14 @@ def _classify_document(path: Path, text: str) -> str:
 
 
 def _extract_title(text: str) -> str | None:
+    """문서 텍스트에서 H1 제목을 추출한다.
+
+    Args:
+        text: 문서 텍스트.
+
+    Returns:
+        제목 문자열 또는 None.
+    """
     for line in text.splitlines():
         stripped = line.strip()
         if stripped.startswith("# "):
@@ -391,6 +505,14 @@ def _extract_title(text: str) -> str | None:
 
 
 def _extract_headings(text: str) -> list[str]:
+    """문서 텍스트에서 모든 헤딩을 추출한다.
+
+    Args:
+        text: 문서 텍스트.
+
+    Returns:
+        헤딩 문자열 목록.
+    """
     return [
         re.sub(r"^#+\s*", "", line.strip()).strip()
         for line in text.splitlines()
@@ -399,6 +521,14 @@ def _extract_headings(text: str) -> list[str]:
 
 
 def _extract_metadata(text: str) -> dict[str, str]:
+    """문서 상단에서 메타데이터 패턴을 추출한다.
+
+    Args:
+        text: 문서 텍스트.
+
+    Returns:
+        메타데이터 키-값 딕셔너리.
+    """
     metadata: dict[str, str] = {}
     for key, pattern in COMMON_META_PATTERNS.items():
         match = pattern.search(text[:600])
@@ -408,6 +538,15 @@ def _extract_metadata(text: str) -> dict[str, str]:
 
 
 def _extract_links(path: Path, text: str) -> list[LinkRecord]:
+    """문서 텍스트에서 마크다운 링크를 추출하고 유효성을 검사한다.
+
+    Args:
+        path: 문서 파일 경로 (상대 링크 해석 기준).
+        text: 문서 텍스트.
+
+    Returns:
+        LinkRecord 목록.
+    """
     records: list[LinkRecord] = []
     for target in MARKDOWN_LINK_RE.findall(text):
         if target.startswith(("http://", "https://", "mailto:")) or target.startswith(
@@ -433,6 +572,14 @@ def _extract_links(path: Path, text: str) -> list[LinkRecord]:
 
 
 def _has_purpose_near_top(text: str) -> bool:
+    """문서 상단 20줄 내에 목적/개요 관련 키워드가 있는지 확인한다.
+
+    Args:
+        text: 문서 텍스트.
+
+    Returns:
+        목적 키워드가 상단에 있으면 True.
+    """
     lines = [line.strip().lower() for line in text.splitlines()[:20] if line.strip()]
     sample = " ".join(lines)
     return any(
@@ -444,6 +591,16 @@ def _has_purpose_near_top(text: str) -> bool:
 def _run_document_checks(
     root: Path, docs: list[DocumentRecord], profile: str
 ) -> list[AuditFinding]:
+    """문서 목록에 대해 규칙 기반 검사를 수행한다.
+
+    Args:
+        root: 프로젝트 루트 경로.
+        docs: 검사할 문서 레코드 목록.
+        profile: 적용할 감사 프로파일.
+
+    Returns:
+        AuditFinding 목록.
+    """
     findings: list[AuditFinding] = []
     doc_types = [doc.doc_type for doc in docs]
     if not docs:
@@ -457,91 +614,128 @@ def _run_document_checks(
         ]
 
     for doc in docs:
-        if doc.doc_type != "readme" and not doc.metadata.get("doc_class"):
-            findings.append(
-                AuditFinding(
-                    severity="low",
-                    code="missing_doc_class_meta",
-                    message="Document is missing classification metadata near the top.",
-                    path=doc.relative_path,
-                )
-            )
-        if doc.doc_type not in {"readme", "other_doc"} and not doc.metadata.get(
-            "version"
-        ):
-            findings.append(
-                AuditFinding(
-                    severity="low",
-                    code="missing_version_meta",
-                    message="Document is missing version metadata near the top.",
-                    path=doc.relative_path,
-                )
-            )
-        if doc.doc_type not in {"readme", "other_doc"} and not doc.metadata.get(
-            "last_updated"
-        ):
-            findings.append(
-                AuditFinding(
-                    severity="low",
-                    code="missing_last_updated_meta",
-                    message="Document is missing last-updated metadata near the top.",
-                    path=doc.relative_path,
-                )
-            )
-        if len(doc.headings) < 2 and doc.doc_type != "changelog":
-            findings.append(
-                AuditFinding(
-                    severity="low",
-                    code="too_few_sections",
-                    message="Document has fewer than two headings.",
-                    path=doc.relative_path,
-                )
-            )
-        if not doc.purpose_near_top and doc.doc_type != "changelog":
-            findings.append(
-                AuditFinding(
-                    severity="low",
-                    code="purpose_not_clear_near_top",
-                    message="Document purpose is not obvious near the top of the file.",
-                    path=doc.relative_path,
-                )
-            )
-        for link in doc.links:
-            if link.is_relative and not link.exists:
-                findings.append(
-                    AuditFinding(
-                        severity="medium",
-                        code="broken_relative_link",
-                        message="Document contains a broken relative link.",
-                        path=doc.relative_path,
-                        evidence=link.target,
-                    )
-                )
-        findings.extend(_check_doc_type_sections(doc))
+        findings.extend(_check_single_document(doc))
 
     if profile == "ml-pipeline":
-        if "benchmark" in doc_types and "pipeline_verification" not in doc_types:
+        findings.extend(_check_ml_pipeline_rules(root, doc_types))
+
+    return findings
+
+
+def _check_single_document(doc: DocumentRecord) -> list[AuditFinding]:
+    """단일 문서에 대한 품질 검사를 수행한다.
+
+    Args:
+        doc: 검사할 문서 레코드.
+
+    Returns:
+        AuditFinding 목록.
+    """
+    findings: list[AuditFinding] = []
+
+    if doc.doc_type != "readme" and not doc.metadata.get("doc_class"):
+        findings.append(
+            AuditFinding(
+                severity="low",
+                code="missing_doc_class_meta",
+                message="Document is missing classification metadata near the top.",
+                path=doc.relative_path,
+            )
+        )
+    if doc.doc_type not in {"readme", "other_doc"} and not doc.metadata.get("version"):
+        findings.append(
+            AuditFinding(
+                severity="low",
+                code="missing_version_meta",
+                message="Document is missing version metadata near the top.",
+                path=doc.relative_path,
+            )
+        )
+    if doc.doc_type not in {"readme", "other_doc"} and not doc.metadata.get(
+        "last_updated"
+    ):
+        findings.append(
+            AuditFinding(
+                severity="low",
+                code="missing_last_updated_meta",
+                message="Document is missing last-updated metadata near the top.",
+                path=doc.relative_path,
+            )
+        )
+    if len(doc.headings) < 2 and doc.doc_type != "changelog":
+        findings.append(
+            AuditFinding(
+                severity="low",
+                code="too_few_sections",
+                message="Document has fewer than two headings.",
+                path=doc.relative_path,
+            )
+        )
+    if not doc.purpose_near_top and doc.doc_type != "changelog":
+        findings.append(
+            AuditFinding(
+                severity="low",
+                code="purpose_not_clear_near_top",
+                message="Document purpose is not obvious near the top of the file.",
+                path=doc.relative_path,
+            )
+        )
+    for link in doc.links:
+        if link.is_relative and not link.exists:
             findings.append(
                 AuditFinding(
-                    severity="high",
-                    code="missing_end_to_end_pipeline_verification",
-                    message="ML pipeline project has benchmark docs but no end-to-end pipeline verification document.",
-                    path=str(root),
+                    severity="medium",
+                    code="broken_relative_link",
+                    message="Document contains a broken relative link.",
+                    path=doc.relative_path,
+                    evidence=link.target,
                 )
             )
-        if "changelog" in doc_types and "feature_spec" not in doc_types:
-            findings.append(
-                AuditFinding(
-                    severity="high",
-                    code="missing_feature_spec_workflow",
-                    message="Project has version history but no feature-spec document type for future changes.",
-                    path=str(root),
-                )
+    findings.extend(_check_doc_type_sections(doc))
+    return findings
+
+
+def _check_ml_pipeline_rules(root: Path, doc_types: list[str]) -> list[AuditFinding]:
+    """ML 파이프라인 프로파일 전용 규칙을 검사한다.
+
+    Args:
+        root: 프로젝트 루트 경로.
+        doc_types: 발견된 문서 유형 목록.
+
+    Returns:
+        AuditFinding 목록.
+    """
+    findings: list[AuditFinding] = []
+    if "benchmark" in doc_types and "pipeline_verification" not in doc_types:
+        findings.append(
+            AuditFinding(
+                severity="high",
+                code="missing_end_to_end_pipeline_verification",
+                message="ML pipeline project has benchmark docs but no end-to-end pipeline verification document.",
+                path=str(root),
             )
+        )
+    if "changelog" in doc_types and "feature_spec" not in doc_types:
+        findings.append(
+            AuditFinding(
+                severity="high",
+                code="missing_feature_spec_workflow",
+                message="Project has version history but no feature-spec document type for future changes.",
+                path=str(root),
+            )
+        )
     return findings
 
 
 def _check_doc_type_sections(doc: DocumentRecord) -> list[AuditFinding]:
+    """문서 유형별 필수 섹션 존재 여부를 검사한다.
+
+    Args:
+        doc: 검사할 문서 레코드.
+
+    Returns:
+        AuditFinding 목록.
+    """
     findings: list[AuditFinding] = []
     searchable = _searchable_text(doc)
     for rule_name, aliases in SECTION_RULES.get(doc.doc_type, []):
@@ -558,6 +752,15 @@ def _check_doc_type_sections(doc: DocumentRecord) -> list[AuditFinding]:
 
 
 def _find_missing_docs(docs: list[DocumentRecord], profile: str) -> list[str]:
+    """프로파일 필수 문서 중 누락된 유형을 반환한다.
+
+    Args:
+        docs: 발견된 문서 레코드 목록.
+        profile: 적용할 감사 프로파일.
+
+    Returns:
+        누락된 문서 유형 문자열 목록.
+    """
     present = {doc.doc_type for doc in docs}
     return [
         doc_type
@@ -567,6 +770,14 @@ def _find_missing_docs(docs: list[DocumentRecord], profile: str) -> list[str]:
 
 
 def _find_missing_doc_findings(missing_docs: list[str]) -> list[AuditFinding]:
+    """누락된 문서 유형에 대한 AuditFinding을 생성한다.
+
+    Args:
+        missing_docs: 누락된 문서 유형 목록.
+
+    Returns:
+        AuditFinding 목록.
+    """
     findings: list[AuditFinding] = []
     for missing_doc in missing_docs:
         severity = (
@@ -588,6 +799,15 @@ def _find_missing_doc_findings(missing_docs: list[str]) -> list[AuditFinding]:
 def _recommend_actions(
     findings: list[AuditFinding], missing_docs: list[str]
 ) -> list[str]:
+    """감사 결과를 기반으로 권장 조치를 생성한다.
+
+    Args:
+        findings: 감사 발견 항목 목록.
+        missing_docs: 누락된 문서 유형 목록.
+
+    Returns:
+        권장 조치 문자열 목록.
+    """
     actions: list[str] = []
     if missing_docs:
         actions.append(
@@ -617,6 +837,14 @@ def _recommend_actions(
 
 
 def _discover_version_sources(root: Path) -> dict[str, str]:
+    """프로젝트 파일에서 버전 정보를 탐색한다.
+
+    Args:
+        root: 프로젝트 루트 경로.
+
+    Returns:
+        파일 경로 → 버전 문자열 딕셔너리.
+    """
     versions: dict[str, str] = {}
     pyproject = root / "pyproject.toml"
     if pyproject.exists():
@@ -644,6 +872,14 @@ def _discover_version_sources(root: Path) -> dict[str, str]:
 
 
 def _group_docs_by_type(docs: list[DocumentRecord]) -> dict[str, list[DocumentRecord]]:
+    """문서 목록을 유형별로 그룹화한다.
+
+    Args:
+        docs: 문서 레코드 목록.
+
+    Returns:
+        유형 → 문서 목록 딕셔너리.
+    """
     grouped: dict[str, list[DocumentRecord]] = {}
     for doc in docs:
         grouped.setdefault(doc.doc_type, []).append(doc)
@@ -653,6 +889,15 @@ def _group_docs_by_type(docs: list[DocumentRecord]) -> dict[str, list[DocumentRe
 def _build_stats(
     docs: list[DocumentRecord], findings: list[AuditFinding]
 ) -> dict[str, Any]:
+    """문서와 발견 항목 통계를 계산한다.
+
+    Args:
+        docs: 문서 레코드 목록.
+        findings: 감사 발견 항목 목록.
+
+    Returns:
+        통계 딕셔너리 (document_count, finding_count, score, severity_counts).
+    """
     penalty = sum(SEVERITY_WEIGHTS.get(finding.severity, 0) for finding in findings)
     severity_counts = {"high": 0, "medium": 0, "low": 0}
     for finding in findings:
@@ -667,31 +912,77 @@ def _build_stats(
 
 
 def _searchable_text(doc: DocumentRecord) -> str:
+    """문서의 제목, 헤딩, 미리보기를 결합한 검색용 문자열을 반환한다.
+
+    Args:
+        doc: 문서 레코드.
+
+    Returns:
+        소문자로 정규화된 검색용 문자열.
+    """
     headings = " ".join(_normalize_heading(heading) for heading in doc.headings)
     return f"{doc.title.lower()} {headings} {doc.body_preview.lower()}"
 
 
 def _normalize_heading(heading: str) -> str:
+    """헤딩 문자열에서 번호, 화살표 등을 제거하고 정규화한다.
+
+    Args:
+        heading: 헤딩 문자열.
+
+    Returns:
+        정규화된 헤딩 문자열.
+    """
     heading = re.sub(r"^\d+[\.\)]\s*", "", heading.lower())
     heading = heading.replace("→", " ")
     return re.sub(r"\s+", " ", heading).strip()
 
 
 def _preview(text: str, limit: int = 1200) -> str:
+    """문서 텍스트의 상단 미리보기 문자열을 생성한다.
+
+    Args:
+        text: 문서 텍스트.
+        limit: 미리보기 최대 길이 (기본값: 1200).
+
+    Returns:
+        미리보기 문자열.
+    """
     preview_lines = [line.strip() for line in text.splitlines() if line.strip()]
     return " ".join(preview_lines[:12])[:limit]
 
 
 def _read_text(path: Path) -> str:
+    """파일을 UTF-8로 읽어 문자열로 반환한다.
+
+    Args:
+        path: 읽을 파일 경로.
+
+    Returns:
+        파일 텍스트 내용.
+    """
     return path.read_text(encoding="utf-8", errors="replace")
 
 
 def _finding_sort_key(finding: AuditFinding) -> tuple[int, str, str]:
+    """AuditFinding 정렬 키를 반환한다 (severity → path → code 순).
+
+    Args:
+        finding: 정렬할 AuditFinding.
+
+    Returns:
+        정렬 키 튜플.
+    """
     order = {"high": 0, "medium": 1, "low": 2}
     return (order.get(finding.severity, 99), finding.path or "", finding.code)
 
 
 def _feature_spec_template() -> str:
+    """Feature Spec 문서 마크다운 템플릿을 반환한다.
+
+    Returns:
+        Feature Spec 템플릿 문자열.
+    """
     return """# Feature Specification
 
 > **분류**: 명세 · **버전**: v0.1 · **최종 수정**: YYYY-MM-DD
@@ -737,6 +1028,11 @@ def _feature_spec_template() -> str:
 
 
 def _pipeline_verification_template() -> str:
+    """Pipeline Verification 문서 마크다운 템플릿을 반환한다.
+
+    Returns:
+        Pipeline Verification 템플릿 문자열.
+    """
     return """# Pipeline Verification Report
 
 > **분류**: 검증 · **버전**: v0.1 · **최종 수정**: YYYY-MM-DD
@@ -777,6 +1073,11 @@ def _pipeline_verification_template() -> str:
 
 
 def _benchmark_template() -> str:
+    """Benchmark Report 문서 마크다운 템플릿을 반환한다.
+
+    Returns:
+        Benchmark Report 템플릿 문자열.
+    """
     return """# Benchmark Report
 
 > **분류**: 벤치마크 · **버전**: v0.1 · **최종 수정**: YYYY-MM-DD
@@ -825,6 +1126,11 @@ python scripts/benchmark_example.py
 
 
 def _llm_prompt_guide() -> str:
+    """LLM 문서 감사 프롬프트 가이드 마크다운을 반환한다.
+
+    Returns:
+        프롬프트 가이드 문자열.
+    """
     return """# LLM Documentation Audit Prompt Guide
 
 상위 폴더 경로만 주어졌을 때 아래 순서로 문서 감사를 수행한다.

@@ -1,18 +1,32 @@
 """Qwen-VL 모델 스텁 (OpenRouter 연동).
 
-OpenRouter 플랫폼을 통해 Qwen 멀티모달 모델을 호출합니다.
+OpenRouter 플랫폼을 통해 Qwen 멀티모달 모델을 호출한다.
 """
 
 from __future__ import annotations
+
 import base64
 import json
-from typing import Any, Dict
-from langchain_openai import ChatOpenAI
+import logging
+from typing import Any
+
 from langchain_core.messages import HumanMessage
+from langchain_openai import ChatOpenAI
+
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 def _encode_image_base64(image_path: str) -> str:
+    """이미지 파일을 Base64 인코딩 문자열로 변환한다.
+
+    Args:
+        image_path: 인코딩할 이미지 파일 경로.
+
+    Returns:
+        Base64 인코딩된 문자열.
+    """
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode("utf-8")
 
@@ -21,9 +35,19 @@ def probe_with_qwen(
     mission_type: str,
     image_path: str,
     answer: str,
-    prompt_bundle: Dict[str, Any],
-) -> Dict[str, Any]:
-    """OpenRouter를 경유하여 Qwen-VL 모델로 이미지를 분석한다."""
+    prompt_bundle: dict[str, Any],
+) -> dict[str, Any]:
+    """OpenRouter를 경유하여 Qwen-VL 모델로 이미지를 분석한다.
+
+    Args:
+        mission_type: 미션 유형 ('location' | 'atmosphere').
+        image_path: 분석할 이미지 파일 경로.
+        answer: 미션 정답 키워드.
+        prompt_bundle: 모델별 프롬프트 정보 딕셔너리.
+
+    Returns:
+        모델 투표 결과 딕셔너리 (model, score, label, reason).
+    """
     if not settings.OPENROUTER_API_KEY:
         return {
             "model": "qwen",
@@ -33,8 +57,10 @@ def probe_with_qwen(
         }
 
     try:
-        print(
-            f"  --> [Agent: Evaluator / Model: Qwen] API 통신 시작 (Timeout: {settings.API_TIMEOUT_SECONDS}s, Retries: {settings.API_MAX_RETRIES})"
+        logger.info(
+            "[Agent: Evaluator / Model: Qwen] API 통신 시작 (Timeout: %ss, Retries: %s)",
+            settings.API_TIMEOUT_SECONDS,
+            settings.API_MAX_RETRIES,
         )
         llm = ChatOpenAI(
             api_key=settings.OPENROUTER_API_KEY,
@@ -51,7 +77,6 @@ def probe_with_qwen(
             "qwen_prompt", f"Does this image match the keyword: {answer}?"
         )
 
-        # JSON 포맷으로 출력하도록 명시적인 지시어 추가
         system_instruction = (
             "You are an AI assistant specialized in analyzing images. "
             "You must respond ONLY with a valid JSON object. Do not include any markdown formatting like ```json. "
@@ -84,11 +109,11 @@ def probe_with_qwen(
             "label": parsed.get("label", "mismatch"),
             "reason": parsed.get("reason", "OpenRouter Qwen response parse failed."),
         }
-    except Exception as e:
-        print(f"[Qwen-VL Error] {e}")
+    except Exception as exc:
+        logger.error("[Qwen-VL Error] %s", exc)
         return {
             "model": "qwen",
             "score": 0.0,
             "label": "fail",
-            "reason": f"OpenRouter API 호출 또는 파싱 오류: {e}",
+            "reason": f"OpenRouter API 호출 또는 파싱 오류: {exc}",
         }

@@ -1,6 +1,8 @@
-"""Atmosphere keyword definitions and synonym hints."""
+"""분위기 키워드 정의 및 동의어 힌트 모음."""
 
-keyword_mapping = {
+from __future__ import annotations
+
+keyword_mapping: dict[str, list[str]] = {
     "화사한": ["sunny and bright", "vivid and colorful", "lively and vibrant"],
     "차분한": ["warm and cozy", "calm and peaceful", "relaxed and comfortable"],
     "활기찬": [
@@ -18,7 +20,7 @@ keyword_mapping = {
     "웅장한": ["majestic and grand", "imposing and magnificent"],
 }
 
-feedback_guide = {
+feedback_guide: dict[str, dict[str, str]] = {
     "화사한": {
         "desc": "밝은 조명, 선명한 색 대비, 생동감 있는 피사체가 잘 드러난 장면",
     },
