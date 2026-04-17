@@ -13,9 +13,7 @@ def run_test_pipeline():
     try:
         # 1. Setup mock session variables
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        image_path = os.path.join(
-            project_root, "docs", "assets", "20251008＿171359.jpg"
-        )
+        image_path = r"c:\Users\irubw\geminiProject\projects\active\PAZULE\data\assets\피노지움 조각상\1659956580134.jpg"
 
         # fallback: if image doesn't exist, create a mock one
         if not os.path.exists(image_path):
@@ -32,12 +30,15 @@ def run_test_pipeline():
                     image_path = os.path.join(project_root, "docs", "assets", assets[0])
         user_id = "test-user"
         site_id = "test-site"
-        mission_type = "atmosphere"
+        mission_type = "location"
 
-        # We need an answer for atmosphere
+        # We need an answer for location
         a1, a2, h1, h2 = get_today_answers()
-        answer = a2  # target atmosphere answer
-        hint = h2
+        answer = a1  # target location answer (피노지움 조각상)
+        hint = h1
+
+        # Override for exact match in this test if needed
+        answer = "피노지움 조각상"
 
         print("--- INIT ---")
         print(f"Target Answer: {answer}")
@@ -55,14 +56,15 @@ def run_test_pipeline():
         )
         mission_id = session["mission_id"]
 
+        # 1. Pipeline Input Configuration
         initial_state = {
             "request_context": {
+                "user_id": "tester_01",
+                "mission_type": "location",
+                "answer": "피노지움 조각상",
+                "image_path": r"c:\Users\irubw\geminiProject\projects\active\PAZULE\data\assets\피노지움 조각상\1659956580134.jpg",
                 "mission_id": mission_id,
-                "user_id": user_id,
                 "site_id": site_id,
-                "mission_type": mission_type,
-                "image_path": image_path,
-                "answer": answer,
                 "model_selection": "ensemble",  # use ensemble for full trace
             },
             "artifacts": {},
@@ -83,25 +85,25 @@ def run_test_pipeline():
                 if node_name == "validator":
                     print(f" - Gate Result: {artifacts.get('gate_result')}")
                 elif node_name == "router":
-                    print(f" - Route Decision: {artifacts.get('route_decision')}")
+                    # router returns route_decision at top level of its output dict
+                    print(f" - Route Decision: {state.get('route_decision')}")
                 elif node_name == "evaluator":
                     print(" - Model Votes:")
                     for idx, vote in enumerate(artifacts.get("model_votes", [])):
                         print(
-                            f"    [{idx}] Model: {vote.get('model_name', 'N/A')}, Score: {vote.get('score', 0):.2f}, Hint: {vote.get('hint', '')[:50]}..."
+                            f"    [{idx}] Model: {vote.get('model', 'N/A')}, Score: {vote.get('score', 0):.2f}, Label: {vote.get('label', '')}"
                         )
                 elif node_name == "aggregator":
-                    print(f" - Aggregated Score: {artifacts.get('merged_score')}")
-                    print(f" - Threshold: {artifacts.get('threshold')}")
-                    print(f" - Conflict Index: {artifacts.get('conflict')}")
+                    ens = artifacts.get("ensemble_result", {})
+                    print(f" - Aggregated Score: {ens.get('merged_score')}")
+                    print(f" - Threshold: {ens.get('threshold')}")
+                    print(f" - Conflict: {ens.get('conflict')}")
                 elif node_name == "council":
-                    print(
-                        f" - Deliberation Output: {artifacts.get('deliberation_output')}"
-                    )
+                    print(f" - Council Verdict: {artifacts.get('council_verdict')}")
                 elif node_name == "judge":
                     print(f" - Judgment: {artifacts.get('judgment')}")
                 elif node_name == "policy":
-                    print(f" - Policy Result: {artifacts.get('policy_result')}")
+                    print(f" - Policy Result: {artifacts.get('coupon_decision')}")
                 elif node_name == "responder":
                     print(
                         f" - Final Response Data: {state.get('final_response', {}).get('data')}"
