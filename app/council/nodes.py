@@ -16,6 +16,22 @@ from app.services.mission_session_service import mission_session_service
 
 logger = logging.getLogger(__name__)
 
+# 멀티스레딩 환경(ThreadPoolExecutor)에서 transformers 라이브러리의 지연 로딩 이슈를 방지하기 위해
+# 메인 스레드에서 주요 클래스들을 미리 임포트하여 캐싱한다.
+try:
+    from transformers import (  # noqa: F401
+        AutoModel,
+        AutoProcessor,
+        BlipForQuestionAnswering,
+        BlipProcessor,
+    )
+
+    logger.debug("Transformers core classes pre-loaded in main thread.")
+except ImportError:
+    logger.warning(
+        "Transformers classes not pre-loaded; might cause issues in sub-threads."
+    )
+
 
 # Local helper _normalize_mission_type removed in favor of app.core.utils.normalize_mission_type
 

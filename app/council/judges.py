@@ -83,11 +83,23 @@ class ConsistencyJudge(BaseJudge):
                 needs_escalation=True,
             )
 
+        # 모델 간 의견 충돌(Conflict)이 있는 경우, 필드 자체는 일관되더라도 상위 티어에서 정밀 검증 필요
+        if ensemble.get("conflict"):
+            return JudgeVerdict(
+                judge="ConsistencyJudge",
+                approved=merged_score >= threshold,
+                confidence=0.5,
+                reason="Field consistency OK, but model conflict detected. Escalating...",
+                needs_escalation=True,
+            )
+
+        # 일관성이 있고 충돌도 없다면 원래 점수 기반의 합격 여부를 그대로 따른다.
+        approved = merged_score >= threshold
         return JudgeVerdict(
             judge="ConsistencyJudge",
-            approved=True,
+            approved=approved,
             confidence=0.9,
-            reason="All fields consistent",
+            reason=f"All fields consistent ({'Pass' if approved else 'Fail'})",
             needs_escalation=False,
         )
 
@@ -165,7 +177,7 @@ class QwenFallbackJudge(BaseJudge):
 
         try:
             logger.info(
-                "[Council] SigLIP2의 1차 판단이 모호하여, Qwen-VL(LLM)을 추가 호출합니다..."
+                "[Council] 모델 간 의견 충돌(Conflict) 또는 경계값 감지로 인해 Qwen-VL API를 통한 최종 재검증을 수행합니다..."
             )
             registry = ModelRegistry.get_instance()
             probe = registry.get("qwen")
