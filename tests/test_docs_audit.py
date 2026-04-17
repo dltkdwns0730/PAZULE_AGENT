@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from app.docs_audit.audit import (
+from app.legacy.docs_audit.audit import (
     audit_project,
     render_report_markdown,
     scaffold_missing_documents,

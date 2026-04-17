@@ -1,0 +1,28 @@
+# Git
+.git
+.github
+
+# Python
+.venv
+.uv-cache
+.pytest_cache
+.ruff_cache
+__pycache__
+*.pyc
+
+# Local Data/Secret
+.env
+data/*.json
+
+# Documentation Assets (Large)
+docs/assets
+docs/benchmarks
+
+# Frontend build artifacts
+front/node_modules
+front/dist
+
+# Project artifacts
+pazule.egg-info
+build
+dist

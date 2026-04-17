@@ -28,7 +28,7 @@ dependencies = [
 ]
 
 [project.scripts]
-docs-audit = "app.docs_audit.cli:main"
+docs-audit = "app.legacy.docs_audit.cli:main"
 
 [project.optional-dependencies]
 # Model inference and orchestration stack
