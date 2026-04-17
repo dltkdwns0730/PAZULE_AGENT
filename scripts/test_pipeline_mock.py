@@ -12,12 +12,24 @@ import traceback
 def run_test_pipeline():
     try:
         # 1. Setup mock session variables
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         image_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "docs",
-            "assets",
-            "pipeline_architecture.png",
+            project_root, "docs", "assets", "20251008＿171359.jpg"
         )
+
+        # fallback: if image doesn't exist, create a mock one
+        if not os.path.exists(image_path):
+            os.makedirs(os.path.dirname(image_path), exist_ok=True)
+            try:
+                from PIL import Image
+
+                test_img = Image.new("RGB", (640, 480), (100, 150, 200))
+                test_img.save(image_path)
+            except ImportError:
+                # If PIL is not available, try other assets
+                assets = os.listdir(os.path.join(project_root, "docs", "assets"))
+                if assets:
+                    image_path = os.path.join(project_root, "docs", "assets", assets[0])
         user_id = "test-user"
         site_id = "test-site"
         mission_type = "atmosphere"

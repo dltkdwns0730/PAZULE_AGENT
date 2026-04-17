@@ -9,13 +9,15 @@
 
 ```
 HTTP 요청
-  → api/routes.py          (진입점 — 입력 검증, 라우팅)
-    → services/            (비즈니스 로직 조율)
-      → council/graph.py   (LangGraph 파이프라인 실행)
-        → council/nodes.py (각 처리 단계)
-          → models/        (AI 모델 어댑터)
-        → council/judges.py / deliberation.py  (판정)
-      → services/coupon_service.py  (쿠폰 발급)
+  → api/routes.py                    (진입점 — 요청 정규화, 업로드 파일 처리)
+    → services/answer_service.py     (오늘의 정답·힌트 조회)
+    → services/mission_session_service.py (세션 생성, 제출 이력, 해시 중복 체크)
+    → council/graph.py               (LangGraph 파이프라인 실행)
+      → council/nodes.py             (validator / evaluator / judge / responder)
+        → metadata/validator.py      (EXIF, GPS, 날짜 검증)
+        → models/                    (SigLIP2, BLIP, Qwen, LLM 어댑터)
+      → council/judges.py / deliberation.py  (위원회 판정)
+    → services/coupon_service.py     (쿠폰 발급·사용)
   → HTTP 응답
 ```
 
@@ -42,6 +44,7 @@ Flask 라우트 정의. **HTTP 레이어만** 담당한다.
 | `config/settings.py` | 환경변수 기반 런타임 설정 (`.env` 로드) |
 | `config/constants.py` | 코드에 하드코딩하지 않아야 할 정적 상수 |
 | `config/__init__.py` | `from app.core.config import settings, constants` re-export |
+| `utils.py` | 공통 유틸리티 함수 (미션 타입 정규화, 레거시 변환 등) |
 | `keyword.py` | 키워드 추출 유틸리티 |
 
 **새 상수를 추가할 때**: 코드에 직접 숫자/문자열 리터럴을 쓰지 말고 `constants.py`에 정의한 뒤 참조한다.
@@ -89,8 +92,8 @@ AI 모델 어댑터 레이어. **모델 교체 시 이 디렉터리만 수정한
 
 ---
 
-### `plugins/`
-미션 유형별 플러그인 시스템.
+### `legacy/plugins/`
+레거시 호환용 미션 플러그인 시스템. 현재 운영 API 경로는 이 레이어를 직접 호출하지 않는다.
 
 | 파일 | 역할 |
 |---|---|
@@ -98,6 +101,8 @@ AI 모델 어댑터 레이어. **모델 교체 시 이 디렉터리만 수정한
 | `registry.py` | 플러그인 등록/디스패치 |
 | `location_mission.py` | 위치 기반 미션 |
 | `photo_mission.py` | 분위기 미션 |
+
+> `main.py`에서 초기화는 하지만, 현행 운영 경로는 `api/routes.py`에서 `pipeline_app`을 직접 호출한다. 이 레이어는 CLI/호환 검증을 위한 레거시 코드다.
 
 ---
 
@@ -117,10 +122,12 @@ LLM 프롬프트 템플릿 관리.
 
 | 파일 | 역할 |
 |---|---|
-| `mission_service.py` | 미션 실행 조율 (파이프라인 호출 → 결과 처리) |
+| `legacy/mission_service.py` | 레거시 미션 실행 서비스 (CLI/플러그인 호환용) |
 | `mission_session_service.py` | 세션 관리, 이미지 해시 중복 체크 |
 | `coupon_service.py` | 쿠폰 발급·조회·사용 (JSON 파일 스토리지) |
 | `answer_service.py` | 오늘의 정답 키워드 조회 |
+
+> 현재 운영 API 경로는 `app/legacy/mission_service.py`를 거치지 않는다. 실제 제출 처리는 `app/api/routes.py`에서 `pipeline_app.invoke(...)`를 직접 호출한다.
 
 ---
 

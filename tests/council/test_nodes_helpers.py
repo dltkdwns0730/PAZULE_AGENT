@@ -18,12 +18,12 @@ from unittest.mock import patch
 
 import pytest
 
+from app.core.utils import normalize_mission_type
 from app.council.nodes import (
     _build_bypass_votes,
     _check_duplicate,
     _check_image_presence,
     _check_metadata,
-    _normalize_mission_type,
     _process_model_future,
 )
 
@@ -33,20 +33,20 @@ from app.council.nodes import (
 
 class TestNormalizeMissionType:
     def test_location_unchanged(self) -> None:
-        assert _normalize_mission_type("location") == "location"
+        assert normalize_mission_type("location") == "location"
 
     def test_atmosphere_unchanged(self) -> None:
-        assert _normalize_mission_type("atmosphere") == "atmosphere"
+        assert normalize_mission_type("atmosphere") == "atmosphere"
 
     def test_photo_becomes_atmosphere(self) -> None:
         """'photo'는 레거시 표현 → 'atmosphere'로 정규화."""
-        assert _normalize_mission_type("photo") == "atmosphere"
+        assert normalize_mission_type("photo") == "atmosphere"
 
     def test_unknown_falls_back_to_location(self) -> None:
-        assert _normalize_mission_type("unknown") == "location"
+        assert normalize_mission_type("unknown") == "location"
 
     def test_empty_string_falls_back_to_location(self) -> None:
-        assert _normalize_mission_type("") == "location"
+        assert normalize_mission_type("") == "location"
 
 
 # ── _check_image_presence ────────────────────────────────────────────────────
@@ -128,9 +128,10 @@ class TestCheckMetadata:
     def test_no_skip_delegates_to_validate_metadata_true(self) -> None:
         """SKIP=False일 때 validate_metadata가 True → True 반환."""
         artifacts: dict[str, Any] = {}
-        with patch("app.council.nodes.settings") as mock_settings, patch(
-            "app.council.nodes.validate_metadata", return_value=True
-        ) as mock_val:
+        with (
+            patch("app.council.nodes.settings") as mock_settings,
+            patch("app.council.nodes.validate_metadata", return_value=True) as mock_val,
+        ):
             mock_settings.SKIP_METADATA_VALIDATION = False
             result = _check_metadata("/real.jpg", artifacts)
         assert result is True
@@ -139,8 +140,9 @@ class TestCheckMetadata:
     def test_no_skip_delegates_to_validate_metadata_false(self) -> None:
         """SKIP=False일 때 validate_metadata가 False → False 반환."""
         artifacts: dict[str, Any] = {}
-        with patch("app.council.nodes.settings") as mock_settings, patch(
-            "app.council.nodes.validate_metadata", return_value=False
+        with (
+            patch("app.council.nodes.settings") as mock_settings,
+            patch("app.council.nodes.validate_metadata", return_value=False),
         ):
             mock_settings.SKIP_METADATA_VALIDATION = False
             result = _check_metadata("/bad.jpg", artifacts)
@@ -148,8 +150,9 @@ class TestCheckMetadata:
 
     def test_no_skip_marks_metadata_not_skipped(self) -> None:
         artifacts: dict[str, Any] = {}
-        with patch("app.council.nodes.settings") as mock_settings, patch(
-            "app.council.nodes.validate_metadata", return_value=True
+        with (
+            patch("app.council.nodes.settings") as mock_settings,
+            patch("app.council.nodes.validate_metadata", return_value=True),
         ):
             mock_settings.SKIP_METADATA_VALIDATION = False
             _check_metadata("/real.jpg", artifacts)
@@ -164,9 +167,10 @@ class TestCheckDuplicate:
 
     def test_no_duplicate_returns_false(self) -> None:
         request_context: dict[str, Any] = {}
-        with patch("app.council.nodes.mission_session_service") as mock_svc, patch(
-            "app.council.nodes.settings"
-        ) as mock_settings:
+        with (
+            patch("app.council.nodes.mission_session_service") as mock_svc,
+            patch("app.council.nodes.settings") as mock_settings,
+        ):
             mock_svc.hash_file.return_value = "abc123"
             mock_svc.is_duplicate_hash_for_user.return_value = False
             mock_settings.SKIP_METADATA_VALIDATION = False
@@ -175,9 +179,10 @@ class TestCheckDuplicate:
 
     def test_duplicate_returns_true(self) -> None:
         request_context: dict[str, Any] = {}
-        with patch("app.council.nodes.mission_session_service") as mock_svc, patch(
-            "app.council.nodes.settings"
-        ) as mock_settings:
+        with (
+            patch("app.council.nodes.mission_session_service") as mock_svc,
+            patch("app.council.nodes.settings") as mock_settings,
+        ):
             mock_svc.hash_file.return_value = "abc123"
             mock_svc.is_duplicate_hash_for_user.return_value = True
             mock_settings.SKIP_METADATA_VALIDATION = False
@@ -186,9 +191,10 @@ class TestCheckDuplicate:
 
     def test_image_hash_stored_in_context(self) -> None:
         request_context: dict[str, Any] = {}
-        with patch("app.council.nodes.mission_session_service") as mock_svc, patch(
-            "app.council.nodes.settings"
-        ) as mock_settings:
+        with (
+            patch("app.council.nodes.mission_session_service") as mock_svc,
+            patch("app.council.nodes.settings") as mock_settings,
+        ):
             mock_svc.hash_file.return_value = "deadbeef123"
             mock_svc.is_duplicate_hash_for_user.return_value = False
             mock_settings.SKIP_METADATA_VALIDATION = False
@@ -199,9 +205,10 @@ class TestCheckDuplicate:
     def test_skip_flag_ignores_duplicate(self) -> None:
         """SKIP_METADATA_VALIDATION=True면 중복이어도 False로 처리."""
         request_context: dict[str, Any] = {}
-        with patch("app.council.nodes.mission_session_service") as mock_svc, patch(
-            "app.council.nodes.settings"
-        ) as mock_settings:
+        with (
+            patch("app.council.nodes.mission_session_service") as mock_svc,
+            patch("app.council.nodes.settings") as mock_settings,
+        ):
             mock_svc.hash_file.return_value = "abc"
             mock_svc.is_duplicate_hash_for_user.return_value = True
             mock_settings.SKIP_METADATA_VALIDATION = True
@@ -269,9 +276,10 @@ class TestProcessModelFuture:
         vote = {"model": "siglip2", "score": 0.9, "label": "match"}
         fut = self._make_future(result=vote)
         errors: list = []
-        with patch("app.council.nodes.settings") as mock_settings, patch(
-            "app.council.nodes.constants"
-        ) as mock_constants:
+        with (
+            patch("app.council.nodes.settings") as mock_settings,
+            patch("app.council.nodes.constants") as mock_constants,
+        ):
             mock_settings.API_TIMEOUT_SECONDS = 30
             mock_constants.MODEL_TIMEOUT_BUFFER_SECONDS = 5.0
             result = _process_model_future(fut, "siglip2", errors)
@@ -282,9 +290,10 @@ class TestProcessModelFuture:
         fut: concurrent.futures.Future = concurrent.futures.Future()
         # Future never set → will timeout
         errors: list = []
-        with patch("app.council.nodes.settings") as mock_settings, patch(
-            "app.council.nodes.constants"
-        ) as mock_constants:
+        with (
+            patch("app.council.nodes.settings") as mock_settings,
+            patch("app.council.nodes.constants") as mock_constants,
+        ):
             mock_settings.API_TIMEOUT_SECONDS = 0
             mock_constants.MODEL_TIMEOUT_BUFFER_SECONDS = 0.01
             result = _process_model_future(fut, "siglip2", errors)
@@ -294,9 +303,10 @@ class TestProcessModelFuture:
     def test_exception_returns_none(self) -> None:
         fut = self._make_future(exc=RuntimeError("model crashed"))
         errors: list = []
-        with patch("app.council.nodes.settings") as mock_settings, patch(
-            "app.council.nodes.constants"
-        ) as mock_constants:
+        with (
+            patch("app.council.nodes.settings") as mock_settings,
+            patch("app.council.nodes.constants") as mock_constants,
+        ):
             mock_settings.API_TIMEOUT_SECONDS = 30
             mock_constants.MODEL_TIMEOUT_BUFFER_SECONDS = 5.0
             result = _process_model_future(fut, "blip", errors)
@@ -306,9 +316,10 @@ class TestProcessModelFuture:
     def test_error_contains_model_name(self) -> None:
         fut = self._make_future(exc=ValueError("bad"))
         errors: list = []
-        with patch("app.council.nodes.settings") as mock_settings, patch(
-            "app.council.nodes.constants"
-        ) as mock_constants:
+        with (
+            patch("app.council.nodes.settings") as mock_settings,
+            patch("app.council.nodes.constants") as mock_constants,
+        ):
             mock_settings.API_TIMEOUT_SECONDS = 30
             mock_constants.MODEL_TIMEOUT_BUFFER_SECONDS = 5.0
             _process_model_future(fut, "blip", errors)
@@ -319,9 +330,10 @@ class TestProcessModelFuture:
         vote = {"model": "siglip2", "score": 0.9}
         fut = self._make_future(result=vote)
         errors: list = []
-        with patch("app.council.nodes.settings") as mock_settings, patch(
-            "app.council.nodes.constants"
-        ) as mock_constants:
+        with (
+            patch("app.council.nodes.settings") as mock_settings,
+            patch("app.council.nodes.constants") as mock_constants,
+        ):
             mock_settings.API_TIMEOUT_SECONDS = 10
             mock_constants.MODEL_TIMEOUT_BUFFER_SECONDS = 5.0
             # future.result를 spy해서 timeout 값을 검증
