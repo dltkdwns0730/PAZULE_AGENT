@@ -55,10 +55,10 @@ class TestLocationModelWeights:
         assert isinstance(constants.LOCATION_MODEL_WEIGHTS, dict)
 
     def test_siglip2_weight(self) -> None:
-        assert constants.LOCATION_MODEL_WEIGHTS["siglip2"] == pytest.approx(0.60)
+        assert constants.LOCATION_MODEL_WEIGHTS["siglip2"] == pytest.approx(0.30)
 
     def test_blip_weight(self) -> None:
-        assert constants.LOCATION_MODEL_WEIGHTS["blip"] == pytest.approx(0.40)
+        assert constants.LOCATION_MODEL_WEIGHTS["blip"] == pytest.approx(0.70)
 
     def test_weights_sum_to_one(self) -> None:
         total = sum(constants.LOCATION_MODEL_WEIGHTS.values())
@@ -75,10 +75,10 @@ class TestAtmosphereModelWeights:
         assert isinstance(constants.ATMOSPHERE_MODEL_WEIGHTS, dict)
 
     def test_siglip2_weight(self) -> None:
-        assert constants.ATMOSPHERE_MODEL_WEIGHTS["siglip2"] == pytest.approx(0.75)
+        assert constants.ATMOSPHERE_MODEL_WEIGHTS["siglip2"] == pytest.approx(0.80)
 
     def test_blip_weight(self) -> None:
-        assert constants.ATMOSPHERE_MODEL_WEIGHTS["blip"] == pytest.approx(0.25)
+        assert constants.ATMOSPHERE_MODEL_WEIGHTS["blip"] == pytest.approx(0.20)
 
     def test_weights_sum_to_one(self) -> None:
         total = sum(constants.ATMOSPHERE_MODEL_WEIGHTS.values())
