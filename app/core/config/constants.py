@@ -12,10 +12,10 @@ ALLOWED_UPLOAD_EXTENSIONS: frozenset[str] = frozenset(
 )
 
 # ── Ensemble Model Weights ─────────────────────────────────
-# location 미션: siglip2(0.60) + blip(0.40)
-LOCATION_MODEL_WEIGHTS: dict[str, float] = {"siglip2": 0.60, "blip": 0.40}
-# atmosphere 미션: siglip2(0.75) + blip(0.25)
-ATMOSPHERE_MODEL_WEIGHTS: dict[str, float] = {"siglip2": 0.75, "blip": 0.25}
+# location 미션: 정밀한 VQA(BLIP)를 주력으로 활용 (0.70)
+LOCATION_MODEL_WEIGHTS: dict[str, float] = {"blip": 0.70, "siglip2": 0.30}
+# atmosphere 미션: 전역 시각적 특징(SigLIP2/CLIP)을 주력으로 활용 (0.80)
+ATMOSPHERE_MODEL_WEIGHTS: dict[str, float] = {"siglip2": 0.80, "blip": 0.20}
 # 레지스트리에 없는 모델의 기본 가중치
 DEFAULT_MODEL_WEIGHT: float = 0.1
 

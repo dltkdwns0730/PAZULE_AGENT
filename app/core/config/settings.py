@@ -98,7 +98,7 @@ class Settings:
     #
     # QWEN_VL_MODEL_ID: Qwen Vision-Language 모델. API 호출 방식.
     #   Council Tier 3 에스컬레이션에서 경계값 케이스 재검증에 사용.
-    QWEN_VL_MODEL_ID: str = os.getenv("QWEN_VL_MODEL_ID", "qwen/qwen3.6-plus:free")
+    QWEN_VL_MODEL_ID: str = os.getenv("QWEN_VL_MODEL_ID", "qwen/qwen3-vl-8b-instruct")
     #
     # LLM_MODEL_ID: 텍스트 전용 LLM. 힌트 생성, 프롬프트 기반 판정에 사용.
     #   미설정 시 Gemini API를 기본 프로바이더로 사용.
