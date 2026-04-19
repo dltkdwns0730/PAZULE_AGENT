@@ -422,9 +422,15 @@ class TestResponderFail:
         mission_type: str = "location",
         votes: list | None = None,
         reason: str = "score_below_threshold",
+        answer: str = "지혜의숲",
+        static_hint: str = "책이 가득한 곳",
     ) -> dict[str, Any]:
         return {
-            "request_context": {"mission_type": mission_type},
+            "request_context": {
+                "mission_type": mission_type,
+                "answer": answer,
+                "static_hint": static_hint,
+            },
             "artifacts": {
                 "gate_result": {"passed": True},
                 "judgment": {"success": False, "reason": reason, "confidence": 0.45},
@@ -448,19 +454,30 @@ class TestResponderFail:
         assert "messages" in result
         assert result["messages"] == ["responder: fail"]
 
-    def test_fail_hint_from_best_vote(self) -> None:
-        """votes가 있으면 가장 높은 score 투표의 reason을 hint로 사용."""
-        votes = [
-            {"model": "blip", "score": 0.3, "reason": "low similarity"},
-            {"model": "siglip2", "score": 0.6, "reason": "partial match"},
-        ]
-        result = responder(self._fail_state(votes=votes))
-        assert result["final_response"]["data"]["hint"] == "partial match"
+    def test_fail_hint_from_llm(self) -> None:
+        """실패 시 _generate_retry_hint를 통해 LLM 힌트가 반환된다."""
+        with patch(
+            "app.council.nodes._generate_retry_hint",
+            return_value="감성적인 힌트 문장입니다.",
+        ) as mock_hint:
+            result = responder(self._fail_state())
+        mock_hint.assert_called_once_with("지혜의숲", "책이 가득한 곳", "location")
+        assert result["final_response"]["data"]["hint"] == "감성적인 힌트 문장입니다."
 
-    def test_fail_hint_fallback_to_reason_when_no_votes(self) -> None:
-        """votes 없으면 judgment.reason을 hint로 사용."""
-        result = responder(self._fail_state(votes=[], reason="score_below_threshold"))
-        assert result["final_response"]["data"]["hint"] == "score_below_threshold"
+    def test_fail_hint_llm_receives_static_hint_and_answer(self) -> None:
+        """_generate_retry_hint에 answer, static_hint, mission_type이 정확히 전달된다."""
+        with patch(
+            "app.council.nodes._generate_retry_hint",
+            return_value="힌트",
+        ) as mock_hint:
+            responder(
+                self._fail_state(
+                    answer="화사한",
+                    static_hint="밝은 느낌의 사진",
+                    mission_type="atmosphere",
+                )
+            )
+        mock_hint.assert_called_once_with("화사한", "밝은 느낌의 사진", "atmosphere")
 
     def test_fail_atmosphere_maps_to_photo_in_legacy(self) -> None:
         """atmosphere 미션은 legacy missionType='photo'로 변환."""
