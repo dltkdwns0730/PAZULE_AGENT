@@ -186,4 +186,19 @@ class LLMService:
         return "\n".join(result)
 
 
-llm_service = LLMService()
+_llm_service: "LLMService | None" = None
+
+
+def get_llm_service() -> "LLMService":
+    """LLMService 싱글턴을 반환한다 (lazy initialization).
+
+    API 키 없이 모듈을 임포트해도 초기화가 지연되므로
+    테스트 환경에서 import-time 오류가 발생하지 않는다.
+
+    Returns:
+        초기화된 LLMService 인스턴스.
+    """
+    global _llm_service
+    if _llm_service is None:
+        _llm_service = LLMService()
+    return _llm_service
