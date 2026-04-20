@@ -214,7 +214,7 @@ def _process_model_future(
             model=model_name,
         )
         logger.warning("[Evaluator/%s] 실패: %s", model_name, exc)
-        traceback.print_exc()
+        logger.debug(traceback.format_exc())
         return None
 
 
