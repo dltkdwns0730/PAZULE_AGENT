@@ -20,7 +20,7 @@ export default function MissionHome() {
             await startMission(type);
             navigate('/mission/submit');
         } catch (error) {
-            alert(error.message || 'Failed to start mission');
+            alert(error.message || '미션 시작에 실패했습니다.');
         }
     };
 
@@ -38,8 +38,8 @@ export default function MissionHome() {
                 {/* Header */}
                 <header className="pt-10 px-6 flex justify-between items-center bg-white flex-shrink-0">
                     <div className="flex flex-col">
-                        <span className="text-gray-400 text-sm font-medium">Welcome back,</span>
-                        <h1 className="text-dark-teal text-2xl font-bold tracking-tight">Hello, Explorer</h1>
+                        <span className="text-gray-400 text-sm font-medium">다시 오셨군요,</span>
+                        <h1 className="text-dark-teal text-2xl font-bold tracking-tight">안녕하세요, 탐험가님</h1>
                     </div>
                     <div className="w-10 h-10 rounded-full bg-light-grey flex items-center justify-center border border-gray-100 text-dark-teal shadow-sm">
                         <span className="material-symbols-outlined text-2xl">person</span>
@@ -51,7 +51,7 @@ export default function MissionHome() {
 
                     {/* Today's Hint (Moved to Top) */}
                     <div className="mb-8">
-                        <h2 className="text-dark-teal font-bold text-lg mb-3">Today's Hint</h2>
+                        <h2 className="text-dark-teal font-bold text-lg mb-3">오늘의 힌트</h2>
                         <div
                             onClick={() => setIsHintRevealed(true)}
                             className={`bg-light-grey rounded-3xl p-5 relative overflow-hidden transition-colors border border-gray-100/50 ${isHintRevealed ? 'bg-white shadow-soft transition-all duration-300' : 'cursor-pointer hover:bg-gray-200 active:bg-gray-300'}`}
@@ -62,12 +62,12 @@ export default function MissionHome() {
                                 </div>
                                 <div className="flex-1 mt-0.5">
                                     <p className="text-coral-end text-[10px] font-bold uppercase tracking-wider mb-1">
-                                        {isHintRevealed ? 'Hint Unlocked' : 'Tap to reveal'}
+                                        {isHintRevealed ? '힌트 공개됨' : '탭하여 확인'}
                                     </p>
                                     
                                     {/* 항상 유지되는 기존 티저 힌트 */}
                                     <p className="text-gray-600 font-medium text-sm leading-relaxed">
-                                        Where the scent of old paper meets new coffee...
+                                        오래된 종이 향기와 새 커피 향이 만나는 곳...
                                     </p>
                                     
                                     {/* 숨겨진 실제 API 힌트 (클릭 시 하단에 펼쳐짐) */}
@@ -75,7 +75,7 @@ export default function MissionHome() {
                                         <div className="mt-4 pt-3 border-t border-gray-100 flex items-start gap-2 animate-fade-in-up">
                                             <span className="material-symbols-outlined text-coral-end text-[18px]">key</span>
                                             <p className="text-dark-teal font-bold text-[13px] leading-snug">
-                                                {hint || "Checking today's hint..."}
+                                                {hint || "오늘의 힌트를 불러오는 중..."}
                                             </p>
                                         </div>
                                     )}
@@ -90,8 +90,8 @@ export default function MissionHome() {
                     {/* Active Missions */}
                     <div className="space-y-4 pb-4">
                         <div className="flex justify-between items-end">
-                            <h2 className="text-dark-teal font-bold text-lg">Missions</h2>
-                            <span className="text-coral-end text-xs font-semibold uppercase tracking-widest bg-pale-coral px-2.5 py-1 rounded-md">2 Active</span>
+                            <h2 className="text-dark-teal font-bold text-lg">미션</h2>
+                            <span className="text-coral-end text-xs font-semibold uppercase tracking-widest bg-pale-coral px-2.5 py-1 rounded-md">2개 진행 중</span>
                         </div>
 
                         {/* Mission Card 1 (Location Hunt - Connected to API) */}
@@ -108,10 +108,10 @@ export default function MissionHome() {
                                 <div className="w-12 h-12 bg-pale-coral rounded-2xl flex items-center justify-center shadow-inner">
                                     <span className="material-symbols-outlined text-coral-end text-3xl">location_on</span>
                                 </div>
-                                <span className="bg-dark-teal/5 text-dark-teal text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wide">Exploration</span>
+                                <span className="bg-dark-teal/5 text-dark-teal text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wide">탐험</span>
                             </div>
-                            <h3 className="text-dark-teal text-xl font-bold mb-1">Location Hunt</h3>
-                            <p className="text-gray-400 text-sm leading-snug">Find the secret courtyard tucked away in the Forest of Wisdom.</p>
+                            <h3 className="text-dark-teal text-xl font-bold mb-1">장소 찾기</h3>
+                            <p className="text-gray-400 text-sm leading-snug">지혜의 숲 깊은 곳에 숨겨진 비밀 안뜰을 찾아보세요.</p>
                         </div>
 
                         {/* Mission Card 2 (Atmosphere) */}
@@ -128,10 +128,10 @@ export default function MissionHome() {
                                 <div className="w-12 h-12 bg-pale-coral rounded-2xl flex items-center justify-center shadow-inner">
                                     <span className="material-symbols-outlined text-coral-end text-3xl">filter_vintage</span>
                                 </div>
-                                <span className="bg-dark-teal/5 text-dark-teal text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wide">Atmosphere</span>
+                                <span className="bg-dark-teal/5 text-dark-teal text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wide">분위기</span>
                             </div>
-                            <h3 className="text-dark-teal text-xl font-bold mb-1">Vibe Seeker</h3>
-                            <p className="text-gray-400 text-sm leading-snug">Capture a photo of the morning sunlight hitting the book stacks.</p>
+                            <h3 className="text-dark-teal text-xl font-bold mb-1">분위기 포착</h3>
+                            <p className="text-gray-400 text-sm leading-snug">책장에 스며드는 아침 햇살을 사진으로 담아보세요.</p>
                         </div>
                     </div>
                 </main>

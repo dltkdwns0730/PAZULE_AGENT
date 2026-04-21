@@ -84,7 +84,13 @@ class LLMService:
             [("system", prompt.system), ("user", prompt.user)]
         )
         chain = chat_prompt | self.llm
-        response = chain.invoke({})
+        response = chain.invoke(
+            {
+                "answer": answer,
+                "static_hint": static_hint,
+                "mission_type": mission_type,
+            }
+        )
         return response.content
 
     @with_prompt("mood_verification")
@@ -113,7 +119,13 @@ class LLMService:
         chain = chat_prompt | self.llm
 
         try:
-            response = chain.invoke({})
+            response = chain.invoke(
+                {
+                    "answer": answer,
+                    "context": context,
+                    "keyword_definitions": keyword_definitions,
+                }
+            )
             content = response.content.replace("```json", "").replace("```", "").strip()
             return json.loads(content)
         except Exception as exc:

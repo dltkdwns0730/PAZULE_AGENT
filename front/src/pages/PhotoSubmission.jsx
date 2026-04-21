@@ -26,7 +26,7 @@ export default function PhotoSubmission() {
 
     // Current Date formatting
     const today = new Date();
-    const dateFormatted = `${today.toLocaleString('en-US', { month: 'short' })} ${today.getDate()}, ${today.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} (Today)`;
+    const dateFormatted = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일 ${today.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} (오늘)`;
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -80,12 +80,12 @@ export default function PhotoSubmission() {
                     <div className="flex items-center gap-3">
                         <span className="material-symbols-outlined text-red-500">error</span>
                         <div>
-                            <p className="text-red-900 text-sm font-bold">Verification failed</p>
-                            <p className="text-red-700 text-xs">{attemptsLeft} attempts left</p>
+                            <p className="text-red-900 text-sm font-bold">인증 실패</p>
+                            <p className="text-red-700 text-xs">남은 시도 횟수: {attemptsLeft}회</p>
                         </div>
                     </div>
                     <button onClick={() => setRetryError(null)} className="px-3 py-1.5 bg-red-100 text-red-700 text-xs font-bold rounded-lg hover:bg-red-200 transition-colors">
-                        Dismiss
+                        닫기
                     </button>
                 </div>
 
@@ -97,7 +97,7 @@ export default function PhotoSubmission() {
                     <button onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-full text-slate-800 hover:bg-black/5 dark:text-slate-100 dark:hover:bg-slate-800 transition-colors">
                         <span className="material-symbols-outlined">arrow_back_ios_new</span>
                     </button>
-                    <span className="text-slate-800 dark:text-slate-100 font-bold text-base tracking-tight">Mission Detail</span>
+                    <span className="text-slate-800 dark:text-slate-100 font-bold text-base tracking-tight">미션 상세</span>
                     <button onClick={() => navigate('/')} className="flex h-10 w-10 items-center justify-center rounded-full text-slate-800 hover:bg-black/5 dark:text-slate-100 dark:hover:bg-slate-800 transition-colors">
                         <span className="material-symbols-outlined">close</span>
                     </button>
@@ -109,13 +109,13 @@ export default function PhotoSubmission() {
                         <div className="bg-white/40 dark:bg-black/20 rounded-[1.4rem] p-6 flex flex-col items-center text-center">
                             <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary mb-4">
                                 <span className="material-symbols-outlined text-[16px]">location_on</span>
-                                <span className="text-[11px] font-bold uppercase tracking-wider">Mission Target</span>
+                                <span className="text-[11px] font-bold uppercase tracking-wider">미션 목표</span>
                             </div>
                             <h1 className="text-[26px] font-extrabold text-slate-800 dark:text-white leading-tight mb-2 tracking-tight">
-                                {store.missionId === 'location' ? <>Find the<br />Giant Bookshelf</> : <>Capture the<br />Atmosphere</>}
+                                {store.missionType === 'location' ? <>거대한<br />책장을 찾아라</> : <>분위기를<br />포착하라</>}
                             </h1>
                             <p className="text-slate-500 dark:text-slate-300 text-sm font-medium leading-relaxed max-w-[260px] mx-auto mb-6">
-                                {store.hint || "Verify your visit to unlock the reward coupon."}
+                                {store.hint || "리워드 쿠폰을 받으려면 방문을 인증하세요."}
                             </p>
 
                             {/* Upload Area */}
@@ -128,8 +128,8 @@ export default function PhotoSubmission() {
                                                 <span className="material-symbols-outlined text-[36px] text-accent-orange">photo_camera</span>
                                             </div>
                                             <div className="relative text-center z-10">
-                                                <p className="text-slate-800 dark:text-slate-100 font-bold text-lg">Tap to take photo</p>
-                                                <p className="text-slate-400 text-xs mt-1">or upload from gallery</p>
+                                                <p className="text-slate-800 dark:text-slate-100 font-bold text-lg">탭하여 사진 촬영</p>
+                                                <p className="text-slate-400 text-xs mt-1">또는 갤러리에서 업로드</p>
                                             </div>
                                         </>
                                     )}
@@ -153,7 +153,7 @@ export default function PhotoSubmission() {
                     </div>
 
                     <div className="space-y-3 px-1">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-2">Verification Steps</h3>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-2">인증 단계</h3>
 
                         <div className="flex items-center justify-between p-4 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-sm">
                             <div className="flex items-center gap-3.5">
@@ -161,8 +161,8 @@ export default function PhotoSubmission() {
                                     <span className="material-symbols-outlined text-[20px]">near_me</span>
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-slate-800 dark:text-slate-100">GPS Location</span>
-                                    <span className="text-xs text-primary/80 font-medium">Verified Contextually</span>
+                                    <span className="text-sm font-bold text-slate-800 dark:text-slate-100">GPS 위치</span>
+                                    <span className="text-xs text-primary/80 font-medium">맥락 기반 인증</span>
                                 </div>
                             </div>
                             <div className="flex items-center justify-center h-6 w-6 rounded-full bg-accent-mint text-white">
@@ -176,8 +176,8 @@ export default function PhotoSubmission() {
                                     <span className="material-symbols-outlined text-[20px]">schedule</span>
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Current Time</span>
-                                    <span className="text-xs text-slate-400">{imageFile ? dateFormatted : 'Waiting for photo...'}</span>
+                                    <span className="text-sm font-bold text-slate-800 dark:text-slate-100">현재 시간</span>
+                                    <span className="text-xs text-slate-400">{imageFile ? dateFormatted : '사진을 기다리는 중...'}</span>
                                 </div>
                             </div>
                             {imageFile ? (
@@ -199,7 +199,7 @@ export default function PhotoSubmission() {
                             disabled={!imageFile || isLoading}
                             className={`w-full h-[3.75rem] transition-all rounded-2xl flex items-center justify-center gap-2 border border-white/10 ${imageFile && !isLoading ? 'bg-primary hover:bg-primary-dark active:scale-[0.98] shadow-[0_15px_30px_-8px_rgba(55,119,113,0.4)]' : 'bg-slate-300 opacity-70 cursor-not-allowed shadow-none'}`}
                         >
-                            <span className="text-white font-bold text-[17px] tracking-wide">Submit for Verification</span>
+                            <span className="text-white font-bold text-[17px] tracking-wide">인증 제출</span>
                         </button>
                     </div>
                 </div>
