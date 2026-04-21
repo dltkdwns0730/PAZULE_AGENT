@@ -78,7 +78,7 @@ export default function MissionHome() {
 
                             {previewHints.location?.secondary && (
                                 <div className="bg-dark-teal/5 border border-dark-teal/20 rounded-lg p-3 mb-3 animate-fade-in">
-                                    <p className="text-dark-teal/80 text-xs font-semibold tracking-wide uppercase mb-1">구체적 기준</p>
+                                    <p className="text-dark-teal/80 text-xs font-semibold tracking-wide uppercase mb-1">추가 힌트</p>
                                     <p className="text-dark-teal/70 text-xs leading-relaxed">
                                         {previewHints.location.secondary}
                                     </p>
@@ -107,7 +107,7 @@ export default function MissionHome() {
 
                             {previewHints.atmosphere?.secondary && (
                                 <div className="bg-dark-teal/5 border border-dark-teal/20 rounded-lg p-3 mb-3 animate-fade-in">
-                                    <p className="text-dark-teal/80 text-xs font-semibold tracking-wide uppercase mb-1">구체적 기준</p>
+                                    <p className="text-dark-teal/80 text-xs font-semibold tracking-wide uppercase mb-1">추가 힌트</p>
                                     <p className="text-dark-teal/70 text-xs leading-relaxed">
                                         {previewHints.atmosphere.secondary}
                                     </p>
