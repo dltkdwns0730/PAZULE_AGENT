@@ -126,6 +126,14 @@ export default {
                     '0%': { transform: 'translateY(-10vh) rotate(0deg)', opacity: '1' },
                     '100%': { transform: 'translateY(100vh) rotate(720deg)', opacity: '0' },
                 },
+                'scale-in': {
+                    '0%': { transform: 'scale(0.8)', opacity: '0' },
+                    '100%': { transform: 'scale(1)', opacity: '1' },
+                },
+                'subtle-pulse': {
+                    '0%, 100%': { opacity: '1' },
+                    '50%': { opacity: '0.6' },
+                },
             },
             animation: {
                 'slide-up': 'slide-up 0.3s ease-out',
@@ -135,6 +143,8 @@ export default {
                 'confetti-slow': 'confetti 4s linear infinite',
                 'confetti-medium': 'confetti 3s linear infinite',
                 'confetti-fast': 'confetti 2.5s linear infinite',
+                'scale-in': 'scale-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                'subtle-pulse': 'subtle-pulse 3s ease-in-out infinite',
             },
         },
     },
