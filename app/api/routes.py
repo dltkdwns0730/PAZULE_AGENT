@@ -52,16 +52,36 @@ def get_today_hint() -> Response:
 
     Query Params:
         mission_type: 'location' | 'atmosphere' | 'photo' (기본값: 'location').
+        user_id: 사용자 식별자 (기본값: 'guest').
 
     Returns:
-        JSON {"answer": str, "hint": str} 또는 {"error": str} (500).
+        JSON {"answer": str, "hint": str, "completed": bool} 또는 {"error": str} (500).
     """
     mission_type = normalize_mission_type(request.args.get("mission_type", "location"))
+    user_id = request.args.get("user_id", "guest")
     try:
-        a1, a2, h1, h2 = get_today_answers()
+        a1, a2, h1, h2, vqa1, vqa2 = get_today_answers()
+
+        # 1. 오늘 미션 성공 여부 확인
+        completed_by_session = mission_session_service.is_mission_completed_today(
+            user_id, mission_type
+        )
+
+        # 2. 해당 정답에 대한 쿠폰 보유 여부 확인 (최종 보상 획득 여부)
+        answer = a2 if mission_type == "atmosphere" else a1
+        completed_by_coupon = coupon_service.has_coupon_for_answer(user_id, answer)
+
+        # 둘 중 하나라도 참이면 완료로 간주
+        completed = completed_by_session or completed_by_coupon
+
         if mission_type == "atmosphere":
-            return jsonify({"answer": a2, "hint": h2})
-        return jsonify({"answer": a1, "hint": h1})
+            return jsonify(
+                {"answer": a2, "hint": h2, "vqa_hints": vqa2, "completed": completed}
+            )
+        return jsonify(
+            {"answer": a1, "hint": h1, "vqa_hints": vqa1, "completed": completed}
+        )
+
     except Exception as exc:
         logger.exception("get_today_hint 처리 중 오류 발생")
         return jsonify({"error": str(exc)}), 500
@@ -118,11 +138,18 @@ def mission_start() -> Response:
     user_id = payload.get("user_id", "guest")
     site_id = payload.get("site_id", "pazule-default")
 
-    a1, a2, h1, h2 = get_today_answers()
+    a1, a2, h1, h2, vqa1, vqa2 = get_today_answers()
+
+    # 미션 시작 전 당일 완료 여부 최종 검증 (보안 강화)
+    if mission_session_service.is_mission_completed_today(user_id, mission_type):
+        return jsonify(
+            {"error": "오늘 이미 완료한 미션입니다.", "completed": True}
+        ), 400
+
     if mission_type == "atmosphere":
-        answer, hint = a2, h2
+        answer, hint, vqa_hints = a2, h2, vqa2
     else:
-        answer, hint = a1, h1
+        answer, hint, vqa_hints = a1, h1, vqa1
 
     session = mission_session_service.create_session(
         user_id=user_id,
@@ -143,6 +170,7 @@ def mission_start() -> Response:
                 "site_radius_meters": settings.MISSION_SITE_RADIUS_METERS,
             },
             "hint": hint,
+            "vqa_hints": vqa_hints,
         }
     )
 
@@ -229,6 +257,7 @@ def coupon_issue() -> Response:
 
     Request JSON:
         mission_id: 미션 세션 ID.
+        user_id: (선택) 사용자 식별자 (기본값: 세션의 user_id).
         partner_id: (선택) 파트너 식별자.
 
     Returns:
@@ -236,13 +265,18 @@ def coupon_issue() -> Response:
     """
     payload = request.get_json(silent=True) or {}
     mission_id = payload.get("mission_id")
+    user_id = payload.get("user_id")
     partner_id = payload.get("partner_id")
+
     if not mission_id:
         return jsonify({"error": "mission_id is required"}), 400
 
     session = mission_session_service.get_session(mission_id)
     if not session:
         return jsonify({"error": "session_not_found"}), 404
+
+    # 요청에 user_id가 없으면 세션의 것을 사용, 그것도 없으면 'guest'
+    final_user_id = user_id or session.get("user_id", "guest")
 
     latest = session.get("latest_judgment") or {}
     if not latest.get("success"):
@@ -255,6 +289,7 @@ def coupon_issue() -> Response:
         mission_type="mission1" if mission_type == "location" else "mission2",
         answer=session.get("answer", ""),
         mission_id=mission_id,
+        user_id=final_user_id,
         partner_id=partner_id,
     )
     mission_session_service.mark_coupon_issued(mission_id, coupon["code"])
@@ -280,3 +315,33 @@ def coupon_redeem() -> Response:
     result = coupon_service.redeem_coupon(coupon_code, partner_pos_id)
     status = 200 if result.get("redeem_status") == "redeemed" else 400
     return jsonify(result), status
+
+
+@api.route("/api/user/stats", methods=["GET"])
+def get_user_stats() -> Response:
+    """사용자의 미션 통계를 조회한다.
+
+    Query Params:
+        user_id: 사용자 식별자.
+
+    Returns:
+        JSON {total_attempts, success_location, success_atmosphere, total_coupons, history}.
+    """
+    user_id = request.args.get("user_id", "guest")
+    stats = mission_session_service.get_user_stats(user_id)
+    return jsonify(stats)
+
+
+@api.route("/api/coupons", methods=["GET"])
+def get_user_coupons() -> Response:
+    """사용자가 보유한 모든 쿠폰 목록을 조회한다.
+
+    Query Params:
+        user_id: 사용자 식별자 (기본값: 'guest').
+
+    Returns:
+        JSON list of coupons.
+    """
+    user_id = request.args.get("user_id", "guest")
+    coupons = coupon_service.get_user_coupons(user_id)
+    return jsonify(coupons)

@@ -87,30 +87,68 @@ class CouponService:
                 return coupon
         return None
 
+    def _find_by_user_and_answer(
+        self, user_id: str, answer: str
+    ) -> dict[str, Any] | None:
+        """사용자 ID와 정답 키워드로 발급된 쿠폰을 조회한다.
+
+        Args:
+            user_id: 사용자 식별자.
+            answer: 미션 정답 키워드.
+
+        Returns:
+            일치하는 쿠폰 딕셔너리, 없으면 None.
+        """
+        data = self._read_all()
+        for coupon in data.get("coupons", []):
+            if coupon.get("user_id") == user_id and coupon.get("answer") == answer:
+                return coupon
+        return None
+
+    def has_coupon_for_answer(self, user_id: str, answer: str) -> bool:
+        """사용자가 특정 정답에 대한 쿠폰을 이미 보유하고 있는지 확인한다.
+
+        Args:
+            user_id: 사용자 식별자.
+            answer: 미션 정답 키워드.
+
+        Returns:
+            보유 중이면 True, 아니면 False.
+        """
+        return self._find_by_user_and_answer(user_id, answer) is not None
+
     def issue_coupon(
         self,
         mission_type: str,
         answer: str,
         mission_id: str | None = None,
+        user_id: str = "guest",
         partner_id: str | None = None,
         discount_rule: str = constants.DEFAULT_DISCOUNT_RULE,
     ) -> dict[str, Any]:
-        """쿠폰을 발급하고 저장한다. 동일 mission_id가 있으면 기존 쿠폰을 반환한다.
+        """쿠폰을 발급하고 저장한다. 멱등성을 보장하며 중복 발급을 방지한다.
 
         Args:
             mission_type: 'mission1'(위치) 또는 'mission2'(분위기).
             answer: 미션 정답 키워드.
             mission_id: 미션 세션 ID (멱등성 키).
+            user_id: 사용자 식별자.
             partner_id: 파트너 식별자.
             discount_rule: 할인 규칙 문자열 (기본값: DEFAULT_DISCOUNT_RULE).
 
         Returns:
             발급된 쿠폰 딕셔너리.
         """
+        # 1. 미션 ID 기반 멱등성 체크 (동일 세션 재요청)
         if mission_id:
-            existing = self._find_by_mission_id(mission_id)
-            if existing:
-                return existing
+            existing_by_session = self._find_by_mission_id(mission_id)
+            if existing_by_session:
+                return existing_by_session
+
+        # 2. 사용자 + 정답 기반 중복 체크 (다른 세션이지만 동일 미션 성공)
+        existing_by_user = self._find_by_user_and_answer(user_id, answer)
+        if existing_by_user:
+            return existing_by_user
 
         code = self.generate_coupon_code()
         issued_at = datetime.now(timezone.utc)
@@ -127,6 +165,7 @@ class CouponService:
             "mission_type": mission_type,
             "answer": answer,
             "mission_id": mission_id,
+            "user_id": user_id,
             "partner_id": partner_id,
             "discount_rule": discount_rule,
             "status": "issued",
@@ -191,6 +230,44 @@ class CouponService:
             "message": "Coupon redeemed.",
             "coupon": target,
         }
+
+    def get_user_coupons(self, user_id: str) -> list[dict[str, Any]]:
+        """사용자가 보유한 모든 쿠폰 목록을 조회한다.
+
+        Args:
+            user_id: 사용자 식별자.
+
+        Returns:
+            쿠폰 딕셔너리 리스트.
+        """
+        data = self._read_all()
+        # 쿠폰 객체에 저장된 user_id를 직접 확인 (새로운 방식)
+        # 또는 mission_id를 통해 세션 데이터와 대조 (기존 방식 보완)
+        user_coupons = [
+            c for c in data.get("coupons", []) if c.get("user_id") == user_id
+        ]
+
+        # 하위 호환성을 위해: user_id가 없는 예전 쿠폰들은 세션 데이터를 통해 한 번 더 확인
+        if user_id == "guest":
+            from app.services.mission_session_service import mission_session_service
+
+            session_data = mission_session_service._read_all()
+            user_mission_ids = {
+                s.get("mission_id")
+                for s in session_data.get("sessions", [])
+                if s.get("user_id") == user_id
+            }
+
+            existing_ids = {c.get("mission_id") for c in user_coupons}
+            old_coupons = [
+                c
+                for c in data.get("coupons", [])
+                if c.get("mission_id") in user_mission_ids
+                and c.get("mission_id") not in existing_ids
+            ]
+            user_coupons.extend(old_coupons)
+
+        return user_coupons
 
 
 coupon_service = CouponService()

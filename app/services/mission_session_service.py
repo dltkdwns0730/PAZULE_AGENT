@@ -206,6 +206,47 @@ class MissionSessionService:
 
         return self._update_session(mission_id, mutate)
 
+    def is_mission_completed_today(self, user_id: str, mission_type: str) -> bool:
+        """사용자가 오늘 해당 유형의 미션을 이미 성공했는지 확인한다.
+
+        Args:
+            user_id: 사용자 식별자.
+            mission_type: 'location' 또는 'atmosphere'.
+
+        Returns:
+            성공 기록이 있으면 True, 없으면 False.
+        """
+        data = self._read_all()
+        # UTC 대신 로컬 시간대 차이를 고려하여 오늘 날짜 판별 (단순화)
+        today_str = datetime.now(timezone.utc).date().isoformat()
+
+        for session in data.get("sessions", []):
+            if session.get("user_id") != user_id:
+                continue
+            if session.get("mission_type") != mission_type:
+                continue
+
+            # 세션 생성일이 오늘인지 확인
+            try:
+                session_date = (
+                    datetime.fromisoformat(session["created_at"]).date().isoformat()
+                )
+            except (ValueError, KeyError):
+                continue
+
+            if session_date != today_str:
+                continue
+
+            # 성공 여부 확인: 상태가 submitted 또는 coupon_issued 이고 판정 결과가 success인 경우
+            judgment = session.get("latest_judgment")
+            status = session.get("status")
+
+            if judgment and judgment.get("success") is True:
+                if status in ["submitted", "coupon_issued"]:
+                    return True
+
+        return False
+
     def is_duplicate_hash_for_user(self, user_id: str, image_hash: str) -> bool:
         """동일 사용자의 이전 제출 중 같은 이미지 해시가 있는지 검사한다.
 
@@ -226,6 +267,58 @@ class MissionSessionService:
                 if sub.get("image_hash") == image_hash:
                     return True
         return False
+
+    def get_user_stats(self, user_id: str) -> dict[str, Any]:
+        """사용자의 미션 수행 통계를 가져온다.
+
+        Args:
+            user_id: 사용자 식별자.
+
+        Returns:
+            통계 딕셔너리 (total_missions, successful_location, successful_atmosphere, total_coupons).
+        """
+        data = self._read_all()
+        user_sessions = [
+            s for s in data.get("sessions", []) if s.get("user_id") == user_id
+        ]
+
+        stats = {
+            "total_attempts": len(user_sessions),
+            "success_location": 0,
+            "success_atmosphere": 0,
+            "total_coupons": 0,
+            "history": [],
+        }
+
+        for s in user_sessions:
+            is_success = (
+                s.get("status") in ["submitted", "coupon_issued"]
+                and s.get("latest_judgment", {}).get("success") is True
+            )
+
+            if is_success:
+                if s.get("mission_type") == "location":
+                    stats["success_location"] += 1
+                elif s.get("mission_type") == "atmosphere":
+                    stats["success_atmosphere"] += 1
+
+                if s.get("coupon_code"):
+                    stats["total_coupons"] += 1
+
+                stats["history"].append(
+                    {
+                        "mission_id": s.get("mission_id"),
+                        "mission_type": s.get("mission_type"),
+                        "answer": s.get("answer"),
+                        "completed_at": s.get("created_at"),  # 대략적인 완료 시점
+                    }
+                )
+
+        # 최근순 정렬
+        stats["history"] = sorted(
+            stats["history"], key=lambda x: x["completed_at"], reverse=True
+        )[:5]
+        return stats
 
     @staticmethod
     def hash_file(file_path: str) -> str:
