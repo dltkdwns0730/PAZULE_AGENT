@@ -6,12 +6,12 @@ import { useMissionStore } from "../store/useMissionStore";
 export default function MissionHome() {
     const navigate = useNavigate();
     const { fetchHint, startMission, isLoading } = useMission();
-    const { hint } = useMissionStore();
-
-    const [isHintRevealed, setIsHintRevealed] = useState(false);
+    const { previewHints } = useMissionStore();
 
     useEffect(() => {
+        // Fetch hints for both mission types
         fetchHint('location');
+        fetchHint('atmosphere');
     }, []);
 
     const handleStartMission = async (type) => {
@@ -97,7 +97,7 @@ export default function MissionHome() {
                         {/* Mission Card 1 (Location Hunt - Connected to API) */}
                         <div
                             onClick={() => handleStartMission('location')}
-                            className={`bg-warm-cream rounded-[2rem] p-6 shadow-card border border-pale-border transform transition-all duration-300 cursor-pointer hover:border-coral-end/30 hover:shadow-lg active:scale-[0.98] relative z-20 ${isLoading ? 'opacity-70 pointer-events-none' : ''}`}
+                            className={`bg-warm-cream rounded-[2rem] p-6 shadow-[0_10px_30px_-8px_rgba(55,119,113,0.2)] border border-dark-teal/5 transform transition-all duration-300 cursor-pointer hover:border-coral-end/30 hover:shadow-lg active:scale-[0.98] relative z-20 ${isLoading ? 'opacity-70 pointer-events-none' : ''}`}
                         >
                             {isLoading && (
                                 <div className="absolute inset-0 bg-white/50 backdrop-blur-sm rounded-[2rem] z-10 flex items-center justify-center">
@@ -117,7 +117,7 @@ export default function MissionHome() {
                         {/* Mission Card 2 (Atmosphere) */}
                         <div
                             onClick={() => handleStartMission('atmosphere')}
-                            className={`bg-warm-cream rounded-[2rem] p-6 shadow-card border border-pale-border transform transition-all duration-300 cursor-pointer hover:border-coral-end/30 hover:shadow-lg active:scale-[0.98] relative z-20 ${isLoading ? 'opacity-70 pointer-events-none' : ''}`}
+                            className={`bg-warm-cream rounded-[2rem] p-6 shadow-[0_10px_30px_-8px_rgba(55,119,113,0.2)] border border-dark-teal/5 transform transition-all duration-300 cursor-pointer hover:border-coral-end/30 hover:shadow-lg active:scale-[0.98] relative z-20 ${isLoading ? 'opacity-70 pointer-events-none' : ''}`}
                         >
                             {isLoading && (
                                 <div className="absolute inset-0 bg-white/50 backdrop-blur-sm rounded-[2rem] z-10 flex items-center justify-center">
