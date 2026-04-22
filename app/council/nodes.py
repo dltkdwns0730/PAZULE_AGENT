@@ -214,7 +214,7 @@ def _process_model_future(
             model=model_name,
         )
         logger.warning("[Evaluator/%s] 실패: %s", model_name, exc)
-        traceback.print_exc()
+        logger.debug(traceback.format_exc())
         return None
 
 
@@ -638,6 +638,34 @@ def policy(state: dict[str, Any]) -> dict[str, Any]:
     return {"artifacts": artifacts, "messages": [f"policy: eligible={eligible}"]}
 
 
+def _generate_retry_hint(answer: str, static_hint: str, mission_type: str) -> str:
+    """실패 시 재시도 힌트를 LLM으로 생성한다.
+
+    정답 키워드·실패 이유를 직접 언급하지 않고, 정답 장소의 분위기와
+    기존 정적 힌트의 감성 톤을 조합하여 자연스러운 한국어 문장을 반환한다.
+
+    Args:
+        answer: 미션 정답 키워드 (장소명 또는 감성어).
+        static_hint: answer.json에 미리 작성된 정적 힌트 문자열.
+        mission_type: 미션 유형 ('location' | 'atmosphere').
+
+    Returns:
+        생성된 한국어 힌트 문자열. LLM 호출 실패 시 static_hint 반환.
+    """
+    from app.models.llm import LLMService
+
+    try:
+        svc = LLMService()
+        return svc.generate_blip_hint(
+            answer=answer,
+            static_hint=static_hint,
+            mission_type=mission_type,
+        )
+    except Exception as exc:
+        logger.warning("[responder] LLM 힌트 생성 실패, 정적 힌트로 폴백: %s", exc)
+        return static_hint or "장소를 다시 한번 살펴보세요."
+
+
 def responder(state: dict[str, Any]) -> dict[str, Any]:
     """[응답기] 파이프라인 State를 프론트엔드 API DTO 포맷으로 조립한다.
 
@@ -710,18 +738,17 @@ def responder(state: dict[str, Any]) -> dict[str, Any]:
             "messages": ["responder: success"],
         }
 
-    failure_reason = judgment.get("reason", "판정 실패")
-    hint = None
-    if votes:
-        best_vote = sorted(votes, key=lambda x: x.get("score", 0.0), reverse=True)[0]
-        hint = best_vote.get("reason")
+    answer = request_context.get("answer", "")
+    static_hint = request_context.get("static_hint", "")
+
+    hint = _generate_retry_hint(answer, static_hint, mission_type)
 
     message = "미션 조건이 충분히 충족되지 않았습니다. 다시 시도해 주세요."
     final_data = {
         "success": False,
         "message": message,
         "missionType": legacy_mission_type,
-        "hint": hint or failure_reason,
+        "hint": hint,
         "confidence": judgment.get("confidence", 0.0),
         "decision_trace": {"judgment": judgment, "coupon_decision": coupon_decision},
         "model_votes": votes,
