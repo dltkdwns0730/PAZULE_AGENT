@@ -15,6 +15,7 @@ export default function PhotoSubmission() {
     const [previewUrl, setPreviewUrl] = useState(null);
     const [retryError, setRetryError] = useState(null);
     const [attemptsLeft, setAttemptsLeft] = useState(MAX_ATTEMPTS);
+    const [showSecondaryHint, setShowSecondaryHint] = useState(false);
     const fileInputRef = useRef(null);
 
     // Route guard: 활성 mission 없이 접근 시 홈으로 redirect
@@ -53,14 +54,14 @@ export default function PhotoSubmission() {
             } else {
                 const newAttemptsLeft = Math.max(0, attemptsLeft - 1);
                 setAttemptsLeft(newAttemptsLeft);
-                setRetryError(result.error || result.message || 'Verification Failed. Target not found.');
+                setRetryError(result.error || result.message || '인증 실패. 대상을 찾을 수 없습니다.');
 
                 if (newAttemptsLeft <= 0) {
                     navigate('/mission/result'); // Go to failure result if out of attempts
                 }
             }
         } catch (err) {
-            setRetryError(err.message || 'Server connection failed.');
+            setRetryError(err.message || '서버 연결 실패.');
         }
     };
 
@@ -117,6 +118,22 @@ export default function PhotoSubmission() {
                             <p className="text-slate-500 dark:text-slate-300 text-sm font-medium leading-relaxed max-w-[260px] mx-auto mb-6">
                                 {store.hint || "리워드 쿠폰을 받으려면 방문을 인증하세요."}
                             </p>
+                            {store.activeHint?.secondary && (
+                                <button
+                                    onClick={() => setShowSecondaryHint(!showSecondaryHint)}
+                                    className="text-primary hover:text-primary-dark text-xs font-bold uppercase tracking-wider mb-4 transition-colors"
+                                >
+                                    {showSecondaryHint ? '힌트 숨기기' : '추가 힌트 보기'}
+                                </button>
+                            )}
+                            {showSecondaryHint && store.activeHint?.secondary && (
+                                <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mb-4 animate-fade-in">
+                                    <p className="text-primary dark:text-primary-light text-xs font-semibold tracking-wide uppercase mb-1">추가 힌트</p>
+                                    <p className="text-primary/80 dark:text-primary-light/70 text-xs leading-relaxed">
+                                        {store.activeHint.secondary}
+                                    </p>
+                                </div>
+                            )}
 
                             {/* Upload Area */}
                             <div className="relative w-full aspect-square group cursor-pointer" onClick={handleUploadClick}>
@@ -150,6 +167,11 @@ export default function PhotoSubmission() {
                                 onChange={handleFileChange}
                             />
                         </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 mb-6 mt-2">
+                        <div className="bg-gradient-to-r from-primary to-accent-orange h-1.5 rounded-full transition-all duration-500" style={{ width: '33%' }} />
                     </div>
 
                     <div className="space-y-3 px-1">
