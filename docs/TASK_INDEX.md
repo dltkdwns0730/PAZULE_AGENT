@@ -19,3 +19,4 @@
 | 2026-04-22 | v2.1.2 | 쿠폰 기반 미션 접근 제한 강화 | 완료 | `docs/tasks/2026/04/2026-04-22_v2.1.2_coupon-based-restriction.md` |
 | 2026-04-23 | v2.1.3 | 재입장 방지 정밀화 및 지갑 동기화 안정화 | 완료 | `docs/tasks/2026/04/2026-04-23_v2.1.3_reentry-and-wallet-final-polish.md` |
 | 2026-04-23 | v2.2.1 | 미션 재입장 불가 로직 및 UI 최종 보완 | 완료 | `docs/tasks/2026/04/2026-04-23_v2.2.1_strict-reentry-prevention.md` |
+| 2026-04-23 | v2.3.0 | 에이전트 부트스트랩 지침서 구축 | 완료 | `docs/tasks/2026/04/2026-04-23_v2.3.0_agent-bootstrap-setup.md` |
