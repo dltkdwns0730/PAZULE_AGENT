@@ -42,9 +42,14 @@ model = [
   "langchain-community>=0.0.10",
   "langgraph>=0.0.10",
 ]
-# Local development helpers
+
+[dependency-groups]
 dev = [
-  "pytest>=8.0.0",
+    "pytest>=9.0.2",
+    "pytest-mock>=3.15.1",
+    "ruff>=0.3.0",
+    "pre-commit>=3.5.0",
+    "pytest-cov>=7.1.0",
 ]
 
 [[tool.uv.index]]
@@ -61,11 +66,28 @@ torch = { index = "pytorch-cpu" }
 where = ["."]
 include = ["app*"]
 
-[dependency-groups]
-dev = [
-    "pytest>=9.0.2",
-    "pytest-mock>=3.15.1",
-    "ruff>=0.3.0",
-    "pre-commit>=3.5.0",
-    "pytest-cov>=7.1.0",
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short --strict-markers"
+markers = [
+    "unit: 빠른 단위 테스트 (I/O 없음, 외부 호출 없음)",
+    "integration: 통합 테스트 (서비스 레이어 포함)",
+    "slow: 느린 테스트 (실제 파일 I/O, 대형 픽스처)",
+]
+
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "app/legacy/*",
+    "*/tests/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+fail_under = 80
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
 ]

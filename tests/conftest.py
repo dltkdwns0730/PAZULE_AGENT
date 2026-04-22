@@ -24,6 +24,7 @@
 from __future__ import annotations
 
 import os
+import json
 
 import pytest
 
@@ -38,6 +39,41 @@ def pytest_configure(config: pytest.Config) -> None:  # noqa: ARG001
         config: pytest Config 객체 (미사용, 시그니처 준수용).
     """
     os.environ.setdefault("PAZULE_ENV", "test")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _setup_test_data_dir(tmp_path_factory):
+    """테스트 세션 전체에서 사용할 격리된 데이터 디렉터리 설정."""
+    from app.core.config import settings
+    import app.services.answer_service
+    import app.services.mission_session_service
+    import app.services.coupon_service
+
+    # 1. 임시 디렉터리 생성
+    test_data_dir = tmp_path_factory.mktemp("data")
+
+    # 2. settings 오버라이드
+    settings.DATA_DIR = str(test_data_dir)
+
+    # 3. 이미 초기화된 서비스들의 경로 재설정
+    if hasattr(app.services.mission_session_service, "mission_session_service"):
+        svc = app.services.mission_session_service.mission_session_service
+        svc._path = os.path.join(settings.DATA_DIR, "mission_sessions.json")
+
+    if hasattr(app.services.answer_service, "ANSWER_FILE"):
+        app.services.answer_service.ANSWER_FILE = os.path.join(
+            settings.DATA_DIR, "answer.json"
+        )
+        # 테스트용 answer.json 기본 파일 생성 (필요 시)
+        with open(app.services.answer_service.ANSWER_FILE, "w", encoding="utf-8") as f:
+            json.dump({"mission-location": [], "mission-atmosphere": []}, f)
+
+    if hasattr(app.services.answer_service, "STATE_FILE"):
+        app.services.answer_service.STATE_FILE = os.path.join(
+            settings.DATA_DIR, "current_answer.json"
+        )
+
+    yield test_data_dir
 
 
 @pytest.fixture(autouse=True)

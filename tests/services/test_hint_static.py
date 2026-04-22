@@ -1,22 +1,4 @@
-"""정적 힌트(초기 힌트) 시스템 단위 테스트.
-
-PAZULE 힌트 제공 흐름:
-  ┌─────────────────────────────────────────────────────────────────┐
-  │  [초기 힌트] data/answer.json → answer_service → routes → UI   │
-  │             정답과 함께 미리 작성된 한국어 힌트 문자열           │
-  │                                                                  │
-  │  [재시도 힌트] _generate_retry_hint → LLMService → UI           │
-  │               정답 장소의 감성·분위기를 활용한 LLM 생성 문장    │
-  │               (실패 이유 / 정답 키워드 직접 언급 금지)           │
-  └─────────────────────────────────────────────────────────────────┘
-
-검증 대상:
-  - answer.json 실제 데이터: hint 필드 존재 및 비어있지 않음
-  - load_missions1 / load_missions2: hint 필드 일관성
-  - _resolve_mission1 / _resolve_mission2: 특정 answer의 hint 반환
-  - get_today_answers: hint1·hint2가 튜플로 반환됨
-  - pipeline 연결: routes에서 static_hint가 파이프라인 상태에 포함됨
-"""
+"""정적 힌트(초기 힌트) 시스템 단위 테스트 (v2.0.0 호환)."""
 
 from __future__ import annotations
 
@@ -30,20 +12,20 @@ import pytest
 # ── 공통 fixture ──────────────────────────────────────────────────────────────
 
 LOCATION_MISSIONS = [
-    {"answer": "지혜의숲", "hint": "천장까지 닿는 책장"},
-    {"answer": "창비 안뜰", "hint": "창비의 안무형"},
-    {"answer": "출판공방 인쇄소", "hint": "기록의 무게"},
+    {"answer": "지혜의숲", "hint": "천장까지 닿는 책장", "vqa_hints": ["책장"]},
+    {"answer": "창비 안뜰", "hint": "창비의 안무형", "vqa_hints": []},
+    {"answer": "출판공방 인쇄소", "hint": "기록의 무게", "vqa_hints": []},
 ]
 
 ATMOSPHERE_MISSIONS = [
-    {"answer": "차분한", "hint": "차분한 분위기를 담아보세요"},
-    {"answer": "화사한", "hint": "화사한 사진을 찍어보세요"},
-    {"answer": "활기찬", "hint": "활기찬 느낌의 사진을 찍어보세요"},
+    {"answer": "차분한", "hint": "차분한 분위기를 담아보세요", "vqa_hints": ["평화"]},
+    {"answer": "화사한", "hint": "화사한 사진을 찍어보세요", "vqa_hints": []},
+    {"answer": "활기찬", "hint": "활기찬 느낌의 사진을 찍어보세요", "vqa_hints": []},
 ]
 
 ANSWER_JSON = {
-    "missions1": LOCATION_MISSIONS,
-    "missions2": ATMOSPHERE_MISSIONS,
+    "mission-location": LOCATION_MISSIONS,
+    "mission-atmosphere": ATMOSPHERE_MISSIONS,
 }
 
 
@@ -83,111 +65,123 @@ class TestRealAnswerJsonQuality:
             pytest.skip("data/answer.json 파일이 없습니다.")
         return json.loads(path.read_text(encoding="utf-8"))
 
-    def test_missions1_hint_field_exists_for_all(self, real_data: dict) -> None:
-        """missions1의 모든 항목에 hint 필드가 존재한다."""
-        for m in real_data.get("missions1", []):
-            assert "hint" in m, f"missions1 항목에 hint 없음: {m}"
+    def test_mission_location_hint_field_exists_for_all(self, real_data: dict) -> None:
+        """mission-location의 모든 항목에 hint 필드가 존재한다."""
+        for m in real_data.get("mission-location", []):
+            assert "hint" in m, f"mission-location 항목에 hint 없음: {m}"
 
-    def test_missions2_hint_field_exists_for_all(self, real_data: dict) -> None:
-        """missions2의 모든 항목에 hint 필드가 존재한다."""
-        for m in real_data.get("missions2", []):
-            assert "hint" in m, f"missions2 항목에 hint 없음: {m}"
+    def test_mission_atmosphere_hint_field_exists_for_all(
+        self, real_data: dict
+    ) -> None:
+        """mission-atmosphere의 모든 항목에 hint 필드가 존재한다."""
+        for m in real_data.get("mission-atmosphere", []):
+            assert "hint" in m, f"mission-atmosphere 항목에 hint 없음: {m}"
 
-    def test_missions1_hint_is_non_empty_string(self, real_data: dict) -> None:
-        """missions1의 모든 hint는 비어 있지 않은 문자열이다."""
-        for m in real_data.get("missions1", []):
+    def test_mission_location_hint_is_non_empty_string(self, real_data: dict) -> None:
+        """mission-location의 모든 hint는 비어 있지 않은 문자열이다."""
+        for m in real_data.get("mission-location", []):
             hint = m.get("hint", "")
             assert isinstance(hint, str), f"hint가 str이 아님: {m}"
             assert len(hint.strip()) > 0, f"hint가 빈 문자열: {m}"
 
-    def test_missions2_hint_is_non_empty_string(self, real_data: dict) -> None:
-        """missions2의 모든 hint는 비어 있지 않은 문자열이다."""
-        for m in real_data.get("missions2", []):
+    def test_mission_atmosphere_hint_is_non_empty_string(self, real_data: dict) -> None:
+        """mission-atmosphere의 모든 hint는 비어 있지 않은 문자열이다."""
+        for m in real_data.get("mission-atmosphere", []):
             hint = m.get("hint", "")
             assert isinstance(hint, str), f"hint가 str이 아님: {m}"
             assert len(hint.strip()) > 0, f"hint가 빈 문자열: {m}"
 
-    def test_missions1_answer_field_exists_for_all(self, real_data: dict) -> None:
-        """missions1의 모든 항목에 answer 필드가 존재한다."""
-        for m in real_data.get("missions1", []):
-            assert "answer" in m, f"missions1 항목에 answer 없음: {m}"
+    def test_mission_location_answer_field_exists_for_all(
+        self, real_data: dict
+    ) -> None:
+        """mission-location의 모든 항목에 answer 필드가 존재한다."""
+        for m in real_data.get("mission-location", []):
+            assert "answer" in m, f"mission-location 항목에 answer 없음: {m}"
 
-    def test_missions2_answer_field_exists_for_all(self, real_data: dict) -> None:
-        """missions2의 모든 항목에 answer 필드가 존재한다."""
-        for m in real_data.get("missions2", []):
-            assert "answer" in m, f"missions2 항목에 answer 없음: {m}"
+    def test_mission_atmosphere_answer_field_exists_for_all(
+        self, real_data: dict
+    ) -> None:
+        """mission-atmosphere의 모든 항목에 answer 필드가 존재한다."""
+        for m in real_data.get("mission-atmosphere", []):
+            assert "answer" in m, f"mission-atmosphere 항목에 answer 없음: {m}"
 
-    def test_missions1_is_non_empty(self, real_data: dict) -> None:
-        """missions1 목록이 최소 1개 이상의 미션을 포함한다."""
-        assert len(real_data.get("missions1", [])) > 0
+    def test_mission_location_is_non_empty(self, real_data: dict) -> None:
+        """mission-location 목록이 최소 1개 이상의 미션을 포함한다."""
+        assert len(real_data.get("mission-location", [])) > 0
 
-    def test_missions2_is_non_empty(self, real_data: dict) -> None:
-        """missions2 목록이 최소 1개 이상의 미션을 포함한다."""
-        assert len(real_data.get("missions2", [])) > 0
+    def test_mission_atmosphere_is_non_empty(self, real_data: dict) -> None:
+        """mission-atmosphere 목록이 최소 1개 이상의 미션을 포함한다."""
+        assert len(real_data.get("mission-atmosphere", [])) > 0
 
 
 # ── load_missions hint 일관성 ─────────────────────────────────────────────────
 
 
 class TestLoadMissionsHintConsistency:
-    """load_missions1/2가 hint 필드를 포함한 미션 목록을 올바르게 반환하는지 검증한다."""
+    """load_mission_location/atmosphere가 hint 필드를 포함한 미션 목록을 올바르게 반환하는지 검증한다."""
 
-    def test_missions1_all_have_hint(self, answer_file: Path, state_file: Path) -> None:
-        """load_missions1 결과의 모든 항목에 hint 키가 존재한다."""
-        p1, p2 = _patch_files(answer_file, state_file)
-        with p1, p2:
-            from app.services.answer_service import load_missions1
-
-            result = load_missions1()
-        assert all("hint" in m for m in result)
-
-    def test_missions2_all_have_hint(self, answer_file: Path, state_file: Path) -> None:
-        """load_missions2 결과의 모든 항목에 hint 키가 존재한다."""
-        p1, p2 = _patch_files(answer_file, state_file)
-        with p1, p2:
-            from app.services.answer_service import load_missions2
-
-            result = load_missions2()
-        assert all("hint" in m for m in result)
-
-    def test_missions1_hint_values_are_strings(
+    def test_mission_location_all_have_hint(
         self, answer_file: Path, state_file: Path
     ) -> None:
-        """load_missions1의 hint 값은 모두 str이다."""
+        """load_mission_location 결과의 모든 항목에 hint 키가 존재한다."""
         p1, p2 = _patch_files(answer_file, state_file)
         with p1, p2:
-            from app.services.answer_service import load_missions1
+            from app.services.answer_service import load_mission_location
 
-            result = load_missions1()
-        assert all(isinstance(m["hint"], str) for m in result)
+            result = load_mission_location()
+        assert all("hint" in m for m in result)
 
-    def test_missions2_hint_values_are_strings(
+    def test_mission_atmosphere_all_have_hint(
         self, answer_file: Path, state_file: Path
     ) -> None:
-        """load_missions2의 hint 값은 모두 str이다."""
+        """load_mission_atmosphere 결과의 모든 항목에 hint 키가 존재한다."""
         p1, p2 = _patch_files(answer_file, state_file)
         with p1, p2:
-            from app.services.answer_service import load_missions2
+            from app.services.answer_service import load_mission_atmosphere
 
-            result = load_missions2()
+            result = load_mission_atmosphere()
+        assert all("hint" in m for m in result)
+
+    def test_mission_location_hint_values_are_strings(
+        self, answer_file: Path, state_file: Path
+    ) -> None:
+        """load_mission_location의 hint 값은 모두 str이다."""
+        p1, p2 = _patch_files(answer_file, state_file)
+        with p1, p2:
+            from app.services.answer_service import load_mission_location
+
+            result = load_mission_location()
         assert all(isinstance(m["hint"], str) for m in result)
 
-    def test_missions1_count(self, answer_file: Path, state_file: Path) -> None:
-        """픽스처의 missions1 개수와 일치한다."""
+    def test_mission_atmosphere_hint_values_are_strings(
+        self, answer_file: Path, state_file: Path
+    ) -> None:
+        """load_mission_atmosphere의 hint 값은 모두 str이다."""
         p1, p2 = _patch_files(answer_file, state_file)
         with p1, p2:
-            from app.services.answer_service import load_missions1
+            from app.services.answer_service import load_mission_atmosphere
 
-            result = load_missions1()
+            result = load_mission_atmosphere()
+        assert all(isinstance(m["hint"], str) for m in result)
+
+    def test_mission_location_count(self, answer_file: Path, state_file: Path) -> None:
+        """픽스처의 mission-location 개수와 일치한다."""
+        p1, p2 = _patch_files(answer_file, state_file)
+        with p1, p2:
+            from app.services.answer_service import load_mission_location
+
+            result = load_mission_location()
         assert len(result) == len(LOCATION_MISSIONS)
 
-    def test_missions2_count(self, answer_file: Path, state_file: Path) -> None:
-        """픽스처의 missions2 개수와 일치한다."""
+    def test_mission_atmosphere_count(
+        self, answer_file: Path, state_file: Path
+    ) -> None:
+        """픽스처의 mission-atmosphere 개수와 일치한다."""
         p1, p2 = _patch_files(answer_file, state_file)
         with p1, p2:
-            from app.services.answer_service import load_missions2
+            from app.services.answer_service import load_mission_atmosphere
 
-            result = load_missions2()
+            result = load_mission_atmosphere()
         assert len(result) == len(ATMOSPHERE_MISSIONS)
 
 
@@ -195,51 +189,52 @@ class TestLoadMissionsHintConsistency:
 
 
 class TestResolveMissionHint:
-    """_resolve_mission1/2가 정답에 대응하는 정확한 hint를 반환하는지 검증한다."""
+    """_resolve_mission_location/atmosphere가 정답에 대응하는 정확한 hint를 반환하는지 검증한다."""
 
-    def test_resolve_mission1_returns_correct_hint(
+    def test_resolve_mission_location_returns_correct_hint(
         self, answer_file: Path, state_file: Path
     ) -> None:
-        """관리자 지정 answer의 hint를 정확히 반환한다."""
+        """관리자 지정 location answer의 hint를 정확히 반환한다."""
         p1, p2 = _patch_files(answer_file, state_file)
         with p1, p2:
-            from app.services.answer_service import _resolve_mission1
+            from app.services.answer_service import _resolve_mission_location
 
-            _, hint = _resolve_mission1("지혜의숲")
+            # v2.0.0 returns (answer, hint, vqa_hints)
+            _, hint, _ = _resolve_mission_location("지혜의숲")
         assert hint == "천장까지 닿는 책장"
 
-    def test_resolve_mission2_returns_correct_hint(
+    def test_resolve_mission_atmosphere_returns_correct_hint(
         self, answer_file: Path, state_file: Path
     ) -> None:
         """관리자 지정 atmosphere answer의 hint를 정확히 반환한다."""
         p1, p2 = _patch_files(answer_file, state_file)
         with p1, p2:
-            from app.services.answer_service import _resolve_mission2
+            from app.services.answer_service import _resolve_mission_atmosphere
 
-            _, hint = _resolve_mission2("화사한")
+            _, hint, _ = _resolve_mission_atmosphere("화사한")
         assert hint == "화사한 사진을 찍어보세요"
 
-    def test_resolve_mission1_random_hint_is_string(
+    def test_resolve_mission_location_random_hint_is_string(
         self, answer_file: Path, state_file: Path
     ) -> None:
         """랜덤 선택 시에도 hint는 str이다."""
         p1, p2 = _patch_files(answer_file, state_file)
         with p1, p2:
-            from app.services.answer_service import _resolve_mission1
+            from app.services.answer_service import _resolve_mission_location
 
-            _, hint = _resolve_mission1(None)
+            _, hint, _ = _resolve_mission_location(None)
         assert isinstance(hint, str)
         assert len(hint) > 0
 
-    def test_resolve_mission2_random_hint_is_string(
+    def test_resolve_mission_atmosphere_random_hint_is_string(
         self, answer_file: Path, state_file: Path
     ) -> None:
         """랜덤 선택 시에도 hint는 str이다."""
         p1, p2 = _patch_files(answer_file, state_file)
         with p1, p2:
-            from app.services.answer_service import _resolve_mission2
+            from app.services.answer_service import _resolve_mission_atmosphere
 
-            _, hint = _resolve_mission2(None)
+            _, hint, _ = _resolve_mission_atmosphere(None)
         assert isinstance(hint, str)
         assert len(hint) > 0
 
@@ -250,16 +245,16 @@ class TestResolveMissionHint:
 class TestGetTodayAnswersHint:
     """get_today_answers가 hint1·hint2를 포함한 튜플을 반환하는지 검증한다."""
 
-    def test_returns_four_element_tuple(
+    def test_returns_six_element_tuple(
         self, answer_file: Path, state_file: Path
     ) -> None:
-        """반환값은 (answer1, answer2, hint1, hint2) 4-튜플이다."""
+        """반환값은 (ans1, ans2, h1, h2, vqa1, vqa2) 6-튜플이다."""
         p1, p2 = _patch_files(answer_file, state_file)
         with p1, p2:
             from app.services import answer_service
 
             result = answer_service.get_today_answers()
-        assert len(result) == 4
+        assert len(result) == 6
 
     def test_hint1_is_non_empty_string(
         self, answer_file: Path, state_file: Path
@@ -269,19 +264,19 @@ class TestGetTodayAnswersHint:
         with p1, p2:
             from app.services import answer_service
 
-            _, _, hint1, _ = answer_service.get_today_answers()
+            _, _, hint1, _, _, _ = answer_service.get_today_answers()
         assert isinstance(hint1, str)
         assert len(hint1.strip()) > 0
 
     def test_hint2_is_non_empty_string(
         self, answer_file: Path, state_file: Path
     ) -> None:
-        """hint2는 비어있지 않은 str이다."""
+        """hint2은 비어있지 않은 str이다."""
         p1, p2 = _patch_files(answer_file, state_file)
         with p1, p2:
             from app.services import answer_service
 
-            _, _, _, hint2 = answer_service.get_today_answers()
+            _, _, _, hint2, _, _ = answer_service.get_today_answers()
         assert isinstance(hint2, str)
         assert len(hint2.strip()) > 0
 
@@ -293,7 +288,9 @@ class TestGetTodayAnswersHint:
         with p1, p2:
             from app.services import answer_service
 
-            _, _, hint1, _ = answer_service.get_today_answers(admin_choice1="지혜의숲")
+            _, _, hint1, _, _, _ = answer_service.get_today_answers(
+                admin_choice1="지혜의숲"
+            )
         assert hint1 == "천장까지 닿는 책장"
 
 
@@ -301,11 +298,7 @@ class TestGetTodayAnswersHint:
 
 
 class TestStaticHintPipelinePropagation:
-    """routes.py가 세션의 hint를 static_hint로 파이프라인 상태에 주입하는지 검증한다.
-
-    재시도 힌트 생성(_generate_retry_hint)이 static_hint를 받으려면
-    request_context에 'static_hint' 키가 있어야 한다.
-    """
+    """routes.py가 세션의 hint를 static_hint로 파이프라인 상태에 주입하는지 검증한다."""
 
     def _make_pipeline_state(
         self, answer: str = "지혜의숲", hint: str = "천장까지 닿는 책장"
