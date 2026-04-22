@@ -10,7 +10,7 @@ import logging
 from typing import Any
 
 from app.models.blip import check_with_blip, get_visual_context
-from app.models.llm import llm_service
+from app.models.llm import get_llm_service
 from app.services.coupon_service import coupon_service
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ def run_mission1(user_image: str, answer: str) -> dict[str, Any]:
         coupon = coupon_service.issue_coupon("mission1", answer)
         return {"success": True, "coupon": coupon}
 
-    hint = llm_service.generate_blip_hint(answer, blip_info)
+    hint = get_llm_service().generate_blip_hint(answer, blip_info)
     return {
         "success": False,
         "hint": hint,
@@ -55,7 +55,7 @@ def run_mission2(user_image: str, answer: str) -> dict[str, Any]:
         미션 실행 결과 딕셔너리. 성공 시 'coupon' 포함, 실패 시 'hint' 포함.
     """
     context = get_visual_context(user_image)
-    verification = llm_service.verify_mood(answer, context)
+    verification = get_llm_service().verify_mood(answer, context)
 
     if verification.get("success"):
         coupon = coupon_service.issue_coupon("mission2", answer)

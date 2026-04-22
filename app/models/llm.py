@@ -59,23 +59,38 @@ class LLMService:
 
     @with_prompt("hint_generation")
     def generate_blip_hint(
-        self, *, answer: str, failed_info: str, prompt: PromptVersion | None = None
+        self,
+        *,
+        answer: str,
+        static_hint: str,
+        mission_type: str,
+        prompt: PromptVersion | None = None,
     ) -> str:
-        """BLIP 오답 정보를 기반으로 힌트를 생성한다.
+        """정답 장소의 분위기·감성을 활용한 재시도 힌트를 생성한다.
+
+        실패 이유나 키워드를 직접 언급하지 않고,
+        정답 장소 고유의 감성과 기존 힌트 톤을 조합하여 은유적 문장을 반환한다.
 
         Args:
-            answer: 미션 정답 키워드.
-            failed_info: 오답 내역 텍스트.
+            answer: 미션 정답 키워드 (장소명 또는 감성어).
+            static_hint: answer.json에 미리 작성된 정적 힌트 문자열.
+            mission_type: 미션 유형 ('location' | 'atmosphere').
             prompt: 주입된 PromptVersion (데코레이터가 자동 주입).
 
         Returns:
-            생성된 힌트 문자열.
+            생성된 한국어 힌트 문자열.
         """
         chat_prompt = ChatPromptTemplate.from_messages(
             [("system", prompt.system), ("user", prompt.user)]
         )
         chain = chat_prompt | self.llm
-        response = chain.invoke({})
+        response = chain.invoke(
+            {
+                "answer": answer,
+                "static_hint": static_hint,
+                "mission_type": mission_type,
+            }
+        )
         return response.content
 
     @with_prompt("mood_verification")
@@ -104,7 +119,13 @@ class LLMService:
         chain = chat_prompt | self.llm
 
         try:
-            response = chain.invoke({})
+            response = chain.invoke(
+                {
+                    "answer": answer,
+                    "context": context,
+                    "keyword_definitions": keyword_definitions,
+                }
+            )
             content = response.content.replace("```json", "").replace("```", "").strip()
             return json.loads(content)
         except Exception as exc:
@@ -115,19 +136,28 @@ class LLMService:
             }
 
     def generate_blip_hint_from_questions(
-        self, answer: str, failed_questions: list[dict[str, str]]
+        self,
+        answer: str,
+        failed_questions: list[dict[str, str]],
+        static_hint: str = "",
+        mission_type: str = "location",
     ) -> str:
-        """기존 인터페이스 호환: failed_questions를 포맷팅하여 힌트를 생성한다.
+        """기존 인터페이스 호환: failed_questions를 받아 힌트를 생성한다.
 
         Args:
             answer: 미션 정답 키워드.
-            failed_questions: 오답 질문 딕셔너리 목록.
+            failed_questions: 오답 질문 딕셔너리 목록 (현재 미사용, 호환 유지).
+            static_hint: 정적 힌트 문자열.
+            mission_type: 미션 유형.
 
         Returns:
             생성된 힌트 문자열.
         """
-        failed_info = self._format_blip_failures(failed_questions)
-        return self.generate_blip_hint(answer=answer, failed_info=failed_info)
+        return self.generate_blip_hint(
+            answer=answer,
+            static_hint=static_hint,
+            mission_type=mission_type,
+        )
 
     def verify_mood_with_answer(self, answer: str, context: str) -> dict[str, Any]:
         """기존 인터페이스 호환: answer와 context로 감성 검증을 수행한다.
@@ -168,4 +198,19 @@ class LLMService:
         return "\n".join(result)
 
 
-llm_service = LLMService()
+_llm_service: "LLMService | None" = None
+
+
+def get_llm_service() -> "LLMService":
+    """LLMService 싱글턴을 반환한다 (lazy initialization).
+
+    API 키 없이 모듈을 임포트해도 초기화가 지연되므로
+    테스트 환경에서 import-time 오류가 발생하지 않는다.
+
+    Returns:
+        초기화된 LLMService 인스턴스.
+    """
+    global _llm_service
+    if _llm_service is None:
+        _llm_service = LLMService()
+    return _llm_service

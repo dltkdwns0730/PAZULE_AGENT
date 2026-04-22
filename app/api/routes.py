@@ -191,6 +191,7 @@ def mission_submit() -> Response:
                 "mission_type": session.get("mission_type", "location"),
                 "image_path": temp_path,
                 "answer": session.get("answer"),
+                "static_hint": session.get("hint", ""),
                 "model_selection": model_selection,
             },
             "artifacts": {},
