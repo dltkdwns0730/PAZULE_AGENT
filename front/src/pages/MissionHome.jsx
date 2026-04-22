@@ -54,7 +54,7 @@ export default function MissionHome() {
                     <div className="space-y-4 pb-4">
                         <div className="flex justify-between items-end">
                             <h2 className="text-dark-teal font-bold text-lg">미션</h2>
-                            <span className="text-coral-end text-xs font-semibold uppercase tracking-widest bg-pale-coral px-2.5 py-1 rounded-md">2개 진행 중</span>
+                            <span className="animate-pulse text-coral-end text-xs font-bold uppercase tracking-widest bg-coral-start/10 px-3 py-1.5 rounded-full">2개 진행 중</span>
                         </div>
 
                         {/* Mission Card 1 (Location Hunt - Connected to API) */}
@@ -73,12 +73,12 @@ export default function MissionHome() {
                                 </div>
                                 <span className="bg-dark-teal/5 text-dark-teal text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wide">탐험</span>
                             </div>
-                            <h3 className="text-dark-teal text-xl font-bold mb-1">장소 찾기</h3>
+                            <h3 className="text-dark-teal text-2xl font-extrabold mb-2 tracking-tight">장소 찾기</h3>
                             <p className="text-gray-400 text-sm leading-snug mb-3">{previewHints.location?.primary || "오늘의 힌트를 불러오는 중..."}</p>
 
                             {previewHints.location?.secondary && (
                                 <div className="bg-dark-teal/5 border border-dark-teal/20 rounded-lg p-3 mb-3 animate-fade-in">
-                                    <p className="text-dark-teal/80 text-xs font-semibold tracking-wide uppercase mb-1">구체적 기준</p>
+                                    <p className="text-dark-teal/80 text-xs font-semibold tracking-wide uppercase mb-1">추가 힌트</p>
                                     <p className="text-dark-teal/70 text-xs leading-relaxed">
                                         {previewHints.location.secondary}
                                     </p>
@@ -102,12 +102,12 @@ export default function MissionHome() {
                                 </div>
                                 <span className="bg-dark-teal/5 text-dark-teal text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wide">분위기</span>
                             </div>
-                            <h3 className="text-dark-teal text-xl font-bold mb-1">분위기 포착</h3>
+                            <h3 className="text-dark-teal text-2xl font-extrabold mb-2 tracking-tight">분위기 포착</h3>
                             <p className="text-gray-400 text-sm leading-snug mb-3">{previewHints.atmosphere?.primary || "오늘의 힌트를 불러오는 중..."}</p>
 
                             {previewHints.atmosphere?.secondary && (
                                 <div className="bg-dark-teal/5 border border-dark-teal/20 rounded-lg p-3 mb-3 animate-fade-in">
-                                    <p className="text-dark-teal/80 text-xs font-semibold tracking-wide uppercase mb-1">구체적 기준</p>
+                                    <p className="text-dark-teal/80 text-xs font-semibold tracking-wide uppercase mb-1">추가 힌트</p>
                                     <p className="text-dark-teal/70 text-xs leading-relaxed">
                                         {previewHints.atmosphere.secondary}
                                     </p>
