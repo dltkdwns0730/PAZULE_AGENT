@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMission } from "../hooks/useMission";
 import { useMissionStore } from "../store/useMissionStore";
@@ -9,9 +9,8 @@ export default function MissionHome() {
     const { previewHints } = useMissionStore();
 
     useEffect(() => {
-        // Fetch hints for both mission types
-        fetchHint('location');
-        fetchHint('atmosphere');
+        fetchHint('location', 'guest');
+        fetchHint('atmosphere', 'guest');
     }, []);
 
     const handleStartMission = async (type) => {
@@ -22,6 +21,26 @@ export default function MissionHome() {
         } catch (error) {
             alert(error.message || '미션 시작에 실패했습니다.');
         }
+    };
+
+    const VqaChecklist = ({ vqaHints }) => {
+        if (!vqaHints || vqaHints.length === 0) return null;
+        return (
+            <div
+                className="bg-dark-teal/5 border border-dark-teal/15 rounded-xl p-3 mt-3"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <p className="text-dark-teal/60 text-[10px] font-bold uppercase tracking-widest mb-2">AI 검증 기준</p>
+                <ul className="space-y-1.5">
+                    {vqaHints.map((q, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                            <span className="text-dark-teal/40 text-xs mt-0.5 flex-shrink-0">✓</span>
+                            <span className="text-dark-teal/70 text-xs leading-snug">{q}</span>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        );
     };
 
     return (
@@ -41,14 +60,16 @@ export default function MissionHome() {
                         <span className="text-gray-400 text-sm font-medium">다시 오셨군요,</span>
                         <h1 className="text-dark-teal text-2xl font-bold tracking-tight">안녕하세요, 탐험가님</h1>
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-light-grey flex items-center justify-center border border-gray-100 text-dark-teal shadow-sm">
+                    <div 
+                        onClick={() => navigate('/profile')}
+                        className="w-10 h-10 rounded-full bg-light-grey flex items-center justify-center border border-gray-100 text-dark-teal shadow-sm cursor-pointer hover:bg-gray-50 transition-colors"
+                    >
                         <span className="material-symbols-outlined text-2xl">person</span>
                     </div>
                 </header>
 
                 {/* Main Content Scroll */}
                 <main className="flex-1 px-6 py-6 overflow-y-auto no-scrollbar bg-white">
-
 
                     {/* Active Missions */}
                     <div className="space-y-4 pb-4">
@@ -57,14 +78,18 @@ export default function MissionHome() {
                             <span className="animate-pulse text-coral-end text-xs font-bold uppercase tracking-widest bg-coral-start/10 px-3 py-1.5 rounded-full">2개 진행 중</span>
                         </div>
 
-                        {/* Mission Card 1 (Location Hunt - Connected to API) */}
+                        {/* Mission Card 1 — 랜드마크 찾기 */}
                         <div
-                            onClick={() => handleStartMission('location')}
-                            className={`bg-warm-cream rounded-[2rem] p-6 shadow-[0_10px_30px_-8px_rgba(55,119,113,0.2)] border border-dark-teal/5 transform transition-all duration-300 cursor-pointer hover:border-coral-end/30 hover:shadow-lg active:scale-[0.98] relative z-20 ${isLoading ? 'opacity-70 pointer-events-none' : ''}`}
+                            onClick={() => !previewHints.location?.completed && handleStartMission('location')}
+                            className={`bg-warm-cream rounded-[2rem] p-6 shadow-[0_10px_30px_-8px_rgba(55,119,113,0.2)] border border-dark-teal/5 transform transition-all duration-300 cursor-pointer hover:border-coral-end/30 hover:shadow-lg active:scale-[0.98] relative z-20 ${isLoading || previewHints.location?.completed ? 'opacity-70 pointer-events-none' : ''}`}
                         >
-                            {isLoading && (
+                            {(isLoading || previewHints.location?.completed) && (
                                 <div className="absolute inset-0 bg-white/50 backdrop-blur-sm rounded-[2rem] z-10 flex items-center justify-center">
-                                    <div className="w-8 h-8 rounded-full border-4 border-coral-start border-t-transparent animate-spin"></div>
+                                    {previewHints.location?.completed ? (
+                                        <div className="bg-dark-teal text-white px-4 py-2 rounded-full font-bold text-sm shadow-md animate-scale-in">오늘의 미션 완료!</div>
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full border-4 border-coral-start border-t-transparent animate-spin"></div>
+                                    )}
                                 </div>
                             )}
                             <div className="flex justify-between items-start mb-4">
@@ -73,27 +98,25 @@ export default function MissionHome() {
                                 </div>
                                 <span className="bg-dark-teal/5 text-dark-teal text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wide">탐험</span>
                             </div>
-                            <h3 className="text-dark-teal text-2xl font-extrabold mb-2 tracking-tight">장소 찾기</h3>
-                            <p className="text-gray-400 text-sm leading-snug mb-3">{previewHints.location?.primary || "오늘의 힌트를 불러오는 중..."}</p>
-
-                            {previewHints.location?.secondary && (
-                                <div className="bg-dark-teal/5 border border-dark-teal/20 rounded-lg p-3 mb-3 animate-fade-in">
-                                    <p className="text-dark-teal/80 text-xs font-semibold tracking-wide uppercase mb-1">추가 힌트</p>
-                                    <p className="text-dark-teal/70 text-xs leading-relaxed">
-                                        {previewHints.location.secondary}
-                                    </p>
-                                </div>
-                            )}
+                            <h3 className="text-dark-teal text-2xl font-extrabold mb-2 tracking-tight">랜드마크 찾기</h3>
+                            <p className="text-gray-400 text-sm leading-snug">
+                                {previewHints.location?.hint || "오늘의 힌트를 불러오는 중..."}
+                            </p>
+                            <VqaChecklist vqaHints={previewHints.location?.vqa_hints} />
                         </div>
 
-                        {/* Mission Card 2 (Atmosphere) */}
+                        {/* Mission Card 2 — 분위기 담아내기 */}
                         <div
-                            onClick={() => handleStartMission('atmosphere')}
-                            className={`bg-warm-cream rounded-[2rem] p-6 shadow-[0_10px_30px_-8px_rgba(55,119,113,0.2)] border border-dark-teal/5 transform transition-all duration-300 cursor-pointer hover:border-coral-end/30 hover:shadow-lg active:scale-[0.98] relative z-20 ${isLoading ? 'opacity-70 pointer-events-none' : ''}`}
+                            onClick={() => !previewHints.atmosphere?.completed && handleStartMission('atmosphere')}
+                            className={`bg-warm-cream rounded-[2rem] p-6 shadow-[0_10px_30px_-8px_rgba(55,119,113,0.2)] border border-dark-teal/5 transform transition-all duration-300 cursor-pointer hover:border-coral-end/30 hover:shadow-lg active:scale-[0.98] relative z-20 ${isLoading || previewHints.atmosphere?.completed ? 'opacity-70 pointer-events-none' : ''}`}
                         >
-                            {isLoading && (
+                            {(isLoading || previewHints.atmosphere?.completed) && (
                                 <div className="absolute inset-0 bg-white/50 backdrop-blur-sm rounded-[2rem] z-10 flex items-center justify-center">
-                                    <div className="w-8 h-8 rounded-full border-4 border-coral-start border-t-transparent animate-spin"></div>
+                                    {previewHints.atmosphere?.completed ? (
+                                        <div className="bg-dark-teal text-white px-4 py-2 rounded-full font-bold text-sm shadow-md animate-scale-in">오늘의 미션 완료!</div>
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full border-4 border-coral-start border-t-transparent animate-spin"></div>
+                                    )}
                                 </div>
                             )}
                             <div className="flex justify-between items-start mb-4">
@@ -102,17 +125,11 @@ export default function MissionHome() {
                                 </div>
                                 <span className="bg-dark-teal/5 text-dark-teal text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wide">분위기</span>
                             </div>
-                            <h3 className="text-dark-teal text-2xl font-extrabold mb-2 tracking-tight">분위기 포착</h3>
-                            <p className="text-gray-400 text-sm leading-snug mb-3">{previewHints.atmosphere?.primary || "오늘의 힌트를 불러오는 중..."}</p>
-
-                            {previewHints.atmosphere?.secondary && (
-                                <div className="bg-dark-teal/5 border border-dark-teal/20 rounded-lg p-3 mb-3 animate-fade-in">
-                                    <p className="text-dark-teal/80 text-xs font-semibold tracking-wide uppercase mb-1">추가 힌트</p>
-                                    <p className="text-dark-teal/70 text-xs leading-relaxed">
-                                        {previewHints.atmosphere.secondary}
-                                    </p>
-                                </div>
-                            )}
+                            <h3 className="text-dark-teal text-2xl font-extrabold mb-2 tracking-tight">분위기 담아내기</h3>
+                            <p className="text-gray-400 text-sm leading-snug">
+                                {previewHints.atmosphere?.hint || "오늘의 힌트를 불러오는 중..."}
+                            </p>
+                            <VqaChecklist vqaHints={previewHints.atmosphere?.vqa_hints} />
                         </div>
                     </div>
                 </main>

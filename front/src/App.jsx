@@ -11,6 +11,7 @@ import CouponSuccess from "./pages/CouponSuccess";
 import Onboarding from "./pages/Onboarding";
 import Permissions from "./pages/Permissions";
 import CouponWallet from "./pages/CouponWallet";
+import Profile from "./pages/Profile";
 
 export default function App() {
   return (
@@ -26,13 +27,7 @@ export default function App() {
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/permissions" element={<Permissions />} />
           <Route path="/coupon/success" element={<CouponSuccess />} />
-
-          <Route path="/profile" element={
-            <div className="flex flex-col items-center justify-center min-h-[50vh] text-slate-500">
-              <span className="material-symbols-outlined text-4xl mb-2">person</span>
-              <p>Profile Page (In Progress)</p>
-            </div>
-          } />
+          <Route path="/profile" element={<Profile />} />
         </Route>
 
         {/* Admin Routes */}

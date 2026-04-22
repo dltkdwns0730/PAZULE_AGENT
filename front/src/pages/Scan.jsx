@@ -35,18 +35,38 @@ export default function Scan() {
         navigate('/');
     };
 
-    const handleSimulateScan = () => {
+    const handleSimulateScan = async () => {
         if (timeLeft === 0) return;
-        alert("🎉 Mock: Coupon scanned successfully at POS!");
-        navigate('/wallet');
+        
+        try {
+            const response = await fetch('/api/coupon/redeem', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    coupon_code: coupon.code,
+                    partner_pos_id: "POS-001-DEMO"
+                })
+            });
+
+            if (response.ok) {
+                alert("🎉 쿠폰 사용이 완료되었습니다!");
+                navigate('/wallet');
+            } else {
+                const err = await response.json();
+                alert(err.message || '쿠폰 사용에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Redeem failed:', error);
+            alert('네트워크 오류가 발생했습니다.');
+        }
     };
 
     if (!coupon) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-50">
                 <span className="material-symbols-outlined text-4xl text-slate-300 mb-4">qr_code_scanner</span>
-                <p className="text-slate-500 font-medium">No active coupon found.</p>
-                <button onClick={handleGoHome} className="mt-6 px-6 py-2 bg-[#37776f] text-white rounded-full font-bold">Go Home</button>
+                <p className="text-slate-500 font-medium">활성화된 쿠폰을 찾을 수 없습니다.</p>
+                <button onClick={handleGoHome} className="mt-6 px-6 py-2 bg-[#37776f] text-white rounded-full font-bold">홈으로 이동</button>
             </div>
         );
     }
@@ -68,12 +88,12 @@ export default function Scan() {
                 {/* Header */}
                 <header className="px-6 flex justify-between items-center mb-8">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur border border-white/30 flex items-center justify-center overflow-hidden shadow-sm">
-                            <span className="text-white font-bold text-sm">JD</span>
-                        </div>
+                        <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-white/20 backdrop-blur border border-white/30 flex items-center justify-center text-white">
+                            <span className="material-symbols-outlined">arrow_back</span>
+                        </button>
                         <div>
-                            <p className="text-white/80 text-xs font-medium">Wallet</p>
-                            <p className="text-white font-bold tracking-tight">Forest of Wisdom</p>
+                            <p className="text-white/80 text-xs font-medium">쿠폰 지갑</p>
+                            <p className="text-white font-bold tracking-tight">{coupon.answer} 미션</p>
                         </div>
                     </div>
                     {/* Theme Toggle */}
@@ -99,9 +119,9 @@ export default function Scan() {
                             <div className={`absolute top-1/2 -left-3 w-6 h-6 rounded-full ${theme === 'light' ? 'bg-[#f6f7f7]' : 'bg-[#151d1c]'}`}></div>
                             <div className={`absolute top-1/2 -right-3 w-6 h-6 rounded-full ${theme === 'light' ? 'bg-[#f6f7f7]' : 'bg-[#151d1c]'}`}></div>
 
-                            <h2 className="text-xl font-bold text-slate-900 mt-4 mb-1">10% OFF COFFEE</h2>
+                            <h2 className="text-xl font-bold text-slate-900 mt-4 mb-1">{coupon.discount_rule || '10% 할인'}</h2>
                             <p className="text-sm font-medium text-slate-500 mb-6 text-center max-w-[220px]">
-                                {coupon.description || 'Present this QR code at the counter.'}
+                                매장 직원에게 이 화면을 보여주세요.
                             </p>
 
                             {/* Divider */}
@@ -116,7 +136,7 @@ export default function Scan() {
                             <div 
                                 onClick={handleSimulateScan}
                                 className={`relative p-2 bg-gradient-to-br from-slate-100 to-slate-50 border border-slate-200 rounded-[24px] shadow-inner mb-6 group transition-transform ${isExpired ? '' : 'cursor-pointer hover:scale-105 active:scale-95'}`}
-                                title={isExpired ? "QR Code Expired" : "클릭하여 POS 스캔 시뮬레이션"}
+                                title={isExpired ? "만료된 QR 코드" : "클릭하여 POS 스캔 시뮬레이션"}
                             >
                                 {/* The actual scanning area */}
                                 <div className={`p-4 bg-white rounded-[16px] shadow-sm relative overflow-hidden ${isExpired ? 'opacity-50' : ''}`}>
@@ -129,7 +149,7 @@ export default function Scan() {
                                 {isExpired && (
                                     <div className="absolute inset-0 z-10 flex items-center justify-center">
                                         <div className="bg-red-500 text-white font-bold py-1 px-4 rounded-full shadow-lg transform -rotate-12">
-                                            EXPIRED
+                                            기간 만료
                                         </div>
                                     </div>
                                 )}
@@ -145,7 +165,7 @@ export default function Scan() {
                             {/* Countdown Timer */}
                             <div className="w-full flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                 <div>
-                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Time Remaining</p>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">남은 시간</p>
                                     <p className={`text-2xl font-black tabular-nums tracking-tight ${isExpiringSoon ? 'text-red-500 animate-pulse' : 'text-slate-800'}`}>
                                         {minutes}:{seconds}
                                     </p>

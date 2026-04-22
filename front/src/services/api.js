@@ -34,9 +34,10 @@ export const api = {
     /**
      * Get the daily hint for a mission type
      * @param {string} missionType 'location' or 'atmosphere'
+     * @param {string} userId - The user ID to check completion status
      */
-    async getTodayHint(missionType = 'location') {
-        const response = await fetchWithTimeout(`${API_BASE}/get-today-hint?mission_type=${missionType}`);
+    async getTodayHint(missionType = 'location', userId = 'guest') {
+        const response = await fetchWithTimeout(`${API_BASE}/get-today-hint?mission_type=${missionType}&user_id=${userId}`);
         return handleResponse(response);
     },
 
@@ -75,14 +76,18 @@ export const api = {
     /**
      * Issue a coupon after a successful mission
      * @param {string} missionId - The ID of the successful mission
+     * @param {string} userId - (Optional) The ID of the user
      */
-    async issueCoupon(missionId) {
+    async issueCoupon(missionId, userId = 'guest') {
         const response = await fetchWithTimeout(`${API_BASE}/api/coupon/issue`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ mission_id: missionId }),
+            body: JSON.stringify({ 
+                mission_id: missionId,
+                user_id: userId 
+            }),
         });
         return handleResponse(response);
     },

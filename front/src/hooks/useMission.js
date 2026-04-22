@@ -8,13 +8,18 @@ export function useMission() {
 
     const store = useMissionStore();
 
-    const fetchHint = async (missionType) => {
+    const fetchHint = async (missionType, userId = 'guest') => {
         setIsLoading(true);
         setError(null);
         try {
-            const data = await api.getTodayHint(missionType);
-            store.setPreviewHint(missionType, data.hint);
-            return data.hint;
+            const data = await api.getTodayHint(missionType, userId);
+            const hintData = { 
+                hint: data.hint, 
+                vqa_hints: data.vqa_hints ?? [],
+                completed: data.completed ?? false 
+            };
+            store.setPreviewHint(missionType, hintData);
+            return hintData;
         } catch (err) {
             console.error('Failed to fetch hint:', err);
             store.setPreviewHint(missionType, null);
@@ -30,8 +35,10 @@ export function useMission() {
         try {
             const data = await api.startMission({ mission_type: missionType, user_id: userId });
             store.setMissionParams(data.mission_id, missionType);
-            // API 응답 hint 또는 미리 로드된 previewHint를 activeHint로 저장
-            const activeHint = data.hint ?? store.previewHints[missionType] ?? null;
+            // API 응답 또는 미리 로드된 previewHint를 activeHint로 저장 ({ hint, vqa_hints })
+            const activeHint = (data.hint != null)
+                ? { hint: data.hint, vqa_hints: data.vqa_hints ?? [] }
+                : store.previewHints[missionType] ?? null;
             store.setActiveHint(activeHint);
             return data.mission_id;
         } catch (err) {
@@ -74,7 +81,9 @@ export function useMission() {
         setIsLoading(true);
         setError(null);
         try {
-            const result = await api.issueCoupon(store.missionId);
+            // 명시적으로 'guest' 전달 (향후 동적 ID로 변경 가능)
+            const result = await api.issueCoupon(store.missionId, 'guest');
+            // Explicitly set coupon in store
             store.setCoupon(result);
             return result;
         } catch (err) {

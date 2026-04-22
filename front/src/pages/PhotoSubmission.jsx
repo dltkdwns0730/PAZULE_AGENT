@@ -15,7 +15,6 @@ export default function PhotoSubmission() {
     const [previewUrl, setPreviewUrl] = useState(null);
     const [retryError, setRetryError] = useState(null);
     const [attemptsLeft, setAttemptsLeft] = useState(MAX_ATTEMPTS);
-    const [showSecondaryHint, setShowSecondaryHint] = useState(false);
     const fileInputRef = useRef(null);
 
     // Route guard: 활성 mission 없이 접근 시 홈으로 redirect
@@ -113,25 +112,22 @@ export default function PhotoSubmission() {
                                 <span className="text-[11px] font-bold uppercase tracking-wider">미션 목표</span>
                             </div>
                             <h1 className="text-[26px] font-extrabold text-slate-800 dark:text-white leading-tight mb-2 tracking-tight">
-                                {store.missionType === 'location' ? <>거대한<br />책장을 찾아라</> : <>분위기를<br />포착하라</>}
+                                {store.missionType === 'location' ? <>랜드마크<br />찾기</> : <>분위기<br />담아내기</>}
                             </h1>
                             <p className="text-slate-500 dark:text-slate-300 text-sm font-medium leading-relaxed max-w-[260px] mx-auto mb-4">
-                                {store.activeHint?.primary || "리워드 쿠폰을 받으려면 방문을 인증하세요."}
+                                {store.activeHint?.hint || "리워드 쿠폰을 받으려면 방문을 인증하세요."}
                             </p>
-                            {store.activeHint?.secondary && (
-                                <button
-                                    onClick={() => setShowSecondaryHint(!showSecondaryHint)}
-                                    className="text-primary hover:text-primary-dark text-xs font-bold uppercase tracking-wider mb-4 transition-colors"
-                                >
-                                    {showSecondaryHint ? '힌트 숨기기' : '추가 힌트 보기'}
-                                </button>
-                            )}
-                            {showSecondaryHint && store.activeHint?.secondary && (
-                                <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mb-4 animate-fade-in">
-                                    <p className="text-primary dark:text-primary-light text-xs font-semibold tracking-wide uppercase mb-1">추가 힌트</p>
-                                    <p className="text-primary/80 dark:text-primary-light/70 text-xs leading-relaxed">
-                                        {store.activeHint.secondary}
-                                    </p>
+                            {store.activeHint?.vqa_hints?.length > 0 && (
+                                <div className="bg-primary/5 border border-primary/15 rounded-xl p-3 mb-4 w-full text-left">
+                                    <p className="text-primary/60 text-[10px] font-bold uppercase tracking-widest mb-2">AI 검증 기준</p>
+                                    <ul className="space-y-1.5">
+                                        {store.activeHint.vqa_hints.map((q, i) => (
+                                            <li key={i} className="flex items-start gap-2">
+                                                <span className="text-primary/40 text-xs mt-0.5 flex-shrink-0">✓</span>
+                                                <span className="text-primary/70 text-xs leading-snug">{q}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
                                 </div>
                             )}
 

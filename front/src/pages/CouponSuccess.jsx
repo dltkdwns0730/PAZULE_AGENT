@@ -1,4 +1,6 @@
+import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useMissionStore } from "../store/useMissionStore";
 
 // Confetti Particles Data
 const CONFETTI = [
@@ -16,19 +18,12 @@ const CONFETTI = [
 
 export default function CouponSuccess() {
     const navigate = useNavigate();
+    const { coupon } = useMissionStore();
 
     return (
         <div className="font-display h-full w-full flex flex-col relative overflow-hidden bg-background-light dark:bg-background-dark antialiased">
 
-            {/* Desktop Background Elements (fixed behind Layout container) */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 opacity-30">
-                <div
-                    className="absolute top-0 left-0 w-full h-full bg-cover bg-center blur-3xl scale-110"
-                    style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuA-RQPX6qE5J8U8YC-Z0zVmcd2yDc5ng_gMD2Km6L425L7gWRLuqA-CnhGew2Z4qQ8l-owfnvT749j3tMgbIgynvWprZxxLxS3SozjcHj-IJem5oTI8gFMgZ6WYhzhjGkWX_4okax4OYZS2x_y5vIdfLe7iJi9fTiHBaG8-VYWCi2NaG6cuJrexKb2azu7GP1KYSvRAaYPmCIO2LwBCBA6xNj2GWSFA1qQobeb6DLph23XiFBslUNCu8pIT07tH6eqfohRvtaWPyXo')" }}
-                />
-            </div>
-
-            {/* Main Mobile Screen Area (fitting exactly into Layout container) */}
+            {/* Main Mobile Screen Area */}
             <div className="relative w-full h-full bg-gradient-to-br from-[#f45c25] via-[#ff7e4f] to-[#e04812] flex flex-col overflow-hidden z-10 shrink-0">
 
                 {/* Confetti Overlay */}
@@ -51,10 +46,10 @@ export default function CouponSuccess() {
                             <span className="material-symbols-outlined text-4xl">celebration</span>
                         </div>
                         <h1 className="text-white text-4xl font-black leading-tight tracking-tight drop-shadow-sm">
-                            Mission<br />Complete!
+                            미션 완료!
                         </h1>
                         <p className="text-white/90 text-sm font-medium mt-2 leading-relaxed">
-                            You've successfully solved the Pazule<br />at Paju Book City.
+                            파주 출판단지에서<br />탐험 미션을 성공적으로 마쳤습니다.
                         </p>
                     </div>
 
@@ -70,7 +65,7 @@ export default function CouponSuccess() {
                                     <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center overflow-hidden shadow-sm">
                                         <span className="material-symbols-outlined text-gray-800 text-sm">storefront</span>
                                     </div>
-                                    <span className="text-white font-bold text-sm text-[shadow:0_1px_2px_rgba(0,0,0,0.5)]">Forest of Wisdom</span>
+                                    <span className="text-white font-bold text-sm text-[shadow:0_1px_2px_rgba(0,0,0,0.5)]">지혜의 숲</span>
                                 </div>
                             </div>
                         </div>
@@ -84,8 +79,8 @@ export default function CouponSuccess() {
                                 <div className="w-4 h-4 rounded-full bg-[#f45c25] dark:bg-[#e04812]"></div>
                             </div>
 
-                            <h2 className="text-gray-900 text-2xl font-black tracking-tight mb-1">10% OFF</h2>
-                            <p className="text-gray-500 text-xs uppercase tracking-wide font-semibold mb-6">Coffee &amp; Books</p>
+                            <h2 className="text-gray-900 text-2xl font-black tracking-tight mb-1">{coupon?.discount_rule || '10% 할인'}</h2>
+                            <p className="text-gray-500 text-xs uppercase tracking-wide font-semibold mb-6">{coupon?.answer || '미션 완료'} 보상 쿠폰</p>
 
                             {/* QR Code Block */}
                             <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 mb-4 shadow-inner">
@@ -96,8 +91,10 @@ export default function CouponSuccess() {
                                 />
                             </div>
 
-                            <p className="text-gray-400 text-xs">Scan at counter to redeem</p>
-                            <p className="text-[#f45c25] text-xs font-semibold mt-1">Valid until Dec 31, 2026</p>
+                            <p className="text-gray-400 text-[10px]">매장 카운터에서 스캔하여 사용하세요</p>
+                            <p className="text-[#f45c25] text-xs font-semibold mt-1">
+                                만료일: {coupon ? new Date(coupon.expires_at).toLocaleDateString() : '2026. 12. 31.'}
+                            </p>
                         </div>
                     </div>
 
@@ -107,7 +104,7 @@ export default function CouponSuccess() {
                             onClick={() => navigate('/scan')}
                             className="flex w-full cursor-pointer items-center justify-center rounded-xl h-14 px-6 bg-white text-[#f45c25] hover:bg-gray-50 transition-colors shadow-lg group"
                         >
-                            <span className="text-base font-bold mr-2 group-hover:scale-105 transition-transform">Use Now</span>
+                            <span className="text-base font-bold mr-2 group-hover:scale-105 transition-transform">지금 사용하기</span>
                             <span className="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
                         </button>
                         <button
@@ -115,13 +112,10 @@ export default function CouponSuccess() {
                             className="flex w-full cursor-pointer items-center justify-center rounded-xl h-14 px-6 bg-transparent border-2 border-white/40 text-white hover:bg-white/10 hover:border-white transition-all backdrop-blur-sm group"
                         >
                             <span className="material-symbols-outlined mr-2 group-hover:rotate-12 transition-transform">account_balance_wallet</span>
-                            <span className="text-base font-bold">Save to Wallet</span>
+                            <span className="text-base font-bold">지갑에 저장하기</span>
                         </button>
                     </div>
                 </div>
-
-                {/* Simulated Mobile Nav Indicator */}
-                {/* <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-32 h-1 bg-white/30 rounded-full z-30"></div> */}
             </div>
         </div>
     );
