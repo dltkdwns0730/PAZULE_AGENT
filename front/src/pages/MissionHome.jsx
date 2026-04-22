@@ -49,49 +49,12 @@ export default function MissionHome() {
                 {/* Main Content Scroll */}
                 <main className="flex-1 px-6 py-6 overflow-y-auto no-scrollbar bg-white">
 
-                    {/* Today's Hint (Moved to Top) */}
-                    <div className="mb-8">
-                        <h2 className="text-dark-teal font-bold text-lg mb-3">오늘의 힌트</h2>
-                        <div
-                            onClick={() => setIsHintRevealed(true)}
-                            className={`bg-light-grey rounded-3xl p-5 relative overflow-hidden transition-colors border border-gray-100/50 ${isHintRevealed ? 'bg-white shadow-soft transition-all duration-300' : 'cursor-pointer hover:bg-gray-200 active:bg-gray-300'}`}
-                        >
-                            <div className="flex items-start gap-4">
-                                <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center shadow-sm transition-colors ${isHintRevealed ? 'bg-coral-end text-white' : 'bg-white text-coral-end'}`}>
-                                    <span className="material-symbols-outlined">tips_and_updates</span>
-                                </div>
-                                <div className="flex-1 mt-0.5">
-                                    <p className="text-coral-end text-[10px] font-bold uppercase tracking-wider mb-1">
-                                        {isHintRevealed ? '힌트 공개됨' : '탭하여 확인'}
-                                    </p>
-                                    
-                                    {/* 항상 유지되는 기존 티저 힌트 */}
-                                    <p className="text-gray-600 font-medium text-sm leading-relaxed">
-                                        오래된 종이 향기와 새 커피 향이 만나는 곳...
-                                    </p>
-                                    
-                                    {/* 숨겨진 실제 API 힌트 (클릭 시 하단에 펼쳐짐) */}
-                                    {isHintRevealed && (
-                                        <div className="mt-4 pt-3 border-t border-gray-100 flex items-start gap-2 animate-fade-in-up">
-                                            <span className="material-symbols-outlined text-coral-end text-[18px]">key</span>
-                                            <p className="text-dark-teal font-bold text-[13px] leading-snug">
-                                                {hint || "오늘의 힌트를 불러오는 중..."}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                                {!isHintRevealed && (
-                                    <span className="material-symbols-outlined text-gray-300 text-xl mt-2">chevron_right</span>
-                                )}
-                            </div>
-                        </div>
-                    </div>
 
                     {/* Active Missions */}
                     <div className="space-y-4 pb-4">
                         <div className="flex justify-between items-end">
                             <h2 className="text-dark-teal font-bold text-lg">미션</h2>
-                            <span className="text-coral-end text-xs font-semibold uppercase tracking-widest bg-pale-coral px-2.5 py-1 rounded-md">2개 진행 중</span>
+                            <span className="animate-pulse text-coral-end text-xs font-bold uppercase tracking-widest bg-coral-start/10 px-3 py-1.5 rounded-full">2개 진행 중</span>
                         </div>
 
                         {/* Mission Card 1 (Location Hunt - Connected to API) */}
@@ -110,8 +73,17 @@ export default function MissionHome() {
                                 </div>
                                 <span className="bg-dark-teal/5 text-dark-teal text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wide">탐험</span>
                             </div>
-                            <h3 className="text-dark-teal text-xl font-bold mb-1">장소 찾기</h3>
-                            <p className="text-gray-400 text-sm leading-snug">지혜의 숲 깊은 곳에 숨겨진 비밀 안뜰을 찾아보세요.</p>
+                            <h3 className="text-dark-teal text-2xl font-extrabold mb-2 tracking-tight">장소 찾기</h3>
+                            <p className="text-gray-400 text-sm leading-snug mb-3">{previewHints.location?.primary || "오늘의 힌트를 불러오는 중..."}</p>
+
+                            {previewHints.location?.secondary && (
+                                <div className="bg-dark-teal/5 border border-dark-teal/20 rounded-lg p-3 mb-3 animate-fade-in">
+                                    <p className="text-dark-teal/80 text-xs font-semibold tracking-wide uppercase mb-1">추가 힌트</p>
+                                    <p className="text-dark-teal/70 text-xs leading-relaxed">
+                                        {previewHints.location.secondary}
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Mission Card 2 (Atmosphere) */}
@@ -130,8 +102,17 @@ export default function MissionHome() {
                                 </div>
                                 <span className="bg-dark-teal/5 text-dark-teal text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wide">분위기</span>
                             </div>
-                            <h3 className="text-dark-teal text-xl font-bold mb-1">분위기 포착</h3>
-                            <p className="text-gray-400 text-sm leading-snug">책장에 스며드는 아침 햇살을 사진으로 담아보세요.</p>
+                            <h3 className="text-dark-teal text-2xl font-extrabold mb-2 tracking-tight">분위기 포착</h3>
+                            <p className="text-gray-400 text-sm leading-snug mb-3">{previewHints.atmosphere?.primary || "오늘의 힌트를 불러오는 중..."}</p>
+
+                            {previewHints.atmosphere?.secondary && (
+                                <div className="bg-dark-teal/5 border border-dark-teal/20 rounded-lg p-3 mb-3 animate-fade-in">
+                                    <p className="text-dark-teal/80 text-xs font-semibold tracking-wide uppercase mb-1">추가 힌트</p>
+                                    <p className="text-dark-teal/70 text-xs leading-relaxed">
+                                        {previewHints.atmosphere.secondary}
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </main>

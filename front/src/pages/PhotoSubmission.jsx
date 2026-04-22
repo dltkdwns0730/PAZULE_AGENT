@@ -115,8 +115,8 @@ export default function PhotoSubmission() {
                             <h1 className="text-[26px] font-extrabold text-slate-800 dark:text-white leading-tight mb-2 tracking-tight">
                                 {store.missionType === 'location' ? <>거대한<br />책장을 찾아라</> : <>분위기를<br />포착하라</>}
                             </h1>
-                            <p className="text-slate-500 dark:text-slate-300 text-sm font-medium leading-relaxed max-w-[260px] mx-auto mb-6">
-                                {store.hint || "리워드 쿠폰을 받으려면 방문을 인증하세요."}
+                            <p className="text-slate-500 dark:text-slate-300 text-sm font-medium leading-relaxed max-w-[260px] mx-auto mb-4">
+                                {store.activeHint?.primary || "리워드 쿠폰을 받으려면 방문을 인증하세요."}
                             </p>
                             {store.activeHint?.secondary && (
                                 <button
