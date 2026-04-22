@@ -13,11 +13,11 @@ export function useMission() {
         setError(null);
         try {
             const data = await api.getTodayHint(missionType);
-            store.setHint(data.hint);
+            store.setPreviewHint(missionType, data.hint);
             return data.hint;
         } catch (err) {
             console.error('Failed to fetch hint:', err);
-            store.setHint('힌트를 불러올 수 없습니다.');
+            store.setPreviewHint(missionType, null);
             return null;
         } finally {
             setIsLoading(false);
@@ -30,6 +30,9 @@ export function useMission() {
         try {
             const data = await api.startMission({ mission_type: missionType, user_id: userId });
             store.setMissionParams(data.mission_id, missionType);
+            // API 응답 hint 또는 미리 로드된 previewHint를 activeHint로 저장
+            const activeHint = data.hint ?? store.previewHints[missionType] ?? null;
+            store.setActiveHint(activeHint);
             return data.mission_id;
         } catch (err) {
             setError(err.message);
