@@ -46,9 +46,10 @@ DEFAULT_PROFILE: dict[str, object] = {
     # ATMOSPHERE_PASS_THRESHOLD (float, 0.0 ~ 1.0)
     #   분위기(Atmosphere) 미션에서 앙상블 최종 점수가 이 값 이상이면 "통과".
     #   분위기 판정은 주관적이므로 위치보다 낮게 설정.
-    #   기준: SigLIP2(0.75) + BLIP(0.25) 가중합 기반.
+    #   기준: SigLIP2(0.80) + BLIP(0.20) 가중합 기반.
+    #   v2.6.1: 벤치마크 결과(0.3~0.5)를 반영하여 0.62에서 0.35로 하향 조정.
     #
-    "ATMOSPHERE_PASS_THRESHOLD": 0.62,
+    "ATMOSPHERE_PASS_THRESHOLD": 0.35,
     # ── 모델 선택 (Model Selection) ──────────────────────────
     #
     # MODEL_SELECTION_LOCATION (str)

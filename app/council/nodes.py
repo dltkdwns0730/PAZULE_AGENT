@@ -638,20 +638,25 @@ def policy(state: dict[str, Any]) -> dict[str, Any]:
     return {"artifacts": artifacts, "messages": [f"policy: eligible={eligible}"]}
 
 
-def _generate_retry_hint(answer: str, static_hint: str, mission_type: str) -> str:
-    """실패 시 재시도 힌트를 LLM으로 생성한다.
+def _generate_retry_hint(
+    answer: str,
+    static_hint: str,
+    mission_type: str,
+    votes: list[dict[str, Any]] | None = None,
+) -> str:
+    """실패 시 재시도 힌트를 생성한다.
 
-    정답 키워드·실패 이유를 직접 언급하지 않고, 정답 장소의 분위기와
-    기존 정적 힌트의 감성 톤을 조합하여 자연스러운 한국어 문장을 반환한다.
-
-    Args:
-        answer: 미션 정답 키워드 (장소명 또는 감성어).
-        static_hint: answer.json에 미리 작성된 정적 힌트 문자열.
-        mission_type: 미션 유형 ('location' | 'atmosphere').
-
-    Returns:
-        생성된 한국어 힌트 문자열. LLM 호출 실패 시 static_hint 반환.
+    분위기 미션의 경우 모델 점수를 분석하여 대비 힌트를 제공하고,
+    그 외에는 LLM 또는 정적 힌트를 사용한다.
     """
+    if mission_type == "atmosphere" and votes:
+        from app.core.hints import get_atmosphere_hint
+
+        # SigLIP2 모델의 상세 점수 추출
+        siglip_vote = next((v for v in votes if v.get("model") == "siglip2"), None)
+        if siglip_vote and "scores" in siglip_vote:
+            return get_atmosphere_hint(answer, siglip_vote["scores"])
+
     from app.models.llm import LLMService
 
     try:
@@ -741,7 +746,8 @@ def responder(state: dict[str, Any]) -> dict[str, Any]:
     answer = request_context.get("answer", "")
     static_hint = request_context.get("static_hint", "")
 
-    hint = _generate_retry_hint(answer, static_hint, mission_type)
+    # 실패 시 재시도 힌트 생성 (상세 점수 votes 전달)
+    hint = _generate_retry_hint(answer, static_hint, mission_type, votes)
 
     message = "미션 조건이 충분히 충족되지 않았습니다. 다시 시도해 주세요."
     final_data = {

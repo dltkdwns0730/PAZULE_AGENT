@@ -104,8 +104,9 @@ def probe_with_siglip2(
             outputs = _model(input_ids=input_ids, pixel_values=pixel_values)
 
         # SigLIP 특성상 softmax 대신 독립적인 sigmoid 함수가 사용됨
-        logits_per_image = outputs.logits_per_image
-        probs = torch.sigmoid(logits_per_image)  # shape: (1, 1)
+        # 하지만 후보군(candidates) 간의 상대적 확률을 위해 softmax 적용 시도
+        logits_per_image = outputs.logits_per_image  # shape: (1, 2)
+        probs = torch.softmax(logits_per_image, dim=-1)  # shape: (1, 2)
 
         score = float(probs[0][0].cpu().numpy())
     except Exception as exc:

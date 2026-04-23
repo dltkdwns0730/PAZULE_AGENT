@@ -26,15 +26,13 @@ LANDMARK_EN: dict[str, str] = {
     "로드킬 부엉이": "an owl sculpture made of recycled tires",
 }
 
-# 한국어 분위기 키워드 → 영어 변환
+# 한국어 분위기 키워드 → 영어 변환 (VLM 최적화: 대비 극대화)
 ATMOSPHERE_EN: dict[str, str] = {
-    "차분한": "calm and peaceful",
-    "화사한": "bright and colorful",
-    "활기찬": "lively and energetic",
-    "옛스러운": "old-fashioned and vintage",
-    "자연적인": "natural and scenic",
-    "신비로운": "mysterious and dreamy",
-    "웅장한": "grand and majestic",
+    "화사하고 활기찬": "vibrant, bright, and energetic scene with high saturation and vivid colors",
+    "차분하고 자연적인": "serene, calm, and natural atmosphere with soft lighting and organic textures",
+    "옛스럽고 빈티지한": "vintage, old-fashioned, and historical style with aged textures and rustic elements",
+    "웅장하고 신비로운": "majestic, grand, and mysterious mood with massive scale and dramatic lighting",
+    "동화적이고 장난스러운": "whimsical, playful, and fairytale-like atmosphere with toy-like characters and storybook elements",
 }
 
 
