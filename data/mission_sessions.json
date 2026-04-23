@@ -29,877 +29,226 @@
       "latest_judgment": null
     },
     {
-      "mission_id": "bdee1b1f-0556-4b5a-981b-6184b985606f",
-      "user_id": "guest",
-      "site_id": "pazule-default",
+      "mission_id": "101329be-ee01-486d-840d-18aede975368",
+      "user_id": "test_user",
+      "site_id": "site",
       "mission_type": "location",
-      "answer": "창틀 피노키오",
-      "hint": "창틀위의 나무인형",
-      "status": "created",
-      "created_at": "2026-02-22T13:42:44.559260+00:00",
-      "expires_at": "2026-02-22T14:42:44.559260+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "0940ccb5-3ded-4e12-95c9-7651d45abe8f",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "창틀 피노키오",
-      "hint": "창틀위의 나무인형",
-      "status": "created",
-      "created_at": "2026-02-22T13:53:13.013724+00:00",
-      "expires_at": "2026-02-22T14:53:13.013724+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "f0788f60-d199-456e-8a11-d07e5161e561",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "창틀 피노키오",
-      "hint": "창틀위의 나무인형",
-      "status": "created",
-      "created_at": "2026-02-22T13:53:18.095424+00:00",
-      "expires_at": "2026-02-22T14:53:18.095424+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "4ce6eb36-c5f0-4771-86b1-10e7edafec7f",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "창틀 피노키오",
-      "hint": "창틀위의 나무인형",
-      "status": "created",
-      "created_at": "2026-02-22T13:56:26.569988+00:00",
-      "expires_at": "2026-02-22T14:56:26.569988+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "98feed22-4ee3-4fa1-82ad-c094d15030f9",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "창틀 피노키오",
-      "hint": "창틀위의 나무인형",
-      "status": "created",
-      "created_at": "2026-02-22T13:58:01.458493+00:00",
-      "expires_at": "2026-02-22T14:58:01.458493+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "7871ae1f-082c-4496-a42a-dcb21be186bc",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "창틀 피노키오",
-      "hint": "창틀위의 나무인형",
-      "status": "created",
-      "created_at": "2026-02-22T14:32:23.633428+00:00",
-      "expires_at": "2026-02-22T15:32:23.633428+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "2ea6c9a1-24ff-41ae-b0d0-bca62cd98d14",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "지혜의숲 고양이",
-      "hint": "내가 웃고 있나요?",
-      "status": "created",
-      "created_at": "2026-02-23T08:12:48.067295+00:00",
-      "expires_at": "2026-02-23T09:12:48.067295+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "855769e5-8b31-443e-92fc-314ad6c8d2c8",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "지혜의숲 고양이",
-      "hint": "내가 웃고 있나요?",
-      "status": "created",
-      "created_at": "2026-02-23T08:12:53.939219+00:00",
-      "expires_at": "2026-02-23T09:12:53.939219+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "210cc8a1-8844-4cd7-9736-abf0dad1d682",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "지혜의숲 고양이",
-      "hint": "내가 웃고 있나요?",
-      "status": "created",
-      "created_at": "2026-02-23T08:12:57.441147+00:00",
-      "expires_at": "2026-02-23T09:12:57.441147+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "7b2bead4-7477-4d7c-90b8-73dc22d94818",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "지혜의숲 고양이",
-      "hint": "내가 웃고 있나요?",
-      "status": "created",
-      "created_at": "2026-02-23T08:13:03.381599+00:00",
-      "expires_at": "2026-02-23T09:13:03.381599+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "159b66f6-9f74-43b4-be12-41fdc8874c39",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "지혜의숲 고양이",
-      "hint": "내가 웃고 있나요?",
-      "status": "created",
-      "created_at": "2026-02-23T08:13:44.385424+00:00",
-      "expires_at": "2026-02-23T09:13:44.385424+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "551369bf-8743-4fdb-81f2-775c1ea746eb",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "지혜의숲 고양이",
-      "hint": "내가 웃고 있나요?",
-      "status": "created",
-      "created_at": "2026-02-23T08:14:23.299695+00:00",
-      "expires_at": "2026-02-23T09:14:23.299695+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "3d2c5778-a6fe-4afe-8a82-7cbf40ebe923",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "지혜의숲 고양이",
-      "hint": "내가 웃고 있나요?",
-      "status": "created",
-      "created_at": "2026-02-23T12:14:43.733656+00:00",
-      "expires_at": "2026-02-23T13:14:43.733656+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "17010562-832f-4f02-b280-f19ba6c1acc4",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "로드킬 부엉이",
-      "hint": "로드킬 붱철이",
-      "status": "submitted",
-      "created_at": "2026-04-13T15:03:13.269848+00:00",
-      "expires_at": "2026-04-13T16:03:13.269848+00:00",
-      "max_submissions": 3,
-      "submissions": [
-        {
-          "submitted_at": "2026-04-13T15:03:23.238373+00:00",
-          "image_hash": "8c88b17a8a1b55d934dbda0ea1018e15ef17aa402ecb2e17eca557b6f64fde80",
-          "result_summary": {
-            "success": false,
-            "confidence": 0.0
-          }
-        },
-        {
-          "submitted_at": "2026-04-13T15:03:29.060363+00:00",
-          "image_hash": "8c88b17a8a1b55d934dbda0ea1018e15ef17aa402ecb2e17eca557b6f64fde80",
-          "result_summary": {
-            "success": false,
-            "confidence": 0.0
-          }
-        },
-        {
-          "submitted_at": "2026-04-13T15:03:40.141120+00:00",
-          "image_hash": "8c88b17a8a1b55d934dbda0ea1018e15ef17aa402ecb2e17eca557b6f64fde80",
-          "result_summary": {
-            "success": false,
-            "confidence": 0.0
-          }
-        }
-      ],
-      "latest_judgment": {
-        "success": false,
-        "error": "metadata_invalid,duplicate_image",
-        "message": "제출이 정책을 통과하지 못했습니다.",
-        "missionType": "location",
-        "decision_trace": {
-          "route_decision": null,
-          "errors": [
-            {
-              "code": "GATE_BLOCKED",
-              "message": "metadata_invalid,duplicate_image",
-              "node": "validator",
-              "retryable": false
-            }
-          ]
-        },
-        "confidence": 0.0,
-        "model_votes": []
-      }
-    },
-    {
-      "mission_id": "0dee6571-d80a-48ba-8fc4-57ada331645e",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "로드킬 부엉이",
-      "hint": "로드킬 붱철이",
-      "status": "created",
-      "created_at": "2026-04-13T15:03:56.881763+00:00",
-      "expires_at": "2026-04-13T16:03:56.881763+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "d9fed181-bbdc-4eac-aba2-d775b39b1cc7",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "atmosphere",
-      "answer": "신비로운",
-      "hint": "신비로운 느낌이 나는 사진을 찍어보세요.",
-      "status": "created",
-      "created_at": "2026-04-13T15:05:33.706344+00:00",
-      "expires_at": "2026-04-13T16:05:33.706344+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "bcda07de-7c07-41fa-8803-263d2b0865f6",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "로드킬 부엉이",
-      "hint": "로드킬 붱철이",
-      "status": "submitted",
-      "created_at": "2026-04-13T15:08:19.171749+00:00",
-      "expires_at": "2026-04-13T16:08:19.171749+00:00",
-      "max_submissions": 3,
-      "submissions": [
-        {
-          "submitted_at": "2026-04-13T15:08:22.972631+00:00",
-          "image_hash": "8c88b17a8a1b55d934dbda0ea1018e15ef17aa402ecb2e17eca557b6f64fde80",
-          "result_summary": {
-            "success": false,
-            "confidence": 0.0
-          }
-        },
-        {
-          "submitted_at": "2026-04-13T15:08:36.415549+00:00",
-          "image_hash": "8c88b17a8a1b55d934dbda0ea1018e15ef17aa402ecb2e17eca557b6f64fde80",
-          "result_summary": {
-            "success": false,
-            "confidence": 0.0
-          }
-        }
-      ],
-      "latest_judgment": {
-        "success": false,
-        "error": "duplicate_image",
-        "message": "제출이 정책을 통과하지 못했습니다.",
-        "missionType": "location",
-        "decision_trace": {
-          "route_decision": null,
-          "errors": [
-            {
-              "code": "GATE_BLOCKED",
-              "message": "duplicate_image",
-              "node": "validator",
-              "retryable": false
-            }
-          ]
-        },
-        "confidence": 0.0,
-        "model_votes": []
-      }
-    },
-    {
-      "mission_id": "f6f9e006-78b3-44bf-8843-d15d003767d0",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "로드킬 부엉이",
-      "hint": "로드킬 붱철이",
-      "status": "submitted",
-      "created_at": "2026-04-13T15:11:27.873514+00:00",
-      "expires_at": "2026-04-13T16:11:27.873514+00:00",
-      "max_submissions": 3,
-      "submissions": [
-        {
-          "submitted_at": "2026-04-13T15:11:31.484494+00:00",
-          "image_hash": "8c88b17a8a1b55d934dbda0ea1018e15ef17aa402ecb2e17eca557b6f64fde80",
-          "result_summary": {
-            "success": false,
-            "confidence": 0.0
-          }
-        }
-      ],
-      "latest_judgment": {
-        "success": false,
-        "error": "duplicate_image",
-        "message": "제출이 정책을 통과하지 못했습니다.",
-        "missionType": "location",
-        "decision_trace": {
-          "route_decision": null,
-          "errors": [
-            {
-              "code": "GATE_BLOCKED",
-              "message": "duplicate_image",
-              "node": "validator",
-              "retryable": false
-            }
-          ]
-        },
-        "confidence": 0.0,
-        "model_votes": []
-      }
-    },
-    {
-      "mission_id": "fcf7db99-b141-4129-9043-7bfd29341b0d",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "로드킬 부엉이",
-      "hint": "로드킬 붱철이",
-      "status": "submitted",
-      "created_at": "2026-04-13T15:11:55.879793+00:00",
-      "expires_at": "2026-04-13T16:11:55.879793+00:00",
-      "max_submissions": 3,
-      "submissions": [
-        {
-          "submitted_at": "2026-04-13T15:12:02.639524+00:00",
-          "image_hash": "8c88b17a8a1b55d934dbda0ea1018e15ef17aa402ecb2e17eca557b6f64fde80",
-          "result_summary": {
-            "success": false,
-            "confidence": 0.0
-          }
-        }
-      ],
-      "latest_judgment": {
-        "success": false,
-        "error": "duplicate_image",
-        "message": "제출이 정책을 통과하지 못했습니다.",
-        "missionType": "location",
-        "decision_trace": {
-          "route_decision": null,
-          "errors": [
-            {
-              "code": "GATE_BLOCKED",
-              "message": "duplicate_image",
-              "node": "validator",
-              "retryable": false
-            }
-          ]
-        },
-        "confidence": 0.0,
-        "model_votes": []
-      }
-    },
-    {
-      "mission_id": "1687fed1-d7ec-4331-9ad9-9bcc9a9ee052",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "atmosphere",
-      "answer": "신비로운",
-      "hint": "신비로운 느낌이 나는 사진을 찍어보세요.",
-      "status": "created",
-      "created_at": "2026-04-13T15:12:08.017199+00:00",
-      "expires_at": "2026-04-13T16:12:08.017199+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "5e8f31f2-57e7-4ebd-8aa4-86e3b3577af0",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "로드킬 부엉이",
-      "hint": "로드킬 붱철이",
-      "status": "created",
-      "created_at": "2026-04-13T15:12:09.834596+00:00",
-      "expires_at": "2026-04-13T16:12:09.834596+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "4df03a34-e519-457b-a3d1-007237fc47ec",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "로드킬 부엉이",
-      "hint": "로드킬 붱철이",
-      "status": "created",
-      "created_at": "2026-04-13T15:12:13.810152+00:00",
-      "expires_at": "2026-04-13T16:12:13.810152+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "11c4f22f-aea1-449f-9d13-ea9a31588096",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "로드킬 부엉이",
-      "hint": "로드킬 붱철이",
-      "status": "created",
-      "created_at": "2026-04-13T15:12:22.121828+00:00",
-      "expires_at": "2026-04-13T16:12:22.121828+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "d537545c-b22b-4e8a-8b24-c1296a70e12c",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "atmosphere",
-      "answer": "신비로운",
-      "hint": "신비로운 느낌이 나는 사진을 찍어보세요.",
-      "status": "created",
-      "created_at": "2026-04-13T15:12:24.864097+00:00",
-      "expires_at": "2026-04-13T16:12:24.864097+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "6557071c-fc6b-4eed-9f86-e707bed69845",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "로드킬 부엉이",
-      "hint": "로드킬 붱철이",
-      "status": "submitted",
-      "created_at": "2026-04-13T15:12:29.640502+00:00",
-      "expires_at": "2026-04-13T16:12:29.640502+00:00",
-      "max_submissions": 3,
-      "submissions": [
-        {
-          "submitted_at": "2026-04-13T15:12:42.322888+00:00",
-          "image_hash": "8c88b17a8a1b55d934dbda0ea1018e15ef17aa402ecb2e17eca557b6f64fde80",
-          "result_summary": {
-            "success": false,
-            "confidence": 0.0
-          }
-        }
-      ],
-      "latest_judgment": {
-        "success": false,
-        "error": "duplicate_image",
-        "message": "제출이 정책을 통과하지 못했습니다.",
-        "missionType": "location",
-        "decision_trace": {
-          "route_decision": null,
-          "errors": [
-            {
-              "code": "GATE_BLOCKED",
-              "message": "duplicate_image",
-              "node": "validator",
-              "retryable": false
-            }
-          ]
-        },
-        "confidence": 0.0,
-        "model_votes": []
-      }
-    },
-    {
-      "mission_id": "aede2c01-a034-44c7-979b-b25a16741300",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "로드킬 부엉이",
-      "hint": "로드킬 붱철이",
-      "status": "submitted",
-      "created_at": "2026-04-13T15:20:03.256876+00:00",
-      "expires_at": "2026-04-13T16:20:03.256876+00:00",
-      "max_submissions": 3,
-      "submissions": [
-        {
-          "submitted_at": "2026-04-13T15:20:08.064739+00:00",
-          "image_hash": "8c88b17a8a1b55d934dbda0ea1018e15ef17aa402ecb2e17eca557b6f64fde80",
-          "result_summary": {
-            "success": false,
-            "confidence": 0.0
-          }
-        }
-      ],
-      "latest_judgment": {
-        "success": false,
-        "error": "duplicate_image",
-        "message": "제출이 정책을 통과하지 못했습니다.",
-        "missionType": "location",
-        "decision_trace": {
-          "route_decision": null,
-          "errors": [
-            {
-              "code": "GATE_BLOCKED",
-              "message": "duplicate_image",
-              "node": "validator",
-              "retryable": false
-            }
-          ]
-        },
-        "confidence": 0.0,
-        "model_votes": []
-      }
-    },
-    {
-      "mission_id": "d116d364-86f9-40ea-a1bd-a53c47d61093",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "로드킬 부엉이",
-      "hint": "로드킬 붱철이",
+      "answer": "ans1",
+      "hint": "hint1",
       "status": "coupon_issued",
-      "created_at": "2026-04-13T15:22:08.306057+00:00",
-      "expires_at": "2026-04-13T16:22:08.306057+00:00",
+      "created_at": "2026-04-23T08:25:42.655100+00:00",
+      "expires_at": "2026-04-23T09:25:42.655100+00:00",
       "max_submissions": 3,
-      "submissions": [
-        {
-          "submitted_at": "2026-04-13T15:22:12.241553+00:00",
-          "image_hash": "93939c961653e31b8385baa045ddcf5c0e7cd0cff3fbe9e30a9dbd8ba581419b",
-          "result_summary": {
-            "success": true,
-            "confidence": 1.0
-          }
-        }
-      ],
+      "submissions": [],
       "latest_judgment": {
-        "success": true,
-        "message": "미션 성공! 쿠폰 발급 단계로 이동할 수 있습니다.",
-        "missionType": "location",
-        "couponEligible": true,
-        "confidence": 1.0,
-        "decision_trace": {
-          "route_decision": {
-            "next_node": "model_fanout",
-            "reason": "mission_type=location",
-            "confidence": 1.0,
-            "fallback": "finalizer"
-          },
-          "judgment": {
-            "success": true,
-            "reason": "score_passed",
-            "confidence": 1.0,
-            "mission_type": "location",
-            "conflict": false,
-            "council_override": false
-          },
-          "coupon_decision": {
-            "eligible": true,
-            "deny_reason": null,
-            "discount_rule": "10%_OFF"
-          }
-        },
-        "model_votes": [
-          {
-            "model": "siglip2",
-            "score": 1.0,
-            "label": "match",
-            "reason": "bypass_mode"
-          }
-        ]
+        "success": true
       },
-      "coupon_code": "R9TW4HFS"
+      "coupon_code": "T-COUPON"
     },
     {
-      "mission_id": "b8ffa972-e6f3-4e03-baf2-caaaccbec532",
+      "mission_id": "1d062f56-c59a-45cc-b740-ba0974e49c86",
       "user_id": "guest",
       "site_id": "pazule-default",
       "mission_type": "atmosphere",
-      "answer": "신비로운",
-      "hint": "신비로운 느낌이 나는 사진을 찍어보세요.",
-      "status": "coupon_issued",
-      "created_at": "2026-04-13T15:24:11.471373+00:00",
-      "expires_at": "2026-04-13T16:24:11.471373+00:00",
+      "answer": "옛스러운",
+      "hint": "옛스러운 사진을 찍어보세요.",
+      "status": "created",
+      "created_at": "2026-04-23T12:07:16.330172+00:00",
+      "expires_at": "2026-04-23T13:07:16.330172+00:00",
+      "max_submissions": 3,
+      "submissions": [],
+      "latest_judgment": null
+    },
+    {
+      "mission_id": "a3687ea8-3687-48f8-8f2a-86c949f02304",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "atmosphere",
+      "answer": "옛스러운",
+      "hint": "옛스러운 사진을 찍어보세요.",
+      "status": "submitted",
+      "created_at": "2026-04-23T12:07:22.495063+00:00",
+      "expires_at": "2026-04-23T13:07:22.495063+00:00",
       "max_submissions": 3,
       "submissions": [
         {
-          "submitted_at": "2026-04-13T15:24:15.054789+00:00",
-          "image_hash": "93939c961653e31b8385baa045ddcf5c0e7cd0cff3fbe9e30a9dbd8ba581419b",
+          "submitted_at": "2026-04-23T12:08:01.580557+00:00",
+          "image_hash": "e5168a07c4c549f5630e27752756404bd46571986ca179e0cc3486ec6a146287",
           "result_summary": {
-            "success": true,
-            "confidence": 1.0
+            "success": false,
+            "confidence": 0.0
+          }
+        },
+        {
+          "submitted_at": "2026-04-23T12:08:03.401474+00:00",
+          "image_hash": "e5168a07c4c549f5630e27752756404bd46571986ca179e0cc3486ec6a146287",
+          "result_summary": {
+            "success": false,
+            "confidence": 0.0
+          }
+        },
+        {
+          "submitted_at": "2026-04-23T12:08:16.299991+00:00",
+          "image_hash": "e5168a07c4c549f5630e27752756404bd46571986ca179e0cc3486ec6a146287",
+          "result_summary": {
+            "success": false,
+            "confidence": 0.0
           }
         }
       ],
       "latest_judgment": {
-        "success": true,
-        "message": "미션 성공! 쿠폰 발급 단계로 이동할 수 있습니다.",
+        "success": false,
+        "message": "미션 조건이 충분히 충족되지 않았습니다. 다시 시도해 주세요.",
         "missionType": "photo",
-        "couponEligible": true,
-        "confidence": 1.0,
+        "hint": "시간의 흔적이 고스란히 남아있는 듯한 정취를 담아보세요. 바랜 색감과 고즈넉함이 어우러진 순간이 당신을 기다리고 있을 거예요.",
+        "confidence": 0.0,
         "decision_trace": {
-          "route_decision": {
-            "next_node": "model_fanout",
-            "reason": "mission_type=atmosphere",
-            "confidence": 1.0,
-            "fallback": "finalizer"
-          },
           "judgment": {
-            "success": true,
-            "reason": "score_passed",
-            "confidence": 1.0,
+            "success": false,
+            "reason": "score_below_threshold",
+            "confidence": 0.0,
             "mission_type": "atmosphere",
             "conflict": false,
             "council_override": false
           },
           "coupon_decision": {
-            "eligible": true,
-            "deny_reason": null,
-            "discount_rule": "10%_OFF"
+            "eligible": false,
+            "deny_reason": null
           }
         },
         "model_votes": [
           {
             "model": "siglip2",
-            "score": 1.0,
-            "label": "match",
-            "reason": "bypass_mode"
+            "score": 1.1560877283045556e-05,
+            "label": "mismatch",
+            "reason": "SigLIP2 prediction score for 'a photo with old-fashioned and vintage atmosphere'"
           }
         ]
-      },
-      "coupon_code": "ZK9Q4F4C"
+      }
     },
     {
-      "mission_id": "9b67ac2c-fbf1-420e-90a8-d07039a52cc5",
+      "mission_id": "e0c8e4f8-a00f-4016-9350-9bb7596ae1a8",
       "user_id": "guest",
       "site_id": "pazule-default",
       "mission_type": "atmosphere",
-      "answer": "신비로운",
-      "hint": "신비로운 느낌이 나는 사진을 찍어보세요.",
-      "status": "coupon_issued",
-      "created_at": "2026-04-13T15:27:57.882523+00:00",
-      "expires_at": "2026-04-13T16:27:57.882523+00:00",
-      "max_submissions": 3,
-      "submissions": [
-        {
-          "submitted_at": "2026-04-13T15:28:01.959960+00:00",
-          "image_hash": "93939c961653e31b8385baa045ddcf5c0e7cd0cff3fbe9e30a9dbd8ba581419b",
-          "result_summary": {
-            "success": true,
-            "confidence": 1.0
-          }
-        }
-      ],
-      "latest_judgment": {
-        "success": true,
-        "message": "미션 성공! 쿠폰 발급 단계로 이동할 수 있습니다.",
-        "missionType": "photo",
-        "couponEligible": true,
-        "confidence": 1.0,
-        "decision_trace": {
-          "route_decision": {
-            "next_node": "model_fanout",
-            "reason": "mission_type=atmosphere",
-            "confidence": 1.0,
-            "fallback": "finalizer"
-          },
-          "judgment": {
-            "success": true,
-            "reason": "score_passed",
-            "confidence": 1.0,
-            "mission_type": "atmosphere",
-            "conflict": false,
-            "council_override": false
-          },
-          "coupon_decision": {
-            "eligible": true,
-            "deny_reason": null,
-            "discount_rule": "10%_OFF"
-          }
-        },
-        "model_votes": [
-          {
-            "model": "siglip2",
-            "score": 1.0,
-            "label": "match",
-            "reason": "bypass_mode"
-          }
-        ]
-      },
-      "coupon_code": "73ZXTQ9B"
-    },
-    {
-      "mission_id": "e3533e5a-963f-47b3-a4e7-f1f423115379",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "atmosphere",
-      "answer": "신비로운",
-      "hint": "신비로운 느낌이 나는 사진을 찍어보세요.",
-      "status": "coupon_issued",
-      "created_at": "2026-04-13T15:30:20.711026+00:00",
-      "expires_at": "2026-04-13T16:30:20.711026+00:00",
-      "max_submissions": 3,
-      "submissions": [
-        {
-          "submitted_at": "2026-04-13T15:30:23.768689+00:00",
-          "image_hash": "93939c961653e31b8385baa045ddcf5c0e7cd0cff3fbe9e30a9dbd8ba581419b",
-          "result_summary": {
-            "success": true,
-            "confidence": 1.0
-          }
-        }
-      ],
-      "latest_judgment": {
-        "success": true,
-        "message": "미션 성공! 쿠폰 발급 단계로 이동할 수 있습니다.",
-        "missionType": "photo",
-        "couponEligible": true,
-        "confidence": 1.0,
-        "decision_trace": {
-          "route_decision": {
-            "next_node": "model_fanout",
-            "reason": "mission_type=atmosphere",
-            "confidence": 1.0,
-            "fallback": "finalizer"
-          },
-          "judgment": {
-            "success": true,
-            "reason": "score_passed",
-            "confidence": 1.0,
-            "mission_type": "atmosphere",
-            "conflict": false,
-            "council_override": false
-          },
-          "coupon_decision": {
-            "eligible": true,
-            "deny_reason": null,
-            "discount_rule": "10%_OFF"
-          }
-        },
-        "model_votes": [
-          {
-            "model": "siglip2",
-            "score": 1.0,
-            "label": "match",
-            "reason": "bypass_mode"
-          }
-        ]
-      },
-      "coupon_code": "AMXQPJY2"
-    },
-    {
-      "mission_id": "5d0ff326-39b3-49c2-9ff1-be53fc99e0ce",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "로드킬 부엉이",
-      "hint": "로드킬 붱철이",
+      "answer": "옛스러운",
+      "hint": "옛스러운 사진을 찍어보세요.",
       "status": "created",
-      "created_at": "2026-04-13T15:36:33.206819+00:00",
-      "expires_at": "2026-04-13T16:36:33.206819+00:00",
+      "created_at": "2026-04-23T12:09:20.964302+00:00",
+      "expires_at": "2026-04-23T13:09:20.964302+00:00",
       "max_submissions": 3,
       "submissions": [],
       "latest_judgment": null
     },
     {
-      "mission_id": "9979c807-7f7e-44e8-9f0d-8126169efaa2",
-      "user_id": "guest",
+      "mission_id": "e13b6603-7270-43cb-bfd0-f48395c570fc",
+      "user_id": "debug_user",
       "site_id": "pazule-default",
       "mission_type": "atmosphere",
-      "answer": "신비로운",
-      "hint": "신비로운 느낌이 나는 사진을 찍어보세요.",
-      "status": "created",
-      "created_at": "2026-04-13T15:36:35.217384+00:00",
-      "expires_at": "2026-04-13T16:36:35.217384+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "127d170f-7831-4c7e-a9ee-321fb6590b3f",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "로드킬 부엉이",
-      "hint": "로드킬 붱철이",
-      "status": "coupon_issued",
-      "created_at": "2026-04-14T14:15:21.224400+00:00",
-      "expires_at": "2026-04-14T15:15:21.224400+00:00",
+      "answer": "옛스러운",
+      "hint": "옛스러운 사진을 찍어보세요.",
+      "status": "submitted",
+      "created_at": "2026-04-23T12:15:03.903225+00:00",
+      "expires_at": "2026-04-23T13:15:03.903225+00:00",
       "max_submissions": 3,
       "submissions": [
         {
-          "submitted_at": "2026-04-14T14:15:25.717708+00:00",
-          "image_hash": "93939c961653e31b8385baa045ddcf5c0e7cd0cff3fbe9e30a9dbd8ba581419b",
+          "submitted_at": "2026-04-23T12:15:11.020307+00:00",
+          "image_hash": "114631462ba5916dcbe925d0f73f046bcbdc59bb376fef3b17406a9651cc7d8c",
           "result_summary": {
-            "success": true,
-            "confidence": 1.0
+            "success": false,
+            "confidence": 0.0
           }
         }
       ],
       "latest_judgment": {
-        "success": true,
-        "message": "미션 성공! 쿠폰 발급 단계로 이동할 수 있습니다.",
-        "missionType": "location",
-        "couponEligible": true,
-        "confidence": 1.0,
+        "success": false,
+        "message": "미션 조건이 충분히 충족되지 않았습니다. 다시 시도해 주세요.",
+        "missionType": "photo",
+        "hint": "시간의 흔적이 고스란히 묻어나는 순간을 포착해보세요. 오래된 이야기들이 숨 쉬는 듯한 고즈넉한 분위기가 당신을 기다리고 있어요.",
+        "confidence": 0.0,
         "decision_trace": {
-          "route_decision": {
-            "next_node": "model_fanout",
-            "reason": "mission_type=location",
-            "confidence": 1.0,
-            "fallback": "finalizer"
-          },
           "judgment": {
-            "success": true,
-            "reason": "score_passed",
-            "confidence": 1.0,
-            "mission_type": "location",
+            "success": false,
+            "reason": "score_below_threshold",
+            "confidence": 0.0,
+            "mission_type": "atmosphere",
             "conflict": false,
             "council_override": false
           },
           "coupon_decision": {
-            "eligible": true,
-            "deny_reason": null,
-            "discount_rule": "10%_OFF"
+            "eligible": false,
+            "deny_reason": null
           }
         },
         "model_votes": [
           {
             "model": "siglip2",
-            "score": 1.0,
-            "label": "match",
-            "reason": "bypass_mode"
+            "score": 1.3660926924785599e-05,
+            "label": "mismatch",
+            "reason": "SigLIP2 prediction score for 'a photo with old-fashioned and vintage atmosphere'"
           }
         ]
-      },
-      "coupon_code": "DOTNFAZ9"
+      }
+    },
+    {
+      "mission_id": "201212e6-d213-4ccf-ad70-d424893a4232",
+      "user_id": "guest",
+      "site_id": "pazule-default",
+      "mission_type": "atmosphere",
+      "answer": "옛스러운",
+      "hint": "옛스러운 사진을 찍어보세요.",
+      "status": "submitted",
+      "created_at": "2026-04-23T12:16:26.114030+00:00",
+      "expires_at": "2026-04-23T13:16:26.114030+00:00",
+      "max_submissions": 3,
+      "submissions": [
+        {
+          "submitted_at": "2026-04-23T12:16:37.964393+00:00",
+          "image_hash": "321c3bab8ecc90acac5f834c65ca897ef63ebdb5b9736e489912c5c60ef56728",
+          "result_summary": {
+            "success": false,
+            "confidence": 0.0001
+          }
+        },
+        {
+          "submitted_at": "2026-04-23T12:17:02.516902+00:00",
+          "image_hash": "e5168a07c4c549f5630e27752756404bd46571986ca179e0cc3486ec6a146287",
+          "result_summary": {
+            "success": false,
+            "confidence": 0.0
+          }
+        }
+      ],
+      "latest_judgment": {
+        "success": false,
+        "message": "미션 조건이 충분히 충족되지 않았습니다. 다시 시도해 주세요.",
+        "missionType": "photo",
+        "hint": "시간의 흔적이 고스란히 묻어나는 듯한 고요하고 깊은 분위기를 느껴보세요. 빛바랜 추억처럼 따뜻하고 정겨운 순간을 찾아 사진으로 담아보세요.",
+        "confidence": 0.0,
+        "decision_trace": {
+          "judgment": {
+            "success": false,
+            "reason": "score_below_threshold",
+            "confidence": 0.0,
+            "mission_type": "atmosphere",
+            "conflict": false,
+            "council_override": false
+          },
+          "coupon_decision": {
+            "eligible": false,
+            "deny_reason": null
+          }
+        },
+        "model_votes": [
+          {
+            "model": "siglip2",
+            "score": 1.1560877283045556e-05,
+            "label": "mismatch",
+            "reason": "SigLIP2 prediction score for 'a photo with old-fashioned and vintage atmosphere'"
+          }
+        ]
+      }
     }
   ]
 }
