@@ -43,9 +43,11 @@ Flask 라우트 정의. **HTTP 레이어만** 담당한다.
 |---|---|
 | `config/settings.py` | 환경변수 기반 런타임 설정 (`.env` 로드) |
 | `config/constants.py` | 코드에 하드코딩하지 않아야 할 정적 상수 |
-| `config/__init__.py` | `from app.core.config import settings, constants` re-export |
-| `utils.py` | 공통 유틸리티 함수 (미션 타입 정규화, 레거시 변환 등) |
-| `keyword.py` | 키워드 추출 유틸리티 |
+| config/__init__.py | `from app.core.config import settings, constants` re-export |
+| utils.py | 공통 유틸리티 함수 (미션 타입 정규화, 레거시 변환 등) |
+| hints.py | **[v2.7]** 분위기 대비 분석 기반 지능적 힌트 생성 로직 |
+| keyword.py | 키워드 추출 유틸리티 |
+
 
 **새 상수를 추가할 때**: 코드에 직접 숫자/문자열 리터럴을 쓰지 말고 `constants.py`에 정의한 뒤 참조한다.
 

@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "2026/04/2026-04-22_v1.2.0_coverage-supplement-phase-4-5.md",
+                "file": "2026/04/2026-04-23_v2.6.0_atmosphere-accuracy-and-hint.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "2026-04-22_v1.2.0_coverage-supplement-phase-4-5"
+              "title": "2026-04-23_v2.6.0_atmosphere-accuracy-and-hint"
             }
           }
         ]
@@ -185,8 +185,8 @@
   },
   "active": "7d4ffa50cfc611cf",
   "lastOpenFiles": [
-    "2026/04/2026-04-22_v1.1.0_coverage-supplement-phase-1-2.md",
     "2026/04/2026-04-22_v1.2.0_coverage-supplement-phase-4-5.md",
+    "2026/04/2026-04-22_v1.1.0_coverage-supplement-phase-1-2.md",
     "2026/04/2026-04-22_v1.0.0_setup-pm-orchestration.md"
   ]
 }

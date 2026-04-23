@@ -100,11 +100,29 @@
 
 ---
 
-## 이번 정리에서 제거한 항목
+## v2.7.0 고도화 및 정리 항목 (2026-04-23)
 
-- `front/src/designs/` 정적 프로토타입 HTML 묶음
-- `front/download.ps1` 디자인 다운로드 스크립트
-- `front/src/legacy/LegacyMissionApp.jsx` 및 `/legacy` 라우트
-- `app/models/clip.py`
+분위기 판정의 모호성과 개발 도구의 산재 문제를 해결했다.
 
-위 항목들은 코드/문서 참조가 없고 React 런타임에도 연결되지 않아 제거했다.
+- **분위기 엔진 고도화**:
+  - `Atmosphere Engine`: 7개 단순 키워드를 시각적으로 대비되는 5개 표준 클러스터(Vibrant, Serene, Vintage, Majestic, Whimsical)로 재편.
+  - `Smart Feedback`: 모델 점수 기반의 대비 분석 힌트 로직(`app/core/hints.py`) 도입.
+  - `Image Filter`: 단색 이미지 필터링 로직 추가로 VLM 환각(Hallucination) 방지.
+- **스크립트 디렉토리 개편**:
+  - `scripts/` 루트에 산재해 있던 파일들을 `tools/`, `debug/`, `benchmarks/`로 카테고리화.
+  - 모든 스크립트에 표준 헤더(목적, 환경, 사용법) 문서화 완료.
+- **데이터 무결성**:
+  - `data/atmosphere_ground_truth_siglip2.json` 구축으로 분위기 미션의 정답 기준(GT) 확립.
+
+## 이번 정리에서 제거/이동한 항목
+
+- `app/models/clip.py`: SigLIP2로 완전히 대체되어 제거.
+- `scripts/*.py`: 대부분 `scripts/tools/` 또는 `scripts/debug/` 하위로 이동 및 헤더 보강.
+- `data/atmosphere_ground_truth.json`: 모델명이 명시된 `atmosphere_ground_truth_siglip2.json`으로 대체.
+
+---
+
+## 권장 다음 단계
+
+1. **레거시 코드 제거**: `app/legacy/` 하위의 플러그인 시스템과 미션 서비스는 현행 LangGraph 아키텍처와 호환되지 않으므로, 다음 메이저 업데이트 시 완전 제거를 검토한다.
+2. **벤치마크 정례화**: `scripts/benchmarks/benchmark_atmosphere.py`를 활용하여 임계값(Threshold)의 타당성을 주기적으로 검증한다.

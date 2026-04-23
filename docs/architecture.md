@@ -147,13 +147,41 @@ Council (approved?)  ─────────┤
 
 ---
 
-## 미션 타입별 모델 전략
+## Atmosphere Engine v2.7
+
+v2.7.0에서 도입된 분위기 판정 고도화 설계. 단순 키워드 매칭을 넘어 시각적으로 대비되는 클러스터링과 지능적 피드백을 제공한다.
+
+### 1. 대비 클러스터링 (Contrastive Clustering)
+VLM의 변별력을 높이기 위해 시각적으로 명확히 구분되는 5개 표준 클러스터를 정의하고, 정답 에셋에 대해 SigLIP2 기반 멀티라벨링(Ground Truth)을 구축한다.
+
+| 클러스터 | 시각적 특징 (VLM 타겟) | 대표 키워드 |
+| :--- | :--- | :--- |
+| **Vibrant** | 높은 채도, 밝은 조명, 원색 대비 | 화사하고 활기찬 |
+| **Serene** | 부드러운 빛, 자연 질감(나무/풀), 정적 구도 | 차분하고 자연적인 |
+| **Vintage** | 거친 질감(녹/돌), 바랜 색조, 클래식 소품 | 옛스럽고 빈티지한 |
+| **Majestic** | 거대 스케일, 로우 앵글, 강한 명암 대비 | 웅장하고 신비로운 |
+| **Whimsical** | 아기자기한 캐릭터, 원색 포인트, 동화적 구성 | 동화적이고 장난스러운 |
+
+### 2. 지능적 힌트 로직 (Contrastive Feedback)
+미션 실패 시 단순히 점수 미달을 알리는 대신, **Target vs Actual** 점수를 비교하여 사용자가 사진을 어떻게 수정해야 할지 구체적으로 가이드한다.
+
+*   **로직**: `Highest_Wrong_Score_Label`을 감지하여 `Target_Label`과의 차이점을 설명.
+*   **예시**: 타겟이 'Vintage'인데 'Vibrant' 점수가 높을 경우 → "지금은 너무 밝고 현대적이에요! 조금 더 어둡고 낡은 느낌의 장소를 찾아보세요."
+
+### 3. 이미지 유효성 검사 (Monochromatic Filter)
+VLM의 정보 부족에 따른 환각(Hallucination)을 방지하기 위해 `validator` 및 `evaluator`에서 이미지의 표준편차(Standard Deviation)를 측정한다.
+*   **Threshold**: STD < 5.0 (단색 또는 노이즈가 없는 이미지)
+*   **효과**: 단색 이미지에서 높은 분위기 점수가 나오는 오탐지를 원천 차단.
+
+---
+
+## 미션 타입별 모델 전략 (Updated v2.7)
 
 | | Location | Atmosphere |
 |---|---|---|
-| 목표 | 사진 속 장소가 정답과 일치하는가 | 사진의 분위기가 키워드와 일치하는가 |
+| 목표 | 사진 속 장소가 정답과 일치하는가 | 사진의 분위기가 클러스터와 일치하는가 |
 | 기본 모델 | SigLIP2 | SigLIP2 |
 | 앙상블 가중치 | SigLIP2 30% · BLIP 70% | SigLIP2 80% · BLIP 20% |
-| 통과 임계값 | 0.70 | 0.62 |
-| Qwen VL 역할 | 앙상블 불참, Council Tier 3에서만 재호출 | 동일 |
-| Council 개입 | 임계값 ±8% 또는 conflict(score 차 ≥0.35) 시 Qwen 에스컬레이션 | 동일 |
+| 통과 임계값 | 0.70 | **0.35** (v2.6.1 하향 조정) |
+| 정답 데이터 | `landmark_qa_labeled.json` | `atmosphere_ground_truth_siglip2.json` |
+| 힌트 생성 | LLM (static_hint 기반) | **대비 분석 기반 지능적 힌트** |
