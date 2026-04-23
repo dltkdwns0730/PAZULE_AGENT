@@ -320,6 +320,41 @@ class MissionSessionService:
         )[:5]
         return stats
 
+    def reset_user_history(self, user_id: str) -> None:
+        """사용자의 세션 기록을 초기화한다.
+        단, 사용자의 요청대로 '오늘 성공한 미션'은 유지하여 재입장을 방지한다.
+        """
+        data = self._read_all()
+        sessions = data.get("sessions", [])
+        today_str = datetime.now(timezone.utc).date().isoformat()
+
+        new_sessions = []
+        for s in sessions:
+            if s.get("user_id") != user_id:
+                new_sessions.append(s)
+                continue
+
+            # 해당 사용자의 세션인 경우 필터링 로직 적용
+            try:
+                session_date = (
+                    datetime.fromisoformat(s["created_at"]).date().isoformat()
+                )
+            except (ValueError, KeyError):
+                continue
+
+            # 오늘 성공한 미션 세션은 보존
+            is_today_success = (
+                session_date == today_str
+                and s.get("status") in ["submitted", "coupon_issued"]
+                and s.get("latest_judgment", {}).get("success") is True
+            )
+
+            if is_today_success:
+                new_sessions.append(s)
+
+        data["sessions"] = new_sessions
+        self._write_all(data)
+
     @staticmethod
     def hash_file(file_path: str) -> str:
         """파일을 SHA-256으로 해시하여 16진수 문자열을 반환한다.

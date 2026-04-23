@@ -12,6 +12,7 @@ import Onboarding from "./pages/Onboarding";
 import Permissions from "./pages/Permissions";
 import CouponWallet from "./pages/CouponWallet";
 import Profile from "./pages/Profile";
+import Map from "./pages/Map";
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
         {/* Mobile App Routes */}
         <Route element={<Layout />}>
           <Route path="/" element={<MissionHome />} />
+          <Route path="/map" element={<Map />} />
           <Route path="/wallet" element={<CouponWallet />} />
           <Route path="/scan" element={<Scan />} />
           <Route path="/mission/submit" element={<PhotoSubmission />} />

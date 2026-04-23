@@ -332,6 +332,32 @@ def get_user_stats() -> Response:
     return jsonify(stats)
 
 
+@api.route("/api/user/reset", methods=["POST"])
+def reset_user_data() -> Response:
+    """사용자의 탐험 기록과 쿠폰 데이터를 초기화한다.
+    오늘 성공한 미션 기록은 유지하여 재입장을 방지한다.
+
+    Request JSON:
+        user_id: 사용자 식별자.
+
+    Returns:
+        JSON {"success": True}.
+    """
+    payload = request.get_json(silent=True) or {}
+    user_id = payload.get("user_id", "guest")
+
+    try:
+        # 1. 쿠폰 데이터 초기화
+        coupon_service.reset_user_coupons(user_id)
+        # 2. 세션 기록 초기화 (오늘 성공 기록 제외)
+        mission_session_service.reset_user_history(user_id)
+
+        return jsonify({"success": True})
+    except Exception as exc:
+        logger.exception("데이터 초기화 중 오류 발생")
+        return jsonify({"error": str(exc)}), 500
+
+
 @api.route("/api/coupons", methods=["GET"])
 def get_user_coupons() -> Response:
     """사용자가 보유한 모든 쿠폰 목록을 조회한다.

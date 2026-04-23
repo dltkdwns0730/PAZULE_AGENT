@@ -8,8 +8,14 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': 'http://localhost:8080',
-      '/get-today-hint': 'http://localhost:8080',
+      '/api': {
+        target: 'http://127.0.0.1:8080',
+        changeOrigin: true,
+      },
+      '/get-today-hint': {
+        target: 'http://127.0.0.1:8080',
+        changeOrigin: true,
+      },
     },
     fs: {
       allow: ['..']

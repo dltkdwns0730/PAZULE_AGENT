@@ -269,5 +269,22 @@ class CouponService:
 
         return user_coupons
 
+    def reset_user_coupons(self, user_id: str) -> None:
+        """특정 사용자의 모든 쿠폰 기록을 삭제한다.
+
+        Args:
+            user_id: 사용자 식별자.
+        """
+        data = self._read_all()
+        coupons = data.get("coupons", [])
+        # 해당 사용자의 쿠폰을 제외한 나머지만 유지
+        filtered_coupons = [c for c in coupons if c.get("user_id") != user_id]
+
+        # 하위 호환성 (user_id가 guest인 경우 세션 연동 데이터까지 고려해야 할 수 있으나,
+        # 초기화 시점에는 명시적으로 user_id 기반 삭제만 수행함이 안전함)
+
+        data["coupons"] = filtered_coupons
+        self._write_all(data)
+
 
 coupon_service = CouponService()

@@ -38,12 +38,12 @@ export default function Layout() {
                             <span className="text-[10px] font-bold tracking-wide">Home</span>
                         </div>
 
-                        {/* Nav Item: Map (Placeholder action) */}
+                        {/* Nav Item: Map */}
                         <div
-                            onClick={() => { }}
-                            className="flex flex-col items-center gap-1 cursor-pointer transition-all text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                            onClick={() => navigate('/map')}
+                            className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${location.pathname === '/map' ? 'text-[#37776f]' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
                         >
-                            <span className="material-symbols-outlined text-2xl">map</span>
+                            <span className={`material-symbols-outlined text-2xl transition-transform ${location.pathname === '/map' ? "font-variation-settings-'FILL' 1; scale-110" : ""}`}>map</span>
                             <span className="text-[10px] font-bold tracking-wide">Map</span>
                         </div>
 
@@ -52,16 +52,16 @@ export default function Layout() {
                             onClick={() => navigate('/wallet')}
                             className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${location.pathname === '/wallet' ? 'text-[#37776f]' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
                         >
-                            <span className={`material-symbols-outlined text-2xl transition-transform ${location.pathname === '/wallet' ? 'font-variation-settings-\'FILL\' 1; scale-110' : ''}`}>account_balance_wallet</span>
+                            <span className={`material-symbols-outlined text-2xl transition-transform ${location.pathname === '/wallet' ? "font-variation-settings-'FILL' 1; scale-110" : ""}`}>account_balance_wallet</span>
                             <span className="text-[10px] font-bold tracking-wide">Wallet</span>
                         </div>
 
-                        {/* Nav Item: Profile (Placeholder action) */}
+                        {/* Nav Item: Profile */}
                         <div
-                            onClick={() => { }}
-                            className="flex flex-col items-center gap-1 cursor-pointer transition-all text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                            onClick={() => navigate('/profile')}
+                            className={`flex flex-col items-center gap-1 cursor-pointer transition-all ${location.pathname === '/profile' ? 'text-[#37776f]' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
                         >
-                            <span className="material-symbols-outlined text-2xl">person</span>
+                            <span className={`material-symbols-outlined text-2xl transition-transform ${location.pathname === '/profile' ? "font-variation-settings-'FILL' 1; scale-110" : ""}`}>person</span>
                             <span className="text-[10px] font-bold tracking-wide">Profile</span>
                         </div>
                     </nav>

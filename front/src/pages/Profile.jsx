@@ -32,10 +32,26 @@ export default function Profile() {
         fetchStats();
     }, []);
 
-    const handleReset = () => {
+    const handleReset = async () => {
         if (window.confirm('모든 탐험 기록과 설정을 초기화할까요?')) {
-            resetAll();
-            navigate('/');
+            try {
+                // 백엔드 데이터 초기화 호출
+                const response = await fetch('/api/user/reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: 'guest' })
+                });
+
+                if (response.ok) {
+                    resetAll();
+                    navigate('/');
+                } else {
+                    alert('초기화 중 오류가 발생했습니다.');
+                }
+            } catch (error) {
+                console.error('초기화 실패:', error);
+                alert('서버와 통신할 수 없습니다.');
+            }
         }
     };
 

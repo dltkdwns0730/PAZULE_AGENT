@@ -76,17 +76,33 @@ export default function PhotoSubmission() {
             <main className="relative w-full h-full bg-bg-soft dark:bg-[#1a2322] flex flex-col shrink-0 z-10 overflow-hidden">
 
                 {/* --- RETRY BANNER --- */}
-                <div className={`absolute top-0 left-0 w-full z-50 transform ${retryError ? 'translate-y-0' : '-translate-y-full'} transition-transform duration-300 ease-in-out bg-red-50 p-4 pt-12 pb-4 shadow-sm border-b border-red-100 flex items-center justify-between gap-3`}>
-                    <div className="flex items-center gap-3">
-                        <span className="material-symbols-outlined text-red-500">error</span>
-                        <div>
-                            <p className="text-red-900 text-sm font-bold">인증 실패</p>
-                            <p className="text-red-700 text-xs">남은 시도 횟수: {attemptsLeft}회</p>
+                <div className={`absolute top-0 left-0 w-full z-50 transform ${retryError ? 'translate-y-0' : '-translate-y-full'} transition-all duration-300 ease-in-out bg-white p-4 pt-12 pb-5 shadow-2xl border-b border-red-100 flex flex-col gap-3 rounded-b-[2rem]`}>
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
+                                <span className="material-symbols-outlined text-red-500">error</span>
+                            </div>
+                            <div>
+                                <p className="text-red-900 text-sm font-bold tracking-tight">인증 결과가 부족합니다</p>
+                                <p className="text-red-700/60 text-[11px] font-bold uppercase tracking-wider">남은 시도: {attemptsLeft}회</p>
+                            </div>
                         </div>
+                        <button onClick={() => setRetryError(null)} className="p-2 text-slate-400 hover:text-slate-600">
+                            <span className="material-symbols-outlined text-xl font-bold">close</span>
+                        </button>
                     </div>
-                    <button onClick={() => setRetryError(null)} className="px-3 py-1.5 bg-red-100 text-red-700 text-xs font-bold rounded-lg hover:bg-red-200 transition-colors">
-                        닫기
-                    </button>
+                    
+                    {retryError && (
+                        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                            <p className="text-dark-teal/40 text-[9px] font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                                <span className="material-symbols-outlined text-[12px]">lightbulb</span>
+                                탐험가님을 위한 힌트
+                            </p>
+                            <p className="text-slate-700 text-xs leading-relaxed font-medium">
+                                {retryError}
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 {/* --- AI ANALYSIS OVERLAY --- */}
