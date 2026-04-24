@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { useMission } from '../../hooks/useMission';
 import { api } from '../../services/api';
+import { useMissionStore } from '../../store/useMissionStore';
 
 vi.mock('../../services/api', () => ({
   api: {
@@ -12,20 +13,32 @@ vi.mock('../../services/api', () => ({
 }));
 
 vi.mock('../../store/useMissionStore', () => ({
-  useMissionStore: vi.fn(() => ({
-    missionId: 'test-id',
-    setHint: vi.fn(),
-    setMissionParams: vi.fn(),
-    setSubmissionResult: vi.fn(),
-    setCoupon: vi.fn(),
-  })),
+  useMissionStore: vi.fn(),
 }));
 
-describe('useMission — fetchHint isLoading 관리 (BUG 3)', () => {
-  it('fetchHint 호출 중 isLoading이 true다', async () => {
+describe('useMission', () => {
+  let store;
+
+  beforeEach(() => {
+    store = {
+      missionId: 'test-id',
+      previewHints: { location: null, atmosphere: null },
+      setHint: vi.fn(),
+      setPreviewHint: vi.fn(),
+      setActiveHint: vi.fn(),
+      setMissionParams: vi.fn(),
+      setSubmissionResult: vi.fn(),
+      setCoupon: vi.fn(),
+    };
+    useMissionStore.mockReturnValue(store);
+  });
+
+  it('sets isLoading while fetchHint is in flight', async () => {
     let resolve;
     api.getTodayHint.mockReturnValue(
-      new Promise((r) => { resolve = r; })
+      new Promise((r) => {
+        resolve = r;
+      })
     );
 
     const { result } = renderHook(() => useMission());
@@ -36,7 +49,6 @@ describe('useMission — fetchHint isLoading 관리 (BUG 3)', () => {
       result.current.fetchHint('location');
     });
 
-    // fetchHint가 isLoading을 관리하지 않으면 여기서 FAIL
     expect(result.current.isLoading).toBe(true);
 
     await act(async () => {
@@ -46,7 +58,7 @@ describe('useMission — fetchHint isLoading 관리 (BUG 3)', () => {
     expect(result.current.isLoading).toBe(false);
   });
 
-  it('fetchHint 에러 후에도 isLoading이 false다', async () => {
+  it('resets isLoading after fetchHint errors', async () => {
     api.getTodayHint.mockRejectedValue(new Error('Network error'));
 
     const { result } = renderHook(() => useMission());
@@ -56,5 +68,24 @@ describe('useMission — fetchHint isLoading 관리 (BUG 3)', () => {
     });
 
     expect(result.current.isLoading).toBe(false);
+  });
+
+  it('stores an automatically issued coupon from a successful submission', async () => {
+    const coupon = { code: 'AUTO1234', status: 'issued' };
+    const submissionResult = {
+      success: true,
+      mission_id: 'test-id',
+      coupon,
+    };
+    api.submitMission.mockResolvedValue(submissionResult);
+
+    const { result } = renderHook(() => useMission());
+
+    await act(async () => {
+      await result.current.submitPhoto(new File(['image'], 'mission.jpg'));
+    });
+
+    expect(store.setSubmissionResult).toHaveBeenCalledWith(submissionResult);
+    expect(store.setCoupon).toHaveBeenCalledWith(coupon);
   });
 });

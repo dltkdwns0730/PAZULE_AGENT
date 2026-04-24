@@ -116,6 +116,37 @@ def test_is_duplicate_hash_for_user(session_service):
     assert session_service.is_duplicate_hash_for_user("user2", image_hash) is False
 
 
+def test_reset_user_history_removes_today_success_and_allows_retry(session_service):
+    user_id = "reset_user"
+    today_success = session_service.create_session(
+        user_id, "site", "location", "ans", "hint"
+    )
+    old_success = session_service.create_session(
+        user_id, "site", "atmosphere", "ans2", "hint2"
+    )
+    other_user_session = session_service.create_session(
+        "other_user", "site", "location", "ans", "hint"
+    )
+
+    def mark_success(session):
+        session["status"] = "coupon_issued"
+        session["latest_judgment"] = {"success": True}
+        session["coupon_code"] = f"{session['mission_id']}-coupon"
+        return session
+
+    session_service._update_session(today_success["mission_id"], mark_success)
+    session_service._update_session(old_success["mission_id"], mark_success)
+    session_service._update_session(other_user_session["mission_id"], mark_success)
+
+    assert session_service.is_mission_completed_today(user_id, "location") is True
+
+    session_service.reset_user_history(user_id)
+
+    assert session_service.is_mission_completed_today(user_id, "location") is False
+    assert session_service.get_user_stats(user_id)["total_attempts"] == 0
+    assert session_service.get_session(other_user_session["mission_id"]) is not None
+
+
 def test_hash_file(tmp_path):
     f = tmp_path / "test.jpg"
     content = b"pazule test content"

@@ -239,6 +239,17 @@ def mission_submit() -> Response:
                 mission_id, image_hash, final_data
             )
 
+        if final_data.get("success") and final_data.get("couponEligible", True):
+            mission_type = session.get("mission_type", "location")
+            coupon = coupon_service.issue_coupon(
+                mission_type="mission1" if mission_type == "location" else "mission2",
+                answer=session.get("answer", ""),
+                mission_id=mission_id,
+                user_id=session.get("user_id", "guest"),
+            )
+            mission_session_service.mark_coupon_issued(mission_id, coupon["code"])
+            final_data["coupon"] = coupon
+
         final_data["mission_id"] = mission_id
         return jsonify(final_data)
     except Exception as exc:

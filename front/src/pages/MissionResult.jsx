@@ -1,20 +1,16 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMissionStore } from '../store/useMissionStore';
 import { useMission } from '../hooks/useMission';
 
 export default function MissionResult() {
     const navigate = useNavigate();
-    const { submissionResult } = useMissionStore();
+    const { submissionResult, coupon } = useMissionStore();
     const { issueCoupon, isLoading } = useMission();
+    const hasIssuedCouponRef = useRef(false);
 
-    const handleIssueCoupon = async () => {
-        try {
-            await issueCoupon();
-            navigate('/coupon/success');
-        } catch (error) {
-            alert(error.message || '쿠폰 발급에 실패했습니다');
-        }
+    const handleOpenCoupon = () => {
+        navigate('/coupon/success');
     };
 
     const handleTryAgain = () => {
@@ -25,6 +21,21 @@ export default function MissionResult() {
         navigate('/');
     };
 
+    const { success, score, message, error } = submissionResult ?? {};
+    const isSuccess = Boolean(success);
+    const matchPercentage = score !== undefined ? (score * 100).toFixed(0) : (isSuccess ? '100' : '0');
+
+    useEffect(() => {
+        if (!isSuccess || coupon || hasIssuedCouponRef.current) {
+            return;
+        }
+
+        hasIssuedCouponRef.current = true;
+        issueCoupon().catch((err) => {
+            alert(err.message || '쿠폰 발급에 실패했습니다');
+        });
+    }, [isSuccess, coupon, issueCoupon]);
+
     // If no result is found (e.g. user refreshed the page), provide fallback or redirect
     if (!submissionResult) {
         return (
@@ -34,11 +45,6 @@ export default function MissionResult() {
             </div>
         );
     }
-
-    const { success, score, message, error } = submissionResult;
-    const isSuccess = success;
-    const matchPercentage = score !== undefined ? (score * 100).toFixed(0) : (isSuccess ? '100' : '0');
-
     if (isSuccess) {
         return (
             <div className="font-display h-full w-full flex flex-col relative bg-[#f0f2f5] dark:bg-background-dark antialiased">
@@ -128,12 +134,12 @@ export default function MissionResult() {
                         {/* Bottom Fixed Action */}
                         <div className="absolute bottom-0 left-0 right-0 p-6 pt-12 pb-8 bg-gradient-to-t from-white via-white/95 to-transparent pointer-events-none">
                             <button
-                                onClick={handleIssueCoupon}
+                                onClick={handleOpenCoupon}
                                 disabled={isLoading}
                                 className={`w-full pointer-events-auto bg-[#37776f] hover:bg-[#2a5c55] text-white font-bold h-14 rounded-2xl shadow-lg shadow-[#37776f]/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-all ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                             >
-                                <span className="text-[17px] tracking-wide">{isLoading ? '발급 중...' : '쿠폰 발급'}</span>
-                                <span className="material-symbols-outlined">confirmation_number</span>
+                                <span className="text-[17px] tracking-wide">{isLoading ? '쿠폰 준비 중...' : '쿠폰 확인하기'}</span>
+                                <span className="material-symbols-outlined">qr_code_2</span>
                             </button>
                         </div>
                     </div>

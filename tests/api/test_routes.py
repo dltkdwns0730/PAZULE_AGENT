@@ -1,3 +1,5 @@
+import io
+
 import pytest
 from flask import Flask
 from unittest.mock import patch
@@ -85,6 +87,77 @@ class TestMissionStartRoute:
             assert data["hint"] == "hint1"
             # legacy format check (atmosphere -> photo 등)
             assert data["mission_type"] == "location"
+
+
+class TestMissionSubmitRoute:
+    """POST /api/mission/submit 쿠폰 자동 발급 검증."""
+
+    def test_successful_submission_issues_coupon_without_button_click(self, client):
+        mock_session = {
+            "mission_id": "mission-1",
+            "mission_type": "location",
+            "user_id": "guest",
+            "site_id": "default",
+            "answer": "지혜의숲",
+            "hint": "hint",
+        }
+        mock_coupon = {
+            "code": "AUTO1234",
+            "mission_id": "mission-1",
+            "user_id": "guest",
+            "status": "issued",
+        }
+        pipeline_output = {
+            "request_context": {"image_hash": "hash-1"},
+            "final_response": {
+                "data": {
+                    "success": True,
+                    "couponEligible": True,
+                    "score": 0.91,
+                }
+            },
+        }
+
+        with (
+            patch(
+                "app.api.routes.mission_session_service.can_submit",
+                return_value=(True, "ok"),
+            ),
+            patch(
+                "app.api.routes.mission_session_service.get_session",
+                return_value=mock_session,
+            ),
+            patch("app.api.routes._validate_upload", return_value=(True, ".jpg")),
+            patch("app.api.routes.pipeline_app.invoke", return_value=pipeline_output),
+            patch("app.api.routes.mission_session_service.record_submission"),
+            patch(
+                "app.api.routes.coupon_service.issue_coupon", return_value=mock_coupon
+            ) as issue_coupon,
+            patch(
+                "app.api.routes.mission_session_service.mark_coupon_issued"
+            ) as mark_coupon_issued,
+        ):
+            response = client.post(
+                "/api/mission/submit",
+                data={
+                    "mission_id": "mission-1",
+                    "image": (io.BytesIO(b"fake-image"), "mission.jpg"),
+                },
+                content_type="multipart/form-data",
+            )
+
+        data = response.get_json()
+
+        assert response.status_code == 200
+        assert data["success"] is True
+        assert data["coupon"] == mock_coupon
+        issue_coupon.assert_called_once_with(
+            mission_type="mission1",
+            answer="지혜의숲",
+            mission_id="mission-1",
+            user_id="guest",
+        )
+        mark_coupon_issued.assert_called_once_with("mission-1", "AUTO1234")
 
 
 class TestCouponRedeemRoute:

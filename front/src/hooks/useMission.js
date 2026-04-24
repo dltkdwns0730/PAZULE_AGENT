@@ -64,6 +64,9 @@ export function useMission() {
         try {
             const result = await api.submitMission(formData);
             store.setSubmissionResult(result);
+            if (result.coupon) {
+                store.setCoupon(result.coupon);
+            }
             return result;
         } catch (err) {
             setError(err.message);

@@ -71,17 +71,17 @@
       "partner_pos_id": null
     },
     {
-      "code": "HR4510W1",
-      "description": "지혜의숲 조각상 장소 미션 완료 쿠폰",
-      "mission_type": "mission1",
-      "answer": "지혜의숲 조각상",
-      "mission_id": "5dd85386-a9d4-49bb-bb0a-cd6b8eb85dd6",
+      "code": "VK4EJ56Z",
+      "description": "옛스러운 분위기 미션 완료 쿠폰",
+      "mission_type": "mission2",
+      "answer": "옛스러운",
+      "mission_id": "4adec994-0e94-4605-9a64-0531a43bfea9",
       "user_id": "guest",
       "partner_id": null,
       "discount_rule": "10%_OFF",
       "status": "issued",
-      "issued_at": "2026-04-24T11:37:18.883870+00:00",
-      "expires_at": "2026-05-01T11:37:18.883870+00:00",
+      "issued_at": "2026-04-24T14:37:33.704652+00:00",
+      "expires_at": "2026-05-01T14:37:33.704652+00:00",
       "redeemed_at": null,
       "partner_pos_id": null
     }

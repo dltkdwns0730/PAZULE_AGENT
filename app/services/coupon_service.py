@@ -277,8 +277,25 @@ class CouponService:
         """
         data = self._read_all()
         coupons = data.get("coupons", [])
+        user_mission_ids = set()
+        try:
+            from app.services.mission_session_service import mission_session_service
+
+            session_data = mission_session_service._read_all()
+            user_mission_ids = {
+                session.get("mission_id")
+                for session in session_data.get("sessions", [])
+                if session.get("user_id") == user_id and session.get("mission_id")
+            }
+        except Exception:
+            user_mission_ids = set()
         # 해당 사용자의 쿠폰을 제외한 나머지만 유지
-        filtered_coupons = [c for c in coupons if c.get("user_id") != user_id]
+        filtered_coupons = [
+            c
+            for c in coupons
+            if c.get("user_id") != user_id
+            and c.get("mission_id") not in user_mission_ids
+        ]
 
         # 하위 호환성 (user_id가 guest인 경우 세션 연동 데이터까지 고려해야 할 수 있으나,
         # 초기화 시점에는 명시적으로 user_id 기반 삭제만 수행함이 안전함)

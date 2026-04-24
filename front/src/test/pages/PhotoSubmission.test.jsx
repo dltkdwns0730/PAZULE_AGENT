@@ -39,7 +39,7 @@ describe('PhotoSubmission — stale state race condition (BUG 1)', () => {
     const fakeFile = new File(['img'], 'photo.jpg', { type: 'image/jpeg' });
     fireEvent.change(fileInput, { target: { files: [fakeFile] } });
 
-    const btn = screen.getByText('Submit for Verification');
+    const btn = screen.getByText('인증 제출');
 
     // 1차 실패 — navigate 없어야 함
     fireEvent.click(btn);
