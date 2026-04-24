@@ -461,7 +461,7 @@ class TestResponderFail:
             return_value="감성적인 힌트 문장입니다.",
         ) as mock_hint:
             result = responder(self._fail_state())
-        mock_hint.assert_called_once_with("지혜의숲", "책이 가득한 곳", "location")
+        mock_hint.assert_called_once_with("지혜의숲", "책이 가득한 곳", "location", [])
         assert result["final_response"]["data"]["hint"] == "감성적인 힌트 문장입니다."
 
     def test_fail_hint_llm_receives_static_hint_and_answer(self) -> None:
@@ -477,7 +477,9 @@ class TestResponderFail:
                     mission_type="atmosphere",
                 )
             )
-        mock_hint.assert_called_once_with("화사한", "밝은 느낌의 사진", "atmosphere")
+        mock_hint.assert_called_once_with(
+            "화사한", "밝은 느낌의 사진", "atmosphere", []
+        )
 
     def test_fail_atmosphere_maps_to_photo_in_legacy(self) -> None:
         """atmosphere 미션은 legacy missionType='photo'로 변환."""

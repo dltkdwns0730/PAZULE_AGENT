@@ -10,6 +10,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 import pytest
+import torch
 
 import app.models.siglip2 as siglip2_module
 
@@ -33,6 +34,9 @@ def _make_inference_mocks(score_val: float = 0.9) -> tuple:
     mock_probs = [[mock_node]]  # 실제 중첩 리스트로 구성
 
     mock_model = MagicMock()
+    mock_model.return_value.logits_per_image = torch.log(
+        torch.tensor([[score_val, 1.0 - score_val]], dtype=torch.float32)
+    )
     mock_image = MagicMock()
     mock_image.convert.return_value = mock_image
 

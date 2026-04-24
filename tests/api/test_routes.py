@@ -69,11 +69,12 @@ class TestMissionStartRoute:
             "hint": "hint1",
         }
 
-        with patch(
-            "app.api.routes.get_today_answers", return_value=mock_answers
-        ), patch(
-            "app.api.routes.mission_session_service.create_session",
-            return_value=mock_session,
+        with (
+            patch("app.api.routes.get_today_answers", return_value=mock_answers),
+            patch(
+                "app.api.routes.mission_session_service.create_session",
+                return_value=mock_session,
+            ),
         ):
             payload = {"mission_type": "location", "user_id": "test_user"}
             response = client.post("/api/mission/start", json=payload)

@@ -51,9 +51,9 @@ def test_build_prompt_bundle_location():
 
 
 def test_build_prompt_bundle_atmosphere():
-    bundle = build_prompt_bundle("atmosphere", "차분한")
+    bundle = build_prompt_bundle("atmosphere", "차분하고 자연적인")
     assert bundle["mission_type"] == "atmosphere"
-    assert "calm and peaceful" in bundle["answer_en"]
+    assert "serene, calm, and natural" in bundle["answer_en"]
     assert "atmosphere?" in bundle["blip_question"]
 
 

@@ -42,9 +42,10 @@ def test_extract_gps_coordinates_success():
 
 
 def test_quick_photo_summary_success():
-    with patch("PIL.Image.open") as mock_open, patch(
-        "app.metadata.metadata.extract_gps_coordinates"
-    ) as mock_gps:
+    with (
+        patch("PIL.Image.open") as mock_open,
+        patch("app.metadata.metadata.extract_gps_coordinates") as mock_gps,
+    ):
         mock_img = MagicMock()
         mock_exif = {306: "2026:04:22 12:00:00"}  # DateTime Original (approx)
         mock_img.getexif.return_value = mock_exif
@@ -64,9 +65,10 @@ def test_quick_photo_summary_success():
 
 
 def test_quick_photo_summary_not_today():
-    with patch("PIL.Image.open") as mock_open, patch(
-        "app.metadata.metadata.extract_gps_coordinates"
-    ) as mock_gps:
+    with (
+        patch("PIL.Image.open") as mock_open,
+        patch("app.metadata.metadata.extract_gps_coordinates") as mock_gps,
+    ):
         mock_img = MagicMock()
         mock_exif = {306: "2000:01:01 12:00:00"}
         mock_img.getexif.return_value = mock_exif

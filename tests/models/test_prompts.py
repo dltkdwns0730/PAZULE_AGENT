@@ -29,8 +29,8 @@ class TestToEnglish:
         assert result == "알수없는장소"
 
     def test_atmosphere_known_key(self) -> None:
-        result = _to_english("차분한", "atmosphere")
-        assert result == ATMOSPHERE_EN["차분한"]
+        result = _to_english("차분하고 자연적인", "atmosphere")
+        assert result == ATMOSPHERE_EN["차분하고 자연적인"]
 
     def test_atmosphere_unknown_key_returns_original(self) -> None:
         result = _to_english("알수없는분위기", "atmosphere")
@@ -114,5 +114,5 @@ class TestBuildPromptBundle:
         assert bundle["answer_en"] == LANDMARK_EN["활판공방 인쇄기"]
 
     def test_answer_en_translated_for_atmosphere(self) -> None:
-        bundle = build_prompt_bundle("atmosphere", "차분한")
-        assert bundle["answer_en"] == ATMOSPHERE_EN["차분한"]
+        bundle = build_prompt_bundle("atmosphere", "차분하고 자연적인")
+        assert bundle["answer_en"] == ATMOSPHERE_EN["차분하고 자연적인"]

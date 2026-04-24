@@ -39,9 +39,10 @@ class TestTieredEvaluate:
 
     def test_escalate_to_tier_2(self, mock_context):
         """Tier 1에서 에스컬레이션이 필요하면 Tier 2까지 진행한다."""
-        with patch("app.council.judges.ConsistencyJudge.evaluate") as mock_c, patch(
-            "app.council.judges.ThresholdJudge.evaluate"
-        ) as mock_t:
+        with (
+            patch("app.council.judges.ConsistencyJudge.evaluate") as mock_c,
+            patch("app.council.judges.ThresholdJudge.evaluate") as mock_t,
+        ):
             mock_c.return_value = JudgeVerdict(
                 judge="ConsistencyJudge",
                 approved=True,
@@ -65,9 +66,11 @@ class TestTieredEvaluate:
 
     def test_escalate_to_tier_3(self, mock_context):
         """Tier 2에서도 에스컬레이션이 필요하면 Tier 3(Qwen)까지 진행한다."""
-        with patch("app.council.judges.ConsistencyJudge.evaluate") as mock_c, patch(
-            "app.council.judges.ThresholdJudge.evaluate"
-        ) as mock_t, patch("app.council.judges.QwenFallbackJudge.evaluate") as mock_q:
+        with (
+            patch("app.council.judges.ConsistencyJudge.evaluate") as mock_c,
+            patch("app.council.judges.ThresholdJudge.evaluate") as mock_t,
+            patch("app.council.judges.QwenFallbackJudge.evaluate") as mock_q,
+        ):
             mock_c.return_value = JudgeVerdict(
                 judge="C",
                 approved=True,

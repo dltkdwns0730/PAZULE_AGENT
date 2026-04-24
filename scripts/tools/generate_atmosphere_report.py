@@ -6,6 +6,7 @@ GT_PATH = "data/atmosphere_ground_truth_siglip2.json"
 ASSETS_DIR = "data/assets"
 REPORT_PATH = "atmosphere_verification_report_siglip2.html"
 
+
 def generate_html_report():
     if not os.path.exists(GT_PATH):
         print("Ground truth data not found.")
@@ -48,11 +49,13 @@ def generate_html_report():
         # URL 인코딩 적용 (한글 경로 문제 해결)
         encoded_path = quote(rel_path.replace("\\", "/"))
         img_src = f"data/assets/{encoded_path}"
-        
-        labels_html = "".join([f'<span class="label-tag">{label}</span>' for label in info['labels']])
-        
+
+        labels_html = "".join(
+            [f'<span class="label-tag">{label}</span>' for label in info["labels"]]
+        )
+
         scores_html = ""
-        sorted_scores = sorted(info['scores'].items(), key=lambda x: x[1], reverse=True)
+        sorted_scores = sorted(info["scores"].items(), key=lambda x: x[1], reverse=True)
         for label, score in sorted_scores:
             is_high = score >= 0.3
             score_class = "high-score" if is_high else ""
@@ -81,7 +84,7 @@ def generate_html_report():
 
     with open(REPORT_PATH, "w", encoding="utf-8") as f:
         f.write(html_content)
-    
+
     print(f"Report generated: {os.path.abspath(REPORT_PATH)}")
 
     html_content += """
@@ -92,8 +95,9 @@ def generate_html_report():
 
     with open(REPORT_PATH, "w", encoding="utf-8") as f:
         f.write(html_content)
-    
+
     print(f"Report generated: {os.path.abspath(REPORT_PATH)}")
+
 
 if __name__ == "__main__":
     generate_html_report()

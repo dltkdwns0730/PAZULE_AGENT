@@ -46,101 +46,6 @@
       "coupon_code": "T-COUPON"
     },
     {
-      "mission_id": "1d062f56-c59a-45cc-b740-ba0974e49c86",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "atmosphere",
-      "answer": "옛스러운",
-      "hint": "옛스러운 사진을 찍어보세요.",
-      "status": "created",
-      "created_at": "2026-04-23T12:07:16.330172+00:00",
-      "expires_at": "2026-04-23T13:07:16.330172+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
-      "mission_id": "a3687ea8-3687-48f8-8f2a-86c949f02304",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "atmosphere",
-      "answer": "옛스러운",
-      "hint": "옛스러운 사진을 찍어보세요.",
-      "status": "submitted",
-      "created_at": "2026-04-23T12:07:22.495063+00:00",
-      "expires_at": "2026-04-23T13:07:22.495063+00:00",
-      "max_submissions": 3,
-      "submissions": [
-        {
-          "submitted_at": "2026-04-23T12:08:01.580557+00:00",
-          "image_hash": "e5168a07c4c549f5630e27752756404bd46571986ca179e0cc3486ec6a146287",
-          "result_summary": {
-            "success": false,
-            "confidence": 0.0
-          }
-        },
-        {
-          "submitted_at": "2026-04-23T12:08:03.401474+00:00",
-          "image_hash": "e5168a07c4c549f5630e27752756404bd46571986ca179e0cc3486ec6a146287",
-          "result_summary": {
-            "success": false,
-            "confidence": 0.0
-          }
-        },
-        {
-          "submitted_at": "2026-04-23T12:08:16.299991+00:00",
-          "image_hash": "e5168a07c4c549f5630e27752756404bd46571986ca179e0cc3486ec6a146287",
-          "result_summary": {
-            "success": false,
-            "confidence": 0.0
-          }
-        }
-      ],
-      "latest_judgment": {
-        "success": false,
-        "message": "미션 조건이 충분히 충족되지 않았습니다. 다시 시도해 주세요.",
-        "missionType": "photo",
-        "hint": "시간의 흔적이 고스란히 남아있는 듯한 정취를 담아보세요. 바랜 색감과 고즈넉함이 어우러진 순간이 당신을 기다리고 있을 거예요.",
-        "confidence": 0.0,
-        "decision_trace": {
-          "judgment": {
-            "success": false,
-            "reason": "score_below_threshold",
-            "confidence": 0.0,
-            "mission_type": "atmosphere",
-            "conflict": false,
-            "council_override": false
-          },
-          "coupon_decision": {
-            "eligible": false,
-            "deny_reason": null
-          }
-        },
-        "model_votes": [
-          {
-            "model": "siglip2",
-            "score": 1.1560877283045556e-05,
-            "label": "mismatch",
-            "reason": "SigLIP2 prediction score for 'a photo with old-fashioned and vintage atmosphere'"
-          }
-        ]
-      }
-    },
-    {
-      "mission_id": "e0c8e4f8-a00f-4016-9350-9bb7596ae1a8",
-      "user_id": "guest",
-      "site_id": "pazule-default",
-      "mission_type": "atmosphere",
-      "answer": "옛스러운",
-      "hint": "옛스러운 사진을 찍어보세요.",
-      "status": "created",
-      "created_at": "2026-04-23T12:09:20.964302+00:00",
-      "expires_at": "2026-04-23T13:09:20.964302+00:00",
-      "max_submissions": 3,
-      "submissions": [],
-      "latest_judgment": null
-    },
-    {
       "mission_id": "e13b6603-7270-43cb-bfd0-f48395c570fc",
       "user_id": "debug_user",
       "site_id": "pazule-default",
@@ -192,63 +97,63 @@
       }
     },
     {
-      "mission_id": "201212e6-d213-4ccf-ad70-d424893a4232",
+      "mission_id": "5dd85386-a9d4-49bb-bb0a-cd6b8eb85dd6",
       "user_id": "guest",
       "site_id": "pazule-default",
-      "mission_type": "atmosphere",
-      "answer": "옛스러운",
-      "hint": "옛스러운 사진을 찍어보세요.",
-      "status": "submitted",
-      "created_at": "2026-04-23T12:16:26.114030+00:00",
-      "expires_at": "2026-04-23T13:16:26.114030+00:00",
+      "mission_type": "location",
+      "answer": "지혜의숲 조각상",
+      "hint": "줌-인(ZOOM-IN)",
+      "status": "coupon_issued",
+      "created_at": "2026-04-24T11:36:10.438227+00:00",
+      "expires_at": "2026-04-24T12:36:10.438227+00:00",
       "max_submissions": 3,
       "submissions": [
         {
-          "submitted_at": "2026-04-23T12:16:37.964393+00:00",
-          "image_hash": "321c3bab8ecc90acac5f834c65ca897ef63ebdb5b9736e489912c5c60ef56728",
+          "submitted_at": "2026-04-24T11:36:59.396770+00:00",
+          "image_hash": "1c62ef09798722d167e7a184d40f885cf54317f4984f95ba76e380e12deb8daa",
           "result_summary": {
-            "success": false,
-            "confidence": 0.0001
-          }
-        },
-        {
-          "submitted_at": "2026-04-23T12:17:02.516902+00:00",
-          "image_hash": "e5168a07c4c549f5630e27752756404bd46571986ca179e0cc3486ec6a146287",
-          "result_summary": {
-            "success": false,
-            "confidence": 0.0
+            "success": true,
+            "confidence": 0.9962
           }
         }
       ],
       "latest_judgment": {
-        "success": false,
-        "message": "미션 조건이 충분히 충족되지 않았습니다. 다시 시도해 주세요.",
-        "missionType": "photo",
-        "hint": "시간의 흔적이 고스란히 묻어나는 듯한 고요하고 깊은 분위기를 느껴보세요. 빛바랜 추억처럼 따뜻하고 정겨운 순간을 찾아 사진으로 담아보세요.",
-        "confidence": 0.0,
+        "success": true,
+        "message": "미션 성공! 쿠폰 발급 단계로 이동할 수 있습니다.",
+        "missionType": "location",
+        "couponEligible": true,
+        "confidence": 0.9962,
         "decision_trace": {
+          "route_decision": {
+            "next_node": "model_fanout",
+            "reason": "mission_type=location",
+            "confidence": 1.0,
+            "fallback": "finalizer"
+          },
           "judgment": {
-            "success": false,
-            "reason": "score_below_threshold",
-            "confidence": 0.0,
-            "mission_type": "atmosphere",
+            "success": true,
+            "reason": "score_passed",
+            "confidence": 0.9962,
+            "mission_type": "location",
             "conflict": false,
             "council_override": false
           },
           "coupon_decision": {
-            "eligible": false,
-            "deny_reason": null
+            "eligible": true,
+            "deny_reason": null,
+            "discount_rule": "10%_OFF"
           }
         },
         "model_votes": [
           {
             "model": "siglip2",
-            "score": 1.1560877283045556e-05,
-            "label": "mismatch",
-            "reason": "SigLIP2 prediction score for 'a photo with old-fashioned and vintage atmosphere'"
+            "score": 0.9961906671524048,
+            "label": "match",
+            "reason": "SigLIP2 prediction score for 'a photo of a large sculpture at the entrance of a book library'"
           }
         ]
-      }
+      },
+      "coupon_code": "HR4510W1"
     }
   ]
 }

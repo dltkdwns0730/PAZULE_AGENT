@@ -44,9 +44,9 @@
 
 <div align="center">
 
-| 메인 화면 | 미션 제출 | AI 분석 성공 | 미션 완료 |
-| :---: | :---: | :---: | :---: |
-| <img src="./docs/assets/메인화면.jpg" width="200" /> | <img src="./docs/assets/제출화면.jpg" width="200" /> | <img src="./docs/assets/성공화면.jpg" width="200" /> | <img src="./docs/assets/미션%20완료.jpg" width="200" /> |
+| 메인 화면 | 미션 제출 | 미션 성공 | 쿠폰 제공 | 쿠폰 확인 |
+| :---: | :---: | :---: | :---: | :---: |
+| <img src="./front/src/assets/메인화면.jpg" width="200" /> | <img src="./front/src/assets/제출화면.jpg" width="200" /> | <img src="./front/src/assets/미션성공.jpg" width="200" /> | <img src="./front/src/assets/쿠폰제공.jpg" width="200" /> | <img src="./front/src/assets/쿠폰확인.jpg" width="200" /> |
 
 </div>
 
