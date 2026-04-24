@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { useMission } from '../../hooks/useMission';
 import { api } from '../../services/api';
+import { getCurrentPosition } from '../../services/geolocation';
 import { useMissionStore } from '../../store/useMissionStore';
 
 vi.mock('../../services/api', () => ({
@@ -10,6 +11,10 @@ vi.mock('../../services/api', () => ({
     submitMission: vi.fn(),
     issueCoupon: vi.fn(),
   },
+}));
+
+vi.mock('../../services/geolocation', () => ({
+  getCurrentPosition: vi.fn(),
 }));
 
 vi.mock('../../store/useMissionStore', () => ({
@@ -31,6 +36,11 @@ describe('useMission', () => {
       setCoupon: vi.fn(),
     };
     useMissionStore.mockReturnValue(store);
+    getCurrentPosition.mockResolvedValue({
+      client_lat: 37.711988,
+      client_lng: 126.6867095,
+      accuracy_meters: 20,
+    });
   });
 
   it('sets isLoading while fetchHint is in flight', async () => {
@@ -87,5 +97,33 @@ describe('useMission', () => {
 
     expect(store.setSubmissionResult).toHaveBeenCalledWith(submissionResult);
     expect(store.setCoupon).toHaveBeenCalledWith(coupon);
+    expect(api.submitMission).toHaveBeenCalledTimes(1);
+
+    const formData = api.submitMission.mock.calls[0][0];
+    expect(formData.get('client_lat')).toBe('37.711988');
+    expect(formData.get('client_lng')).toBe('126.6867095');
+    expect(formData.get('accuracy_meters')).toBe('20');
+  });
+
+  it('includes current GPS when starting a mission', async () => {
+    api.startMission.mockResolvedValue({
+      mission_id: 'mission-1',
+      hint: 'hint',
+      vqa_hints: [],
+    });
+
+    const { result } = renderHook(() => useMission());
+
+    await act(async () => {
+      await result.current.startMission('location', 'guest');
+    });
+
+    expect(api.startMission).toHaveBeenCalledWith({
+      mission_type: 'location',
+      user_id: 'guest',
+      client_lat: 37.711988,
+      client_lng: 126.6867095,
+      accuracy_meters: 20,
+    });
   });
 });

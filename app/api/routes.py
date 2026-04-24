@@ -16,6 +16,7 @@ from app.core.utils import normalize_mission_type, to_legacy_mission_type
 from app.council.graph import pipeline_app
 from app.services.answer_service import get_today_answers
 from app.services.coupon_service import coupon_service
+from app.services.location_service import validate_client_location
 from app.services.mission_session_service import mission_session_service
 
 logger = logging.getLogger(__name__)
@@ -44,6 +45,12 @@ def _validate_upload(file_obj) -> tuple[bool, str]:
     if ext not in constants.ALLOWED_UPLOAD_EXTENSIONS:
         return False, "지원하지 않는 파일 형식입니다."
     return True, ext
+
+
+def _location_error_response(validation: dict) -> tuple[Response, int]:
+    return jsonify(
+        {"error": validation["reason"], "location_validation": validation}
+    ), 400
 
 
 @api.route("/get-today-hint", methods=["GET"])
@@ -138,6 +145,10 @@ def mission_start() -> Response:
     user_id = payload.get("user_id", "guest")
     site_id = payload.get("site_id", "pazule-default")
 
+    location_validation = validate_client_location(payload)
+    if not location_validation["allowed"]:
+        return _location_error_response(location_validation)
+
     a1, a2, h1, h2, vqa1, vqa2 = get_today_answers()
 
     # 미션 시작 전 당일 완료 여부 최종 검증 (보안 강화)
@@ -164,6 +175,7 @@ def mission_start() -> Response:
             "mission_id": session["mission_id"],
             "mission_type": to_legacy_mission_type(session["mission_type"]),
             "eligibility": {"allowed": True},
+            "location_validation": location_validation,
             "constraints": {
                 "max_submissions": session["max_submissions"],
                 "expires_at": session["expires_at"],
@@ -199,6 +211,10 @@ def mission_submit() -> Response:
     if not session:
         return jsonify({"error": "session_not_found"}), 404
 
+    location_validation = validate_client_location(request.form)
+    if not location_validation["allowed"]:
+        return _location_error_response(location_validation)
+
     file_obj = request.files.get("image")
     valid, ext_or_msg = _validate_upload(file_obj)
     if not valid:
@@ -221,6 +237,7 @@ def mission_submit() -> Response:
                 "answer": session.get("answer"),
                 "static_hint": session.get("hint", ""),
                 "model_selection": model_selection,
+                "client_location": location_validation,
             },
             "artifacts": {},
             "errors": [],
@@ -251,6 +268,7 @@ def mission_submit() -> Response:
             final_data["coupon"] = coupon
 
         final_data["mission_id"] = mission_id
+        final_data["location_validation"] = location_validation
         return jsonify(final_data)
     except Exception as exc:
         logger.exception(

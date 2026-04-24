@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { api } from '../services/api';
+import { getCurrentPosition } from '../services/geolocation';
 import { useMissionStore } from '../store/useMissionStore';
 
 export function useMission() {
@@ -33,7 +34,12 @@ export function useMission() {
         setIsLoading(true);
         setError(null);
         try {
-            const data = await api.startMission({ mission_type: missionType, user_id: userId });
+            const location = await getCurrentPosition();
+            const data = await api.startMission({
+                mission_type: missionType,
+                user_id: userId,
+                ...location,
+            });
             store.setMissionParams(data.mission_id, missionType);
             // API 응답 또는 미리 로드된 previewHint를 activeHint로 저장 ({ hint, vqa_hints })
             const activeHint = (data.hint != null)
@@ -62,6 +68,10 @@ export function useMission() {
         formData.append('mission_id', store.missionId);
 
         try {
+            const location = await getCurrentPosition();
+            formData.append('client_lat', location.client_lat);
+            formData.append('client_lng', location.client_lng);
+            formData.append('accuracy_meters', location.accuracy_meters);
             const result = await api.submitMission(formData);
             store.setSubmissionResult(result);
             if (result.coupon) {
