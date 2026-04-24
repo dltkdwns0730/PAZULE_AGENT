@@ -78,15 +78,34 @@ class TestMissionStartRoute:
                 return_value=mock_session,
             ),
         ):
-            payload = {"mission_type": "location", "user_id": "test_user"}
+            payload = {
+                "mission_type": "location",
+                "user_id": "test_user",
+                "client_lat": 37.711988,
+                "client_lng": 126.6867095,
+                "accuracy_meters": 20,
+            }
             response = client.post("/api/mission/start", json=payload)
             data = response.get_json()
 
             assert response.status_code == 200
             assert data["mission_id"] == "test_id"
             assert data["hint"] == "hint1"
+            assert data["location_validation"]["allowed"] is True
             # legacy format check (atmosphere -> photo 등)
             assert data["mission_type"] == "location"
+
+    def test_mission_start_rejects_missing_gps(self, client):
+        mock_answers = ("ans1", "ans2", "hint1", "hint2", "vqa1", "vqa2")
+
+        with patch("app.api.routes.get_today_answers", return_value=mock_answers):
+            payload = {"mission_type": "location", "user_id": "test_user"}
+            response = client.post("/api/mission/start", json=payload)
+            data = response.get_json()
+
+            assert response.status_code == 400
+            assert data["error"] == "gps_required"
+            assert data["location_validation"]["allowed"] is False
 
 
 class TestMissionSubmitRoute:
@@ -141,6 +160,9 @@ class TestMissionSubmitRoute:
                 "/api/mission/submit",
                 data={
                     "mission_id": "mission-1",
+                    "client_lat": "37.711988",
+                    "client_lng": "126.6867095",
+                    "accuracy_meters": "20",
                     "image": (io.BytesIO(b"fake-image"), "mission.jpg"),
                 },
                 content_type="multipart/form-data",
@@ -158,6 +180,44 @@ class TestMissionSubmitRoute:
             user_id="guest",
         )
         mark_coupon_issued.assert_called_once_with("mission-1", "AUTO1234")
+
+    def test_submission_rejects_outside_gps_before_pipeline(self, client):
+        mock_session = {
+            "mission_id": "mission-1",
+            "mission_type": "location",
+            "user_id": "guest",
+            "site_id": "default",
+            "answer": "ans1",
+            "hint": "hint",
+        }
+
+        with (
+            patch(
+                "app.api.routes.mission_session_service.can_submit",
+                return_value=(True, "ok"),
+            ),
+            patch(
+                "app.api.routes.mission_session_service.get_session",
+                return_value=mock_session,
+            ),
+            patch("app.api.routes.pipeline_app.invoke") as invoke,
+        ):
+            response = client.post(
+                "/api/mission/submit",
+                data={
+                    "mission_id": "mission-1",
+                    "client_lat": "37.720000",
+                    "client_lng": "126.700000",
+                    "accuracy_meters": "20",
+                    "image": (io.BytesIO(b"fake-image"), "mission.jpg"),
+                },
+                content_type="multipart/form-data",
+            )
+            data = response.get_json()
+
+        assert response.status_code == 400
+        assert data["error"] == "outside_mission_site"
+        invoke.assert_not_called()
 
 
 class TestCouponRedeemRoute:

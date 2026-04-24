@@ -110,6 +110,10 @@ DEFAULT_PROFILE: dict[str, object] = {
     #   이 범위 밖에서 촬영한 사진은 위치 검증에서 실패한다.
     #
     "MISSION_SITE_RADIUS_METERS": 300,
+    "MISSION_SITE_LAT": 37.711988,
+    "MISSION_SITE_LON": 126.6867095,
+    "MISSION_GPS_MAX_ACCURACY_METERS": 100,
+    "SKIP_GPS_VALIDATION": False,
     # ── Council (교차 검증 위원회) ────────────────────────────
     #
     # COUNCIL_ENABLED (bool)
@@ -125,6 +129,10 @@ DEFAULT_PROFILE: dict[str, object] = {
     #   예: 임계값 0.70, margin 0.08 → 0.62~0.78 범위가 경계값.
     #
     "COUNCIL_BORDERLINE_MARGIN": 0.08,
+    "DATABASE_URL": "sqlite:///data/pazule.db",
+    "SUPABASE_URL": "",
+    "SUPABASE_JWKS_URL": "",
+    "SUPABASE_JWT_AUDIENCE": "authenticated",
 }
 
 

@@ -24,3 +24,4 @@
 | 2026-04-23 | v2.5.0 | 하단 내비게이션 복구 및 복합 지도 페이지 구현 | 완료 | `docs/tasks/2026/04/2026-04-23_v2.5.0_map-and-profile-nav.md` |
 | 2026-04-23 | v2.6.0 | 분위기 미션 정확도 개선 및 실패 힌트 UI 연동 | 완료 | `docs/tasks/2026/04/2026-04-23_v2.6.0_atmosphere-accuracy-and-hint.md` |
 | 2026-04-23 | v2.7.0 | 분위기 엔진 고도화 및 프로젝트 구조 리팩토링 | 완료 | `docs/tasks/2026/04/2026-04-23_v2.7.0_atmosphere-engine-and-refactor.md` |
+| 2026-04-25 | v2.8.0 | DB/Auth 기반 B2B 플랫폼 확장 준비 | 완료 | `docs/tasks/2026/04/2026-04-25_v2.8.0_platform-foundation.md` |

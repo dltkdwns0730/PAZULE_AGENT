@@ -156,6 +156,18 @@ class Settings:
     MISSION_SITE_RADIUS_METERS: int = _env_or_profile(  # type: ignore[assignment]
         "MISSION_SITE_RADIUS_METERS", int
     )
+    MISSION_SITE_LAT: float = _env_or_profile(  # type: ignore[assignment]
+        "MISSION_SITE_LAT", float
+    )
+    MISSION_SITE_LON: float = _env_or_profile(  # type: ignore[assignment]
+        "MISSION_SITE_LON", float
+    )
+    MISSION_GPS_MAX_ACCURACY_METERS: int = _env_or_profile(  # type: ignore[assignment]
+        "MISSION_GPS_MAX_ACCURACY_METERS", int
+    )
+    SKIP_GPS_VALIDATION: bool = _env_or_profile(  # type: ignore[assignment]
+        "SKIP_GPS_VALIDATION", bool
+    )
 
     # --- Council ---
     COUNCIL_ENABLED: bool = _env_or_profile(  # type: ignore[assignment]
@@ -169,6 +181,20 @@ class Settings:
     #
     # BASE_DIR: 프로젝트 루트 디렉터리 절대 경로.
     #   pyproject.toml이 위치한 디렉터리를 가리킨다.
+    DATABASE_URL: str = _env_or_profile(  # type: ignore[assignment]
+        "DATABASE_URL", str
+    )
+    SUPABASE_URL: str = _env_or_profile(  # type: ignore[assignment]
+        "SUPABASE_URL", str
+    )
+    SUPABASE_JWKS_URL: str = _env_or_profile(  # type: ignore[assignment]
+        "SUPABASE_JWKS_URL", str
+    )
+    SUPABASE_JWT_AUDIENCE: str = _env_or_profile(  # type: ignore[assignment]
+        "SUPABASE_JWT_AUDIENCE", str
+    )
+    SUPABASE_SERVICE_ROLE_KEY: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+
     BASE_DIR: str = os.path.dirname(
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     )
