@@ -14,10 +14,10 @@ export default function AuthCallback() {
   useEffect(() => {
     const completeLogin = async () => {
       try {
-        const session = await getCurrentSupabaseSession();
-        setSession(session ?? parseOAuthCallback());
+        const session = await getCurrentSupabaseSession() ?? parseOAuthCallback();
+        setSession(session);
         window.history.replaceState(null, '', '/auth/callback');
-        navigate('/profile', { replace: true });
+        navigate(session.isAdmin ? '/admin' : '/', { replace: true });
       } catch (exc) {
         setError(exc instanceof Error ? exc.message : '로그인 처리에 실패했습니다.');
       }
