@@ -34,3 +34,24 @@ describe('api — fetch timeout (BUG 2)', () => {
     await expect(promise).rejects.toThrow();
   });
 });
+
+describe('api auth headers', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('adds bearer token to user-owned mission calls', async () => {
+    vi.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ ok: true }),
+    });
+
+    await api.getTodayHint('location', 'user-123', 'token-123');
+    await api.startMission({ mission_type: 'location' }, 'token-123');
+    await api.issueCoupon('mission-1', 'user-123', 'token-123');
+
+    expect(fetch.mock.calls[0][1].headers.Authorization).toBe('Bearer token-123');
+    expect(fetch.mock.calls[1][1].headers.Authorization).toBe('Bearer token-123');
+    expect(fetch.mock.calls[2][1].headers.Authorization).toBe('Bearer token-123');
+  });
+});

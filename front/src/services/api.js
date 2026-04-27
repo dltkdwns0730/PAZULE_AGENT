@@ -14,6 +14,10 @@ class ApiError extends Error {
 
 const FETCH_TIMEOUT_MS = 10_000;
 
+function authHeaders(accessToken) {
+    return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+}
+
 function fetchWithTimeout(url, options = {}) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -36,8 +40,10 @@ export const api = {
      * @param {string} missionType 'location' or 'atmosphere'
      * @param {string} userId - The user ID to check completion status
      */
-    async getTodayHint(missionType = 'location', userId = 'guest') {
-        const response = await fetchWithTimeout(`${API_BASE}/get-today-hint?mission_type=${missionType}&user_id=${userId}`);
+    async getTodayHint(missionType = 'location', userId = 'guest', accessToken = null) {
+        const response = await fetchWithTimeout(`${API_BASE}/get-today-hint?mission_type=${missionType}&user_id=${userId}`, {
+            headers: authHeaders(accessToken),
+        });
         return handleResponse(response);
     },
 
@@ -45,11 +51,12 @@ export const api = {
      * Start a new mission session
      * @param {Object} data - { user_id: string, mission_type: string }
      */
-    async startMission(data) {
+    async startMission(data, accessToken = null) {
         const response = await fetchWithTimeout(`${API_BASE}/api/mission/start`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                ...authHeaders(accessToken),
             },
             body: JSON.stringify(data),
         });
@@ -60,9 +67,10 @@ export const api = {
      * Submit a photo for verification
      * @param {FormData} formData - Contains 'image' (File) and 'mission_id' (string)
      */
-    async submitMission(formData) {
+    async submitMission(formData, accessToken = null) {
         const response = await fetchWithTimeout(`${API_BASE}/api/mission/submit`, {
             method: 'POST',
+            headers: authHeaders(accessToken),
             // Do not set Content-Type header when sending FormData;
             // the browser sets it automatically with the boundary
             body: formData,
@@ -78,16 +86,43 @@ export const api = {
      * @param {string} missionId - The ID of the successful mission
      * @param {string} userId - (Optional) The ID of the user
      */
-    async issueCoupon(missionId, userId = 'guest') {
+    async issueCoupon(missionId, userId = 'guest', accessToken = null) {
         const response = await fetchWithTimeout(`${API_BASE}/api/coupon/issue`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                ...authHeaders(accessToken),
             },
             body: JSON.stringify({ 
                 mission_id: missionId,
                 user_id: userId 
             }),
+        });
+        return handleResponse(response);
+    },
+
+    async getUserStats(userId, accessToken = null) {
+        const response = await fetchWithTimeout(`${API_BASE}/api/user/stats?user_id=${userId}`, {
+            headers: authHeaders(accessToken),
+        });
+        return handleResponse(response);
+    },
+
+    async resetUserData(userId, accessToken = null) {
+        const response = await fetchWithTimeout(`${API_BASE}/api/user/reset`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...authHeaders(accessToken),
+            },
+            body: JSON.stringify({ user_id: userId }),
+        });
+        return handleResponse(response);
+    },
+
+    async getCoupons(userId, accessToken = null) {
+        const response = await fetchWithTimeout(`${API_BASE}/api/coupons?user_id=${userId}&_t=${Date.now()}`, {
+            headers: authHeaders(accessToken),
         });
         return handleResponse(response);
     },

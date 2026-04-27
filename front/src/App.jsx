@@ -13,6 +13,8 @@ import Permissions from "./pages/Permissions";
 import CouponWallet from "./pages/CouponWallet";
 import Profile from "./pages/Profile";
 import Map from "./pages/Map";
+import Login from "./pages/Login";
+import AuthCallback from "./pages/AuthCallback";
 
 export default function App() {
   return (
@@ -30,6 +32,8 @@ export default function App() {
           <Route path="/permissions" element={<Permissions />} />
           <Route path="/coupon/success" element={<CouponSuccess />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
         </Route>
 
         {/* Admin Routes */}

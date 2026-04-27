@@ -130,6 +130,7 @@ DEFAULT_PROFILE: dict[str, object] = {
     #
     "COUNCIL_BORDERLINE_MARGIN": 0.08,
     "DATABASE_URL": "sqlite:///data/pazule.db",
+    "STORAGE_BACKEND": "json",
     "SUPABASE_URL": "",
     "SUPABASE_JWKS_URL": "",
     "SUPABASE_JWT_AUDIENCE": "authenticated",

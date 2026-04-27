@@ -1,26 +1,28 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../services/api';
+import { useAuthStore } from '../store/useAuthStore';
 import { useMissionStore } from '../store/useMissionStore';
 
 export default function CouponWallet() {
     const navigate = useNavigate();
     const { setCoupon } = useMissionStore();
+    const { userId, accessToken, isAuthenticated } = useAuthStore();
     const [coupons, setCoupons] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchCoupons = async () => {
         setIsLoading(true);
+        if (!isAuthenticated || !userId || !accessToken) {
+            navigate('/login', { replace: true });
+            return;
+        }
         try {
-            // 캐시 방지를 위해 타임스탬프 추가
-            const response = await fetch(`/api/coupons?user_id=guest&_t=${Date.now()}`);
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Fetched coupons:', data);
-                const sorted = [...data].sort((a, b) => 
-                    new Date(b.issued_at) - new Date(a.issued_at)
-                );
-                setCoupons(sorted);
-            }
+            const data = await api.getCoupons(userId, accessToken);
+            const sorted = [...data].sort((a, b) =>
+                new Date(b.issued_at) - new Date(a.issued_at)
+            );
+            setCoupons(sorted);
         } catch (error) {
             console.error('쿠폰 로드 실패:', error);
         } finally {
@@ -30,7 +32,7 @@ export default function CouponWallet() {
 
     useEffect(() => {
         fetchCoupons();
-    }, []);
+    }, [accessToken, isAuthenticated, navigate, userId]);
 
     const handleCouponClick = (coupon) => {
         if (coupon.status === 'redeemed' || coupon.status === 'expired') return;
@@ -55,7 +57,7 @@ export default function CouponWallet() {
                     <button onClick={() => navigate('/')} className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
                         <span className="material-symbols-outlined text-white">arrow_back</span>
                     </button>
-                    <h1 className="text-2xl font-extrabold tracking-tight drop-shadow-sm">내 지갑</h1>
+                    <h1 className="text-2xl font-extrabold tracking-tight drop-shadow-sm">쿠폰 지갑</h1>
                     <button onClick={() => navigate('/profile')} className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center hover:bg-white/30 transition-colors">
                         <span className="material-symbols-outlined text-white">person</span>
                     </button>
@@ -66,7 +68,7 @@ export default function CouponWallet() {
                         {coupons.length}
                     </div>
                     <div>
-                        <p className="text-xs text-white/90 font-medium tracking-wide">보유한 혜택</p>
+                        <p className="text-xs text-white/90 font-medium tracking-wide">보유 쿠폰</p>
                         <p className="text-xl font-bold">{coupons.length}개의 쿠폰</p>
                     </div>
                 </div>
@@ -96,7 +98,7 @@ export default function CouponWallet() {
                                 <h3 className="font-bold text-gray-900 text-[15px] mb-0.5">{coupon.answer} 미션</h3>
                                 <p className="text-coral-end font-extrabold text-lg leading-tight">{coupon.discount_rule}</p>
                                 <p className="text-[10px] text-gray-400 font-medium mt-1">
-                                    {coupon.status === 'redeemed' ? '사용 완료' : coupon.status === 'expired' ? '만료됨' : `만료일: ${new Date(coupon.expires_at).toLocaleDateString()}`}
+                                    {coupon.status === 'redeemed' ? '사용 완료' : coupon.status === 'expired' ? '만료됨' : `만료일 ${new Date(coupon.expires_at).toLocaleDateString()}`}
                                 </p>
                             </div>
                             <div className="w-12 h-12 flex-shrink-0 bg-gray-50 rounded-lg p-1 border border-gray-100 shadow-inner flex items-center justify-center">
@@ -112,7 +114,7 @@ export default function CouponWallet() {
                             <span className="material-symbols-outlined text-4xl">confirmation_number</span>
                         </div>
                         <p className="text-gray-400 font-medium">아직 발급된 쿠폰이 없습니다.</p>
-                        <p className="text-gray-300 text-xs mt-1">미션을 완료하고 첫 쿠폰을 받아보세요!</p>
+                        <p className="text-gray-300 text-xs mt-1">미션을 완료하고 첫 쿠폰을 받아보세요.</p>
                         <button 
                             onClick={() => navigate('/')}
                             className="mt-6 px-6 py-2.5 bg-coral-start text-white rounded-full font-bold text-sm shadow-lg shadow-coral-start/20 active:scale-95 transition-transform"
@@ -126,3 +128,4 @@ export default function CouponWallet() {
         </div>
     );
 }
+

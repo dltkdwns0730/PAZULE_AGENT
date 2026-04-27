@@ -184,6 +184,9 @@ class Settings:
     DATABASE_URL: str = _env_or_profile(  # type: ignore[assignment]
         "DATABASE_URL", str
     )
+    STORAGE_BACKEND: str = _env_or_profile(  # type: ignore[assignment]
+        "STORAGE_BACKEND", str
+    )
     SUPABASE_URL: str = _env_or_profile(  # type: ignore[assignment]
         "SUPABASE_URL", str
     )
