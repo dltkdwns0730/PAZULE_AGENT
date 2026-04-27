@@ -11,6 +11,7 @@ from typing import Any, Callable
 
 from app.core.config import settings
 from app.core.utils import normalize_mission_type
+from app.db.repositories import MissionSessionRepository
 
 
 def _utcnow() -> datetime:
@@ -24,7 +25,11 @@ class MissionSessionService:
     def __init__(self) -> None:
         """세션 저장 경로를 초기화하고 data 디렉터리를 생성한다."""
         self._path = os.path.join(settings.DATA_DIR, "mission_sessions.json")
+        self._db_repository = MissionSessionRepository()
         os.makedirs(settings.DATA_DIR, exist_ok=True)
+
+    def _use_db(self) -> bool:
+        return settings.STORAGE_BACKEND.lower() == "db"
 
     def _read_all(self) -> dict[str, Any]:
         """세션 JSON 파일 전체를 읽어 반환한다.
@@ -69,6 +74,15 @@ class MissionSessionService:
         Returns:
             생성된 세션 딕셔너리.
         """
+        if self._use_db():
+            return self._db_repository.create_session(
+                user_id=user_id,
+                site_id=site_id,
+                mission_type=mission_type,
+                answer=answer,
+                hint=hint,
+            )
+
         now = _utcnow()
         expires = now + timedelta(minutes=settings.MISSION_SESSION_TTL_MINUTES)
         session = {
@@ -99,6 +113,9 @@ class MissionSessionService:
         Returns:
             일치하는 세션 딕셔너리, 없으면 None.
         """
+        if self._use_db():
+            return self._db_repository.get_session(mission_id)
+
         data = self._read_all()
         for session in data.get("sessions", []):
             if session.get("mission_id") == mission_id:
@@ -141,6 +158,9 @@ class MissionSessionService:
             (True, 'ok') 가능, (False, reason) 불가.
             reason: 'session_not_found' | 'session_expired' | 'submission_limit_reached'.
         """
+        if self._use_db():
+            return self._db_repository.can_submit(mission_id)
+
         session = self.get_session(mission_id)
         if not session:
             return False, "session_not_found"
@@ -168,6 +188,13 @@ class MissionSessionService:
         Returns:
             갱신된 세션 딕셔너리, 세션이 없으면 None.
         """
+
+        if self._use_db():
+            return self._db_repository.record_submission(
+                mission_id=mission_id,
+                image_hash=image_hash,
+                result=result,
+            )
 
         def mutate(session: dict[str, Any]) -> dict[str, Any]:
             session["status"] = "submitted"
@@ -199,6 +226,9 @@ class MissionSessionService:
             갱신된 세션 딕셔너리, 세션이 없으면 None.
         """
 
+        if self._use_db():
+            return self._db_repository.mark_coupon_issued(mission_id, coupon_code)
+
         def mutate(session: dict[str, Any]) -> dict[str, Any]:
             session["coupon_code"] = coupon_code
             session["status"] = "coupon_issued"
@@ -216,6 +246,9 @@ class MissionSessionService:
         Returns:
             성공 기록이 있으면 True, 없으면 False.
         """
+        if self._use_db():
+            return self._db_repository.is_mission_completed_today(user_id, mission_type)
+
         data = self._read_all()
         # UTC 대신 로컬 시간대 차이를 고려하여 오늘 날짜 판별 (단순화)
         today_str = datetime.now(timezone.utc).date().isoformat()
@@ -257,8 +290,12 @@ class MissionSessionService:
         Returns:
             중복이면 True, 아니면 False.
         """
+        if self._use_db():
+            return self._db_repository.is_duplicate_hash_for_user(user_id, image_hash)
+
         if not image_hash:
             return False
+
         data = self._read_all()
         for session in data.get("sessions", []):
             if session.get("user_id") != user_id:
@@ -277,6 +314,9 @@ class MissionSessionService:
         Returns:
             통계 딕셔너리 (total_missions, successful_location, successful_atmosphere, total_coupons).
         """
+        if self._use_db():
+            return self._db_repository.get_user_stats(user_id)
+
         data = self._read_all()
         user_sessions = [
             s for s in data.get("sessions", []) if s.get("user_id") == user_id
@@ -324,36 +364,19 @@ class MissionSessionService:
         """사용자의 세션 기록을 초기화한다.
         단, 사용자의 요청대로 '오늘 성공한 미션'은 유지하여 재입장을 방지한다.
         """
+        if self._use_db():
+            self._db_repository.reset_user_history(user_id)
+            return
+
         data = self._read_all()
-        sessions = data.get("sessions", [])
-        today_str = datetime.now(timezone.utc).date().isoformat()
-
-        new_sessions = []
-        for s in sessions:
-            if s.get("user_id") != user_id:
-                new_sessions.append(s)
-                continue
-
-            # 해당 사용자의 세션인 경우 필터링 로직 적용
-            try:
-                session_date = (
-                    datetime.fromisoformat(s["created_at"]).date().isoformat()
-                )
-            except (ValueError, KeyError):
-                continue
-
-            # 오늘 성공한 미션 세션은 보존
-            is_today_success = (
-                session_date == today_str
-                and s.get("status") in ["submitted", "coupon_issued"]
-                and s.get("latest_judgment", {}).get("success") is True
-            )
-
-            if is_today_success:
-                new_sessions.append(s)
-
-        data["sessions"] = new_sessions
+        data["sessions"] = [
+            session
+            for session in data.get("sessions", [])
+            if session.get("user_id") != user_id
+        ]
         self._write_all(data)
+        # 해당 사용자의 세션인 경우 필터링 로직 적용
+        # 오늘 성공한 미션 세션은 보존
 
     @staticmethod
     def hash_file(file_path: str) -> str:

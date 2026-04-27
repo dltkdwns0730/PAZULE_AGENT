@@ -1,17 +1,23 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMission } from "../hooks/useMission";
+import { useAuthStore } from "../store/useAuthStore";
 import { useMissionStore } from "../store/useMissionStore";
 
 export default function MissionHome() {
     const navigate = useNavigate();
     const { fetchHint, startMission, isLoading } = useMission();
+    const { isAuthenticated, userId } = useAuthStore();
     const { previewHints } = useMissionStore();
 
     useEffect(() => {
-        fetchHint('location', 'guest');
-        fetchHint('atmosphere', 'guest');
-    }, []);
+        if (!isAuthenticated || !userId) {
+            navigate('/login', { replace: true });
+            return;
+        }
+        fetchHint('location', userId);
+        fetchHint('atmosphere', userId);
+    }, [isAuthenticated, navigate, userId]);
 
     const handleStartMission = async (type) => {
         if (isLoading) return;

@@ -97,44 +97,44 @@
       }
     },
     {
-      "mission_id": "5dd85386-a9d4-49bb-bb0a-cd6b8eb85dd6",
+      "mission_id": "4adec994-0e94-4605-9a64-0531a43bfea9",
       "user_id": "guest",
       "site_id": "pazule-default",
-      "mission_type": "location",
-      "answer": "지혜의숲 조각상",
-      "hint": "줌-인(ZOOM-IN)",
+      "mission_type": "atmosphere",
+      "answer": "옛스러운",
+      "hint": "옛스러운 사진을 찍어보세요.",
       "status": "coupon_issued",
-      "created_at": "2026-04-24T11:36:10.438227+00:00",
-      "expires_at": "2026-04-24T12:36:10.438227+00:00",
+      "created_at": "2026-04-24T14:37:29.258403+00:00",
+      "expires_at": "2026-04-24T15:37:29.258403+00:00",
       "max_submissions": 3,
       "submissions": [
         {
-          "submitted_at": "2026-04-24T11:36:59.396770+00:00",
-          "image_hash": "1c62ef09798722d167e7a184d40f885cf54317f4984f95ba76e380e12deb8daa",
+          "submitted_at": "2026-04-24T14:37:33.666175+00:00",
+          "image_hash": "e5168a07c4c549f5630e27752756404bd46571986ca179e0cc3486ec6a146287",
           "result_summary": {
             "success": true,
-            "confidence": 0.9962
+            "confidence": 0.9774
           }
         }
       ],
       "latest_judgment": {
         "success": true,
         "message": "미션 성공! 쿠폰 발급 단계로 이동할 수 있습니다.",
-        "missionType": "location",
+        "missionType": "photo",
         "couponEligible": true,
-        "confidence": 0.9962,
+        "confidence": 0.9774,
         "decision_trace": {
           "route_decision": {
             "next_node": "model_fanout",
-            "reason": "mission_type=location",
+            "reason": "mission_type=atmosphere",
             "confidence": 1.0,
             "fallback": "finalizer"
           },
           "judgment": {
             "success": true,
             "reason": "score_passed",
-            "confidence": 0.9962,
-            "mission_type": "location",
+            "confidence": 0.9774,
+            "mission_type": "atmosphere",
             "conflict": false,
             "council_override": false
           },
@@ -147,13 +147,13 @@
         "model_votes": [
           {
             "model": "siglip2",
-            "score": 0.9961906671524048,
+            "score": 0.9774192571640015,
             "label": "match",
-            "reason": "SigLIP2 prediction score for 'a photo of a large sculpture at the entrance of a book library'"
+            "reason": "SigLIP2 prediction score for 'a photo with 옛스러운 atmosphere'"
           }
         ]
       },
-      "coupon_code": "HR4510W1"
+      "coupon_code": "VK4EJ56Z"
     }
   ]
 }

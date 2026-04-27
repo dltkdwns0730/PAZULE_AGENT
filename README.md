@@ -277,9 +277,76 @@ OPENROUTER_API_KEY=...
 GEMINI_API_KEY=...
 MODEL_SELECTION_LOCATION=ensemble
 MODEL_SELECTION_ATMOSPHERE=ensemble
+MISSION_SITE_LAT=37.711988
+MISSION_SITE_LON=126.6867095
+MISSION_SITE_RADIUS_METERS=300
+MISSION_GPS_MAX_ACCURACY_METERS=100
+SKIP_GPS_VALIDATION=false
+VITE_NAVER_MAP_CLIENT_ID=...
+VITE_MISSION_SITE_LAT=37.711988
+VITE_MISSION_SITE_LON=126.6867095
+VITE_MISSION_SITE_RADIUS_METERS=300
+DATABASE_URL=sqlite:///data/pazule.db
+SUPABASE_URL=...
+SUPABASE_JWKS_URL=...
+SUPABASE_JWT_AUDIENCE=authenticated
+SUPABASE_SERVICE_ROLE_KEY=...
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_PUBLISHABLE_KEY=...
 ```
 
 > 전체 환경 변수 목록은 [`app/core/config.py`](./app/core/config.py)를 참고하세요.
+
+#### Supabase DB migration from `.env`
+
+The app loads `.env` through `python-dotenv`, but the Supabase CLI does not.
+Use the repo helper so CLI migration commands read the same `.env` file:
+
+```powershell
+# Dry-run remote migrations. No DB mutation.
+$env:PYTHONPATH='.'
+python scripts/tools/supabase_db_apply.py
+
+# Apply remote migrations and run SELECT 1 smoke check.
+$env:PYTHONPATH='.'
+python scripts/tools/supabase_db_apply.py --apply --smoke
+```
+
+Recommended `.env` values:
+
+```env
+STORAGE_BACKEND=json
+SUPABASE_ACCESS_TOKEN=sbp_...
+SUPABASE_PROJECT_REF=yooopszfddqzybicpotx
+```
+
+Do not store the DB password in `.env`. Enter it only for the current
+PowerShell session when applying migrations:
+
+```powershell
+$env:SUPABASE_DB_PASSWORD='...'
+$env:PYTHONPATH='.'
+python scripts/tools/supabase_db_apply.py --apply --smoke
+```
+
+`SUPABASE_URL`, publishable/anon keys, and service-role/secret keys are for
+application API access. They are not sufficient for SQL DDL migrations such as
+`create table` or `alter table`.
+
+For Gmail OAuth in the browser, set only the frontend-safe key:
+
+```env
+VITE_SUPABASE_URL=https://yooopszfddqzybicpotx.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=...
+```
+
+Do not put `SUPABASE_SERVICE_ROLE_KEY` or any `sb_secret_...` key in a
+`VITE_` variable. To verify the real Auth endpoint after filling the
+publishable key:
+
+```powershell
+uv run python scripts/tools/supabase_runtime_verify.py
+```
 
 ### 3. 실행
 
