@@ -139,3 +139,44 @@ class TestGenerateCouponCode:
     def test_codes_are_random(self) -> None:
         codes = {CouponService.generate_coupon_code() for _ in range(20)}
         assert len(codes) > 1
+
+
+class TestResetUserCoupons:
+    def test_removes_user_and_legacy_session_linked_coupons(self, svc: CouponService):
+        from app.services.mission_session_service import mission_session_service
+
+        mission_session_service._write_all(
+            {
+                "sessions": [
+                    {"mission_id": "legacy-user-mission", "user_id": "guest"},
+                    {"mission_id": "other-user-mission", "user_id": "other"},
+                ]
+            }
+        )
+        svc._write_all(
+            {
+                "coupons": [
+                    {
+                        "code": "USER1234",
+                        "user_id": "guest",
+                        "mission_id": "modern-user-mission",
+                    },
+                    {
+                        "code": "LEGACY12",
+                        "mission_id": "legacy-user-mission",
+                    },
+                    {
+                        "code": "OTHER123",
+                        "user_id": "other",
+                        "mission_id": "other-user-mission",
+                    },
+                ]
+            }
+        )
+
+        svc.reset_user_coupons("guest")
+
+        remaining_codes = {
+            coupon["code"] for coupon in svc._read_all().get("coupons", [])
+        }
+        assert remaining_codes == {"OTHER123"}

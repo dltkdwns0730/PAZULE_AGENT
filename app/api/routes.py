@@ -14,9 +14,17 @@ from pillow_heif import register_heif_opener
 from app.core.config import constants, settings
 from app.core.utils import normalize_mission_type, to_legacy_mission_type
 from app.council.graph import pipeline_app
+from app.services.admin_service import admin_service
 from app.services.answer_service import get_today_answers
 from app.services.coupon_service import coupon_service
+from app.services.location_service import validate_client_location
 from app.services.mission_session_service import mission_session_service
+from app.security.auth import (
+    AuthError,
+    AuthPrincipal,
+    extract_bearer_token,
+    verify_supabase_token,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +54,41 @@ def _validate_upload(file_obj) -> tuple[bool, str]:
     return True, ext
 
 
+def _location_error_response(validation: dict) -> tuple[Response, int]:
+    return jsonify(
+        {"error": validation["reason"], "location_validation": validation}
+    ), 400
+
+
+def _require_auth_principal() -> AuthPrincipal:
+    token = extract_bearer_token(request.headers.get("Authorization"))
+    return verify_supabase_token(token)
+
+
+def _auth_error_response(exc: AuthError) -> tuple[Response, int]:
+    return jsonify({"error": str(exc)}), 401
+
+
+def _forbidden_response(reason: str = "forbidden") -> tuple[Response, int]:
+    return jsonify({"error": reason}), 403
+
+
+def _require_admin_principal() -> AuthPrincipal:
+    principal = _require_auth_principal()
+    if not principal.is_admin:
+        raise PermissionError("admin_required")
+    return principal
+
+
+def _admin_or_error() -> tuple[AuthPrincipal | None, tuple[Response, int] | None]:
+    try:
+        return _require_admin_principal(), None
+    except AuthError as exc:
+        return None, _auth_error_response(exc)
+    except PermissionError as exc:
+        return None, _forbidden_response(str(exc))
+
+
 @api.route("/get-today-hint", methods=["GET"])
 def get_today_hint() -> Response:
     """오늘의 미션 정답 힌트를 반환한다.
@@ -57,8 +100,13 @@ def get_today_hint() -> Response:
     Returns:
         JSON {"answer": str, "hint": str, "completed": bool} 또는 {"error": str} (500).
     """
+    try:
+        principal = _require_auth_principal()
+    except AuthError as exc:
+        return _auth_error_response(exc)
+
     mission_type = normalize_mission_type(request.args.get("mission_type", "location"))
-    user_id = request.args.get("user_id", "guest")
+    user_id = principal.user_id
     try:
         a1, a2, h1, h2, vqa1, vqa2 = get_today_answers()
 
@@ -133,10 +181,19 @@ def mission_start() -> Response:
     Returns:
         JSON {mission_id, mission_type, eligibility, constraints, hint}.
     """
+    try:
+        principal = _require_auth_principal()
+    except AuthError as exc:
+        return _auth_error_response(exc)
+
     payload = request.get_json(silent=True) or {}
     mission_type = normalize_mission_type(payload.get("mission_type", "location"))
-    user_id = payload.get("user_id", "guest")
+    user_id = principal.user_id
     site_id = payload.get("site_id", "pazule-default")
+
+    location_validation = validate_client_location(payload)
+    if not location_validation["allowed"]:
+        return _location_error_response(location_validation)
 
     a1, a2, h1, h2, vqa1, vqa2 = get_today_answers()
 
@@ -164,6 +221,7 @@ def mission_start() -> Response:
             "mission_id": session["mission_id"],
             "mission_type": to_legacy_mission_type(session["mission_type"]),
             "eligibility": {"allowed": True},
+            "location_validation": location_validation,
             "constraints": {
                 "max_submissions": session["max_submissions"],
                 "expires_at": session["expires_at"],
@@ -187,6 +245,11 @@ def mission_submit() -> Response:
     Returns:
         JSON 판정 결과 또는 {"error": str} (400 | 404 | 500).
     """
+    try:
+        principal = _require_auth_principal()
+    except AuthError as exc:
+        return _auth_error_response(exc)
+
     mission_id = request.form.get("mission_id")
     if not mission_id:
         return jsonify({"error": "mission_id is required"}), 400
@@ -198,6 +261,12 @@ def mission_submit() -> Response:
     session = mission_session_service.get_session(mission_id)
     if not session:
         return jsonify({"error": "session_not_found"}), 404
+    if session.get("user_id") != principal.user_id:
+        return _forbidden_response("mission_owner_mismatch")
+
+    location_validation = validate_client_location(request.form)
+    if not location_validation["allowed"]:
+        return _location_error_response(location_validation)
 
     file_obj = request.files.get("image")
     valid, ext_or_msg = _validate_upload(file_obj)
@@ -221,6 +290,7 @@ def mission_submit() -> Response:
                 "answer": session.get("answer"),
                 "static_hint": session.get("hint", ""),
                 "model_selection": model_selection,
+                "client_location": location_validation,
             },
             "artifacts": {},
             "errors": [],
@@ -239,7 +309,19 @@ def mission_submit() -> Response:
                 mission_id, image_hash, final_data
             )
 
+        if final_data.get("success") and final_data.get("couponEligible", True):
+            mission_type = session.get("mission_type", "location")
+            coupon = coupon_service.issue_coupon(
+                mission_type="mission1" if mission_type == "location" else "mission2",
+                answer=session.get("answer", ""),
+                mission_id=mission_id,
+                user_id=session.get("user_id", "guest"),
+            )
+            mission_session_service.mark_coupon_issued(mission_id, coupon["code"])
+            final_data["coupon"] = coupon
+
         final_data["mission_id"] = mission_id
+        final_data["location_validation"] = location_validation
         return jsonify(final_data)
     except Exception as exc:
         logger.exception(
@@ -263,9 +345,14 @@ def coupon_issue() -> Response:
     Returns:
         JSON 쿠폰 정보 또는 {"error": str} (400 | 404).
     """
+    try:
+        principal = _require_auth_principal()
+    except AuthError as exc:
+        return _auth_error_response(exc)
+
     payload = request.get_json(silent=True) or {}
     mission_id = payload.get("mission_id")
-    user_id = payload.get("user_id")
+    user_id = principal.user_id
     partner_id = payload.get("partner_id")
 
     if not mission_id:
@@ -274,6 +361,8 @@ def coupon_issue() -> Response:
     session = mission_session_service.get_session(mission_id)
     if not session:
         return jsonify({"error": "session_not_found"}), 404
+    if session.get("user_id") != principal.user_id:
+        return _forbidden_response("mission_owner_mismatch")
 
     # 요청에 user_id가 없으면 세션의 것을 사용, 그것도 없으면 'guest'
     final_user_id = user_id or session.get("user_id", "guest")
@@ -327,7 +416,12 @@ def get_user_stats() -> Response:
     Returns:
         JSON {total_attempts, success_location, success_atmosphere, total_coupons, history}.
     """
-    user_id = request.args.get("user_id", "guest")
+    try:
+        principal = _require_auth_principal()
+    except AuthError as exc:
+        return _auth_error_response(exc)
+
+    user_id = principal.user_id
     stats = mission_session_service.get_user_stats(user_id)
     return jsonify(stats)
 
@@ -343,8 +437,12 @@ def reset_user_data() -> Response:
     Returns:
         JSON {"success": True}.
     """
-    payload = request.get_json(silent=True) or {}
-    user_id = payload.get("user_id", "guest")
+    try:
+        principal = _require_auth_principal()
+    except AuthError as exc:
+        return _auth_error_response(exc)
+
+    user_id = principal.user_id
 
     try:
         # 1. 쿠폰 데이터 초기화
@@ -368,6 +466,74 @@ def get_user_coupons() -> Response:
     Returns:
         JSON list of coupons.
     """
-    user_id = request.args.get("user_id", "guest")
+    try:
+        principal = _require_auth_principal()
+    except AuthError as exc:
+        return _auth_error_response(exc)
+
+    user_id = principal.user_id
     coupons = coupon_service.get_user_coupons(user_id)
     return jsonify(coupons)
+
+
+@api.route("/api/admin/summary", methods=["GET"])
+def admin_summary() -> Response:
+    _, error = _admin_or_error()
+    if error:
+        return error
+    return jsonify(admin_service.get_summary())
+
+
+@api.route("/api/admin/mission-sessions", methods=["GET"])
+def admin_mission_sessions() -> Response:
+    _, error = _admin_or_error()
+    if error:
+        return error
+    rows = admin_service.list_mission_sessions(
+        status=request.args.get("status") or None,
+        search=request.args.get("search") or None,
+    )
+    return jsonify(rows)
+
+
+@api.route("/api/admin/mission-sessions/<mission_id>", methods=["GET"])
+def admin_mission_session_detail(mission_id: str) -> Response:
+    _, error = _admin_or_error()
+    if error:
+        return error
+    row = admin_service.get_mission_session(mission_id)
+    if not row:
+        return jsonify({"error": "mission_session_not_found"}), 404
+    return jsonify(row)
+
+
+@api.route("/api/admin/coupons", methods=["GET"])
+def admin_coupons() -> Response:
+    _, error = _admin_or_error()
+    if error:
+        return error
+    rows = admin_service.list_coupons(
+        status=request.args.get("status") or None,
+        search=request.args.get("search") or None,
+    )
+    return jsonify(rows)
+
+
+@api.route("/api/admin/coupons/<code>/redeem", methods=["POST"])
+def admin_coupon_redeem(code: str) -> Response:
+    _, error = _admin_or_error()
+    if error:
+        return error
+    payload = request.get_json(silent=True) or {}
+    partner_pos_id = payload.get("partner_pos_id") or "ADMIN-CONSOLE"
+    result = admin_service.redeem_coupon(code, partner_pos_id)
+    status = 200 if result.get("redeem_status") == "redeemed" else 400
+    return jsonify(result), status
+
+
+@api.route("/api/admin/users", methods=["GET"])
+def admin_users() -> Response:
+    _, error = _admin_or_error()
+    if error:
+        return error
+    return jsonify(admin_service.list_users(search=request.args.get("search") or None))

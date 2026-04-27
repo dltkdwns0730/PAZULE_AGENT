@@ -7,8 +7,6 @@ export default function Layout() {
 
     // Check if we are on screens that shouldn't show the bottom nav
     const hideBottomNav = ['/mission/submit', '/mission/result', '/coupon/success'].includes(location.pathname);
-    const isScanPage = location.pathname === '/scan';
-
     return (
         <div className="w-full h-full flex items-center justify-center bg-transparent">
             {/* The primary "phone" container */}

@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from app.core.config import constants, settings
+from app.db.repositories import CouponRepository
 
 
 class CouponService:
@@ -18,7 +19,11 @@ class CouponService:
     def __init__(self) -> None:
         """쿠폰 저장 경로를 초기화하고 data 디렉터리를 생성한다."""
         self._path = os.path.join(settings.DATA_DIR, "coupons.json")
+        self._db_repository = CouponRepository()
         os.makedirs(settings.DATA_DIR, exist_ok=True)
+
+    def _use_db(self) -> bool:
+        return settings.STORAGE_BACKEND.lower() == "db"
 
     def _read_all(self) -> dict[str, Any]:
         """쿠폰 JSON 파일 전체를 읽어 반환한다.
@@ -115,6 +120,9 @@ class CouponService:
         Returns:
             보유 중이면 True, 아니면 False.
         """
+        if self._use_db():
+            return self._db_repository.has_coupon_for_answer(user_id, answer)
+
         return self._find_by_user_and_answer(user_id, answer) is not None
 
     def issue_coupon(
@@ -140,6 +148,17 @@ class CouponService:
             발급된 쿠폰 딕셔너리.
         """
         # 1. 미션 ID 기반 멱등성 체크 (동일 세션 재요청)
+        if self._use_db():
+            return self._db_repository.issue_coupon(
+                mission_type=mission_type,
+                answer=answer,
+                mission_id=mission_id,
+                user_id=user_id,
+                partner_id=partner_id,
+                discount_rule=discount_rule,
+                code_factory=self.generate_coupon_code,
+            )
+
         if mission_id:
             existing_by_session = self._find_by_mission_id(mission_id)
             if existing_by_session:
@@ -191,6 +210,9 @@ class CouponService:
             {redeem_status, message, coupon(선택)} 딕셔너리.
             redeem_status: 'redeemed' | 'already_redeemed' | 'expired' | 'not_found'.
         """
+        if self._use_db():
+            return self._db_repository.redeem_coupon(code, partner_pos_id)
+
         data = self._read_all()
         target_idx = None
         target = None
@@ -240,6 +262,9 @@ class CouponService:
         Returns:
             쿠폰 딕셔너리 리스트.
         """
+        if self._use_db():
+            return self._db_repository.get_user_coupons(user_id)
+
         data = self._read_all()
         # 쿠폰 객체에 저장된 user_id를 직접 확인 (새로운 방식)
         # 또는 mission_id를 통해 세션 데이터와 대조 (기존 방식 보완)
@@ -275,10 +300,31 @@ class CouponService:
         Args:
             user_id: 사용자 식별자.
         """
+        if self._use_db():
+            self._db_repository.reset_user_coupons(user_id)
+            return
+
         data = self._read_all()
         coupons = data.get("coupons", [])
+        user_mission_ids = set()
+        try:
+            from app.services.mission_session_service import mission_session_service
+
+            session_data = mission_session_service._read_all()
+            user_mission_ids = {
+                session.get("mission_id")
+                for session in session_data.get("sessions", [])
+                if session.get("user_id") == user_id and session.get("mission_id")
+            }
+        except Exception:
+            user_mission_ids = set()
         # 해당 사용자의 쿠폰을 제외한 나머지만 유지
-        filtered_coupons = [c for c in coupons if c.get("user_id") != user_id]
+        filtered_coupons = [
+            c
+            for c in coupons
+            if c.get("user_id") != user_id
+            and c.get("mission_id") not in user_mission_ids
+        ]
 
         # 하위 호환성 (user_id가 guest인 경우 세션 연동 데이터까지 고려해야 할 수 있으나,
         # 초기화 시점에는 명시적으로 user_id 기반 삭제만 수행함이 안전함)
