@@ -12,6 +12,7 @@ export const useAuthStore = create((set) => ({
   accessToken: storedSession?.accessToken ?? null,
   refreshToken: storedSession?.refreshToken ?? null,
   isAuthenticated: Boolean(storedSession?.userId && storedSession?.accessToken),
+  isAdmin: storedSession?.isAdmin ?? false,
 
   setSession: (session) => {
     persistSupabaseSession(session);
@@ -21,6 +22,7 @@ export const useAuthStore = create((set) => ({
       accessToken: session.accessToken,
       refreshToken: session.refreshToken,
       isAuthenticated: true,
+      isAdmin: session.isAdmin ?? false,
     });
   },
 
@@ -32,6 +34,7 @@ export const useAuthStore = create((set) => ({
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
+      isAdmin: false,
     });
   },
 }));

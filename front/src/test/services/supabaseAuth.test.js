@@ -79,6 +79,7 @@ describe('supabaseAuth', () => {
       tokenType: 'bearer',
       userId: 'user-123',
       email: 'user@example.com',
+      isAdmin: false,
     });
   });
 
@@ -92,6 +93,7 @@ describe('supabaseAuth', () => {
     expect(getUserFromAccessToken(token)).toEqual({
       userId: 'supabase-user-id',
       email: 'a@b.test',
+      isAdmin: false,
     });
   });
 

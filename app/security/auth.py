@@ -18,6 +18,11 @@ class AuthPrincipal:
     email: str | None
     claims: dict[str, Any]
 
+    @property
+    def is_admin(self) -> bool:
+        app_metadata = self.claims.get("app_metadata") or {}
+        return app_metadata.get("role") == "admin"
+
 
 def extract_bearer_token(authorization_header: str | None) -> str:
     """Extract a bearer token from an Authorization header."""

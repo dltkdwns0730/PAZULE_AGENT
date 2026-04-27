@@ -27,4 +27,6 @@
 | 2026-04-25 | v2.8.0 | DB/Auth 湲곕컲 B2B ?뚮옯???뺤옣 以鍮?| ?꾨즺 | `docs/tasks/2026/04/2026-04-25_v2.8.0_platform-foundation.md` |
 | 2026-04-25 | v2.8.1 | DB ?곌껐 ?ㅻえ???뚯뒪??寃쎄퀎 蹂닿컯 | ?꾨즺 | `docs/tasks/2026/04/2026-04-25_v2.8.1_database-smoke-test.md` |
 | 2026-04-27 | v2.9.0 | Supabase OAuth user login and authenticated mission ownership | COMPLETED | `docs/tasks/2026/04/2026-04-27_v2.9.0_supabase-user-oauth-mission-flow.md` |
+| 2026-04-27 | v3.0.0 | Login & Profile UI 재설계 — 사용자 친화성 및 앱 기능 명시성 개선 | COMPLETED | `docs/tasks/2026/04/2026-04-27_v3.0.0_login-profile-ui-redesign.md` |
+| 2026-04-27 | v3.1.0 | Admin operations console MVP | COMPLETED | `docs/tasks/2026/04/2026-04-27_v3.1.0_admin-operations-console.md` |
 

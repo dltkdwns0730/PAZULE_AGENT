@@ -14,6 +14,7 @@ from pillow_heif import register_heif_opener
 from app.core.config import constants, settings
 from app.core.utils import normalize_mission_type, to_legacy_mission_type
 from app.council.graph import pipeline_app
+from app.services.admin_service import admin_service
 from app.services.answer_service import get_today_answers
 from app.services.coupon_service import coupon_service
 from app.services.location_service import validate_client_location
@@ -70,6 +71,22 @@ def _auth_error_response(exc: AuthError) -> tuple[Response, int]:
 
 def _forbidden_response(reason: str = "forbidden") -> tuple[Response, int]:
     return jsonify({"error": reason}), 403
+
+
+def _require_admin_principal() -> AuthPrincipal:
+    principal = _require_auth_principal()
+    if not principal.is_admin:
+        raise PermissionError("admin_required")
+    return principal
+
+
+def _admin_or_error() -> tuple[AuthPrincipal | None, tuple[Response, int] | None]:
+    try:
+        return _require_admin_principal(), None
+    except AuthError as exc:
+        return None, _auth_error_response(exc)
+    except PermissionError as exc:
+        return None, _forbidden_response(str(exc))
 
 
 @api.route("/get-today-hint", methods=["GET"])
@@ -457,3 +474,66 @@ def get_user_coupons() -> Response:
     user_id = principal.user_id
     coupons = coupon_service.get_user_coupons(user_id)
     return jsonify(coupons)
+
+
+@api.route("/api/admin/summary", methods=["GET"])
+def admin_summary() -> Response:
+    _, error = _admin_or_error()
+    if error:
+        return error
+    return jsonify(admin_service.get_summary())
+
+
+@api.route("/api/admin/mission-sessions", methods=["GET"])
+def admin_mission_sessions() -> Response:
+    _, error = _admin_or_error()
+    if error:
+        return error
+    rows = admin_service.list_mission_sessions(
+        status=request.args.get("status") or None,
+        search=request.args.get("search") or None,
+    )
+    return jsonify(rows)
+
+
+@api.route("/api/admin/mission-sessions/<mission_id>", methods=["GET"])
+def admin_mission_session_detail(mission_id: str) -> Response:
+    _, error = _admin_or_error()
+    if error:
+        return error
+    row = admin_service.get_mission_session(mission_id)
+    if not row:
+        return jsonify({"error": "mission_session_not_found"}), 404
+    return jsonify(row)
+
+
+@api.route("/api/admin/coupons", methods=["GET"])
+def admin_coupons() -> Response:
+    _, error = _admin_or_error()
+    if error:
+        return error
+    rows = admin_service.list_coupons(
+        status=request.args.get("status") or None,
+        search=request.args.get("search") or None,
+    )
+    return jsonify(rows)
+
+
+@api.route("/api/admin/coupons/<code>/redeem", methods=["POST"])
+def admin_coupon_redeem(code: str) -> Response:
+    _, error = _admin_or_error()
+    if error:
+        return error
+    payload = request.get_json(silent=True) or {}
+    partner_pos_id = payload.get("partner_pos_id") or "ADMIN-CONSOLE"
+    result = admin_service.redeem_coupon(code, partner_pos_id)
+    status = 200 if result.get("redeem_status") == "redeemed" else 400
+    return jsonify(result), status
+
+
+@api.route("/api/admin/users", methods=["GET"])
+def admin_users() -> Response:
+    _, error = _admin_or_error()
+    if error:
+        return error
+    return jsonify(admin_service.list_users(search=request.args.get("search") or None))

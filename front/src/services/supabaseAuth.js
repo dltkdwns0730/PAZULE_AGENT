@@ -102,6 +102,7 @@ export function parseOAuthCallback(hash = window.location.hash) {
     tokenType,
     userId: user.userId,
     email: user.email,
+    isAdmin: user.isAdmin,
   };
 }
 
@@ -117,6 +118,7 @@ export function getUserFromAccessToken(accessToken) {
   return {
     userId: claims.sub,
     email: claims.email ?? null,
+    isAdmin: claims.app_metadata?.role === 'admin',
   };
 }
 
@@ -142,6 +144,7 @@ export async function getCurrentSupabaseSession(client = getSupabaseClient()) {
     return null;
   }
   const user = session.user ?? getUserFromAccessToken(session.access_token);
+  const parsed = getUserFromAccessToken(session.access_token);
   return {
     accessToken: session.access_token,
     refreshToken: session.refresh_token,
@@ -149,5 +152,6 @@ export async function getCurrentSupabaseSession(client = getSupabaseClient()) {
     tokenType: session.token_type ?? 'bearer',
     userId: user.id ?? user.userId,
     email: user.email ?? null,
+    isAdmin: parsed.isAdmin,
   };
 }
