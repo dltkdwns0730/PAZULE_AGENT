@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api } from '../services/api';
 import { getCurrentPosition } from '../services/geolocation';
+import { useAuthStore } from '../store/useAuthStore';
 import { useMissionStore } from '../store/useMissionStore';
 
 export function useMission() {
@@ -8,12 +9,25 @@ export function useMission() {
     const [error, setError] = useState(null);
 
     const store = useMissionStore();
+    const { userId, accessToken, isAuthenticated } = useAuthStore();
 
-    const fetchHint = async (missionType, userId = 'guest') => {
+    const requireAuth = () => {
+        if (!isAuthenticated || !userId || !accessToken) {
+            throw new Error('Login is required to start missions.');
+        }
+        return { userId, accessToken };
+    };
+
+    const fetchHint = async (missionType, requestedUserId = userId) => {
         setIsLoading(true);
         setError(null);
         try {
-            const data = await api.getTodayHint(missionType, userId);
+            const auth = requireAuth();
+            const data = await api.getTodayHint(
+                missionType,
+                requestedUserId || auth.userId,
+                auth.accessToken,
+            );
             const hintData = { 
                 hint: data.hint, 
                 vqa_hints: data.vqa_hints ?? [],
@@ -30,16 +44,17 @@ export function useMission() {
         }
     };
 
-    const startMission = async (missionType, userId = 'guest') => {
+    const startMission = async (missionType, requestedUserId = userId) => {
         setIsLoading(true);
         setError(null);
         try {
+            const auth = requireAuth();
             const location = await getCurrentPosition();
             const data = await api.startMission({
                 mission_type: missionType,
-                user_id: userId,
+                user_id: requestedUserId || auth.userId,
                 ...location,
-            });
+            }, auth.accessToken);
             store.setMissionParams(data.mission_id, missionType);
             // API 응답 또는 미리 로드된 previewHint를 activeHint로 저장 ({ hint, vqa_hints })
             const activeHint = (data.hint != null)
@@ -72,7 +87,8 @@ export function useMission() {
             formData.append('client_lat', location.client_lat);
             formData.append('client_lng', location.client_lng);
             formData.append('accuracy_meters', location.accuracy_meters);
-            const result = await api.submitMission(formData);
+            const auth = requireAuth();
+            const result = await api.submitMission(formData, auth.accessToken);
             store.setSubmissionResult(result);
             if (result.coupon) {
                 store.setCoupon(result.coupon);
@@ -94,8 +110,12 @@ export function useMission() {
         setIsLoading(true);
         setError(null);
         try {
-            // 명시적으로 'guest' 전달 (향후 동적 ID로 변경 가능)
-            const result = await api.issueCoupon(store.missionId, 'guest');
+            const auth = requireAuth();
+            const result = await api.issueCoupon(
+                store.missionId,
+                auth.userId,
+                auth.accessToken,
+            );
             // Explicitly set coupon in store
             store.setCoupon(result);
             return result;

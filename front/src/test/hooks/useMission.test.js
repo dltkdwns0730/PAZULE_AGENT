@@ -2,6 +2,7 @@ import { renderHook, act } from '@testing-library/react';
 import { useMission } from '../../hooks/useMission';
 import { api } from '../../services/api';
 import { getCurrentPosition } from '../../services/geolocation';
+import { useAuthStore } from '../../store/useAuthStore';
 import { useMissionStore } from '../../store/useMissionStore';
 
 vi.mock('../../services/api', () => ({
@@ -21,6 +22,10 @@ vi.mock('../../store/useMissionStore', () => ({
   useMissionStore: vi.fn(),
 }));
 
+vi.mock('../../store/useAuthStore', () => ({
+  useAuthStore: vi.fn(),
+}));
+
 describe('useMission', () => {
   let store;
 
@@ -36,6 +41,11 @@ describe('useMission', () => {
       setCoupon: vi.fn(),
     };
     useMissionStore.mockReturnValue(store);
+    useAuthStore.mockReturnValue({
+      userId: 'auth-user-123',
+      accessToken: 'access-token-123',
+      isAuthenticated: true,
+    });
     getCurrentPosition.mockResolvedValue({
       client_lat: 37.711988,
       client_lng: 126.6867095,
@@ -115,15 +125,15 @@ describe('useMission', () => {
     const { result } = renderHook(() => useMission());
 
     await act(async () => {
-      await result.current.startMission('location', 'guest');
+      await result.current.startMission('location');
     });
 
     expect(api.startMission).toHaveBeenCalledWith({
       mission_type: 'location',
-      user_id: 'guest',
+      user_id: 'auth-user-123',
       client_lat: 37.711988,
       client_lng: 126.6867095,
       accuracy_meters: 20,
-    });
+    }, 'access-token-123');
   });
 });

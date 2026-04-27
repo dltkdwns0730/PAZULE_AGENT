@@ -18,6 +18,12 @@ from app.services.answer_service import get_today_answers
 from app.services.coupon_service import coupon_service
 from app.services.location_service import validate_client_location
 from app.services.mission_session_service import mission_session_service
+from app.security.auth import (
+    AuthError,
+    AuthPrincipal,
+    extract_bearer_token,
+    verify_supabase_token,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +59,19 @@ def _location_error_response(validation: dict) -> tuple[Response, int]:
     ), 400
 
 
+def _require_auth_principal() -> AuthPrincipal:
+    token = extract_bearer_token(request.headers.get("Authorization"))
+    return verify_supabase_token(token)
+
+
+def _auth_error_response(exc: AuthError) -> tuple[Response, int]:
+    return jsonify({"error": str(exc)}), 401
+
+
+def _forbidden_response(reason: str = "forbidden") -> tuple[Response, int]:
+    return jsonify({"error": reason}), 403
+
+
 @api.route("/get-today-hint", methods=["GET"])
 def get_today_hint() -> Response:
     """오늘의 미션 정답 힌트를 반환한다.
@@ -64,8 +83,13 @@ def get_today_hint() -> Response:
     Returns:
         JSON {"answer": str, "hint": str, "completed": bool} 또는 {"error": str} (500).
     """
+    try:
+        principal = _require_auth_principal()
+    except AuthError as exc:
+        return _auth_error_response(exc)
+
     mission_type = normalize_mission_type(request.args.get("mission_type", "location"))
-    user_id = request.args.get("user_id", "guest")
+    user_id = principal.user_id
     try:
         a1, a2, h1, h2, vqa1, vqa2 = get_today_answers()
 
@@ -140,9 +164,14 @@ def mission_start() -> Response:
     Returns:
         JSON {mission_id, mission_type, eligibility, constraints, hint}.
     """
+    try:
+        principal = _require_auth_principal()
+    except AuthError as exc:
+        return _auth_error_response(exc)
+
     payload = request.get_json(silent=True) or {}
     mission_type = normalize_mission_type(payload.get("mission_type", "location"))
-    user_id = payload.get("user_id", "guest")
+    user_id = principal.user_id
     site_id = payload.get("site_id", "pazule-default")
 
     location_validation = validate_client_location(payload)
@@ -199,6 +228,11 @@ def mission_submit() -> Response:
     Returns:
         JSON 판정 결과 또는 {"error": str} (400 | 404 | 500).
     """
+    try:
+        principal = _require_auth_principal()
+    except AuthError as exc:
+        return _auth_error_response(exc)
+
     mission_id = request.form.get("mission_id")
     if not mission_id:
         return jsonify({"error": "mission_id is required"}), 400
@@ -210,6 +244,8 @@ def mission_submit() -> Response:
     session = mission_session_service.get_session(mission_id)
     if not session:
         return jsonify({"error": "session_not_found"}), 404
+    if session.get("user_id") != principal.user_id:
+        return _forbidden_response("mission_owner_mismatch")
 
     location_validation = validate_client_location(request.form)
     if not location_validation["allowed"]:
@@ -292,9 +328,14 @@ def coupon_issue() -> Response:
     Returns:
         JSON 쿠폰 정보 또는 {"error": str} (400 | 404).
     """
+    try:
+        principal = _require_auth_principal()
+    except AuthError as exc:
+        return _auth_error_response(exc)
+
     payload = request.get_json(silent=True) or {}
     mission_id = payload.get("mission_id")
-    user_id = payload.get("user_id")
+    user_id = principal.user_id
     partner_id = payload.get("partner_id")
 
     if not mission_id:
@@ -303,6 +344,8 @@ def coupon_issue() -> Response:
     session = mission_session_service.get_session(mission_id)
     if not session:
         return jsonify({"error": "session_not_found"}), 404
+    if session.get("user_id") != principal.user_id:
+        return _forbidden_response("mission_owner_mismatch")
 
     # 요청에 user_id가 없으면 세션의 것을 사용, 그것도 없으면 'guest'
     final_user_id = user_id or session.get("user_id", "guest")
@@ -356,7 +399,12 @@ def get_user_stats() -> Response:
     Returns:
         JSON {total_attempts, success_location, success_atmosphere, total_coupons, history}.
     """
-    user_id = request.args.get("user_id", "guest")
+    try:
+        principal = _require_auth_principal()
+    except AuthError as exc:
+        return _auth_error_response(exc)
+
+    user_id = principal.user_id
     stats = mission_session_service.get_user_stats(user_id)
     return jsonify(stats)
 
@@ -372,8 +420,12 @@ def reset_user_data() -> Response:
     Returns:
         JSON {"success": True}.
     """
-    payload = request.get_json(silent=True) or {}
-    user_id = payload.get("user_id", "guest")
+    try:
+        principal = _require_auth_principal()
+    except AuthError as exc:
+        return _auth_error_response(exc)
+
+    user_id = principal.user_id
 
     try:
         # 1. 쿠폰 데이터 초기화
@@ -397,6 +449,11 @@ def get_user_coupons() -> Response:
     Returns:
         JSON list of coupons.
     """
-    user_id = request.args.get("user_id", "guest")
+    try:
+        principal = _require_auth_principal()
+    except AuthError as exc:
+        return _auth_error_response(exc)
+
+    user_id = principal.user_id
     coupons = coupon_service.get_user_coupons(user_id)
     return jsonify(coupons)

@@ -8,6 +8,7 @@ migration that follows.
 from __future__ import annotations
 
 from collections.abc import Iterator
+from contextlib import contextmanager
 
 from app.core.config import settings
 
@@ -43,6 +44,7 @@ def create_session_factory(database_url: str | None = None):
     )
 
 
+@contextmanager
 def session_scope(database_url: str | None = None) -> Iterator[object]:
     """Yield a database session and commit or rollback around the block."""
     factory = create_session_factory(database_url)
@@ -55,3 +57,19 @@ def session_scope(database_url: str | None = None) -> Iterator[object]:
         raise
     finally:
         session.close()
+
+
+def smoke_check_database_connection(database_url: str | None = None) -> bool:
+    """Run a minimal SQL query to verify the configured DB connection."""
+    try:
+        from sqlalchemy import text
+    except ModuleNotFoundError as exc:  # pragma: no cover - dependency guard
+        raise RuntimeError(
+            "SQLAlchemy is not installed. Run `uv sync --dev` before DB checks."
+        ) from exc
+
+    engine = create_db_engine(database_url)
+    with engine.connect() as connection:
+        result = connection.execute(text("SELECT 1")).scalar_one()
+    engine.dispose()
+    return result == 1
