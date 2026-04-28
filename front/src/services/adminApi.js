@@ -29,7 +29,7 @@ async function request(path, accessToken, options = {}) {
     if (!response.ok) {
       const payload = await response.json().catch(() => ({}));
       throw new AdminApiError(
-        payload.detail || payload.error || 'Admin API request failed',
+        payload.detail || payload.error || '관리자 API 요청에 실패했습니다.',
         response.status,
       );
     }
@@ -48,8 +48,11 @@ function withQuery(path, params = {}) {
 }
 
 export const adminApi = {
-  getSummary(accessToken) {
-    return request('/api/admin/summary', accessToken);
+  getOrganizations(accessToken) {
+    return request('/api/admin/organizations', accessToken);
+  },
+  getSummary(accessToken, params = {}) {
+    return request(withQuery('/api/admin/summary', params), accessToken);
   },
   getMissionSessions(accessToken, params = {}) {
     return request(withQuery('/api/admin/mission-sessions', params), accessToken);

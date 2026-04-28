@@ -1,25 +1,27 @@
 import { useState } from 'react';
-import { MapPin, Navigation, Ticket } from 'lucide-react';
-import { startGoogleOAuth } from '../services/supabaseAuth';
+import { useNavigate } from 'react-router-dom';
+import { Building2, MapPin, Navigation, ShieldCheck, Ticket } from 'lucide-react';
+import { createDemoSession, startGoogleOAuth } from '../services/supabaseAuth';
+import { useAuthStore } from '../store/useAuthStore';
 
 const FLOW_STEPS = [
   {
     step: '01',
     icon: Navigation,
     title: '힌트 확인',
-    desc: '오늘의 장소 힌트를 보고 파주 곳곳을 탐험합니다.',
+    desc: '오늘의 장소 힌트를 보고 현장 미션을 시작합니다.',
   },
   {
     step: '02',
     icon: MapPin,
-    title: '장소 방문',
-    desc: '장소를 찾아 사진으로 미션을 인증합니다.',
+    title: '현장 인증',
+    desc: 'GPS와 사진 제출로 방문 여부를 검증합니다.',
   },
   {
     step: '03',
     icon: Ticket,
-    title: '쿠폰 획득',
-    desc: '성공한 미션마다 파주 로컬 쿠폰이 지갑에 적립됩니다.',
+    title: '쿠폰 수령',
+    desc: 'AI 판정 성공 후 쿠폰 지갑에서 보상을 확인합니다.',
   },
 ];
 
@@ -64,10 +66,12 @@ function FlowStep({ step, icon: Icon, title, desc }) {
 }
 
 export default function Login() {
+  const navigate = useNavigate();
+  const setSession = useAuthStore((state) => state.setSession);
   const [error, setError] = useState('');
   const [isStarting, setIsStarting] = useState(false);
 
-  const handleLogin = async () => {
+  const handleGoogleLogin = async () => {
     setError('');
     setIsStarting(true);
     try {
@@ -82,12 +86,16 @@ export default function Login() {
     }
   };
 
+  const handleDemoLogin = (role) => {
+    const session = createDemoSession(role);
+    setSession(session);
+    navigate(session.isAdmin ? '/admin' : '/', { replace: true });
+  };
+
   return (
     <div className="font-display flex min-h-screen bg-white text-dark-teal">
       <main className="mx-auto flex min-h-screen w-full max-w-md flex-col px-6 pb-10 pt-12">
-
-        {/* Brand header */}
-        <header className="mb-10">
+        <header className="mb-8">
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-dark-teal shadow-btn-strong">
             <MapPin size={24} className="text-white" aria-hidden="true" />
           </div>
@@ -95,53 +103,67 @@ export default function Login() {
             PAZULE
           </p>
           <h1 className="mt-2 text-3xl font-black leading-snug text-dark-teal">
-            파주를 걷고,
+            현장에서 미션을
             <br />
-            <span className="text-coral-end">미션</span>을 완료하고,
-            <br />
-            쿠폰을 받으세요.
+            완료하고 <span className="text-coral-end">쿠폰</span>을 받으세요.
           </h1>
           <p className="mt-3 text-sm font-medium leading-relaxed text-gray-500">
-            로그인하면 미션 기록과 쿠폰 지갑이 내 계정에 저장됩니다.
+            데모 계정은 Supabase 키 없이도 사용자 앱과 관리자 콘솔 흐름을 확인할 수 있습니다.
           </p>
         </header>
 
-        {/* 3-step mission flow */}
-        <section aria-label="미션 플로우" className="mb-8 space-y-3">
+        <section aria-label="미션 흐름" className="mb-6 space-y-3">
           {FLOW_STEPS.map((s) => (
             <FlowStep key={s.step} {...s} />
           ))}
         </section>
 
-        {/* Google login button */}
-        <div className="mb-3">
+        <section className="mb-4 grid grid-cols-2 gap-3" aria-label="데모 로그인">
           <button
             type="button"
-            onClick={handleLogin}
-            disabled={isStarting}
-            aria-label="Google 계정으로 로그인"
-            className="flex h-14 w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-700 shadow-card transition-shadow hover:shadow-hover active:scale-[0.98] disabled:opacity-60"
+            onClick={() => handleDemoLogin('user')}
+            className="flex h-14 items-center justify-center gap-2 rounded-xl bg-dark-teal px-3 text-sm font-black text-white shadow-btn transition-transform active:scale-[0.98]"
           >
-            {isStarting ? (
-              <span className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-dark-teal" />
-            ) : (
-              <GoogleIcon />
-            )}
-            {isStarting ? 'Google로 이동 중…' : 'Google 계정으로 시작하기'}
+            <Ticket size={18} aria-hidden="true" />
+            사용자 데모
           </button>
-        </div>
+          <button
+            type="button"
+            onClick={() => handleDemoLogin('admin')}
+            className="flex h-14 items-center justify-center gap-2 rounded-xl bg-coral-end px-3 text-sm font-black text-white shadow-btn transition-transform active:scale-[0.98]"
+          >
+            <Building2 size={18} aria-hidden="true" />
+            관리자 데모
+          </button>
+        </section>
+
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          disabled={isStarting}
+          aria-label="Google 계정으로 로그인"
+          className="flex h-14 w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-700 shadow-card transition-shadow hover:shadow-hover active:scale-[0.98] disabled:opacity-60"
+        >
+          {isStarting ? (
+            <span className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-dark-teal" />
+          ) : (
+            <GoogleIcon />
+          )}
+          {isStarting ? 'Google로 이동 중' : 'Google 계정으로 로그인'}
+        </button>
 
         {error ? (
           <p
             role="alert"
-            className="mb-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-bold leading-relaxed text-red-600"
+            className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-bold leading-relaxed text-red-600"
           >
             {error}
           </p>
         ) : null}
 
-        <p className="mt-auto pt-6 text-center text-xs font-medium text-gray-400">
-          기업 계정은 로그인 후 권한으로 구분됩니다.
+        <p className="mt-auto flex items-center justify-center gap-1.5 pt-6 text-center text-xs font-medium text-gray-400">
+          <ShieldCheck size={14} aria-hidden="true" />
+          실서비스에서는 Supabase OAuth와 서버 JWT 검증을 사용합니다.
         </p>
       </main>
     </div>

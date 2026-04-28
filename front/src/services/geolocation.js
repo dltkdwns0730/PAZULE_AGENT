@@ -6,7 +6,23 @@ export class GeolocationError extends Error {
   }
 }
 
+export function shouldSkipBrowserGps() {
+  return import.meta.env.VITE_SKIP_GPS_VALIDATION === 'true';
+}
+
+export function getDemoMissionLocation() {
+  return {
+    client_lat: Number(import.meta.env.VITE_MISSION_SITE_LAT || 37.711988),
+    client_lng: Number(import.meta.env.VITE_MISSION_SITE_LON || 126.6867095),
+    accuracy_meters: 0,
+  };
+}
+
 export function getCurrentPosition(options = {}) {
+  if (shouldSkipBrowserGps()) {
+    return Promise.resolve(getDemoMissionLocation());
+  }
+
   if (!navigator.geolocation) {
     return Promise.reject(
       new GeolocationError('GPS를 지원하지 않는 브라우저입니다.', 'gps_unsupported')

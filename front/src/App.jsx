@@ -13,7 +13,6 @@ import AdminMissionDetail from "./pages/AdminMissionDetail";
 import AdminMissionLogs from "./pages/AdminMissionLogs";
 import AdminCoupons from "./pages/AdminCoupons";
 import AdminUsers from "./pages/AdminUsers";
-import AdminLogin from "./pages/AdminLogin";
 import CouponSuccess from "./pages/CouponSuccess";
 import Onboarding from "./pages/Onboarding";
 import Permissions from "./pages/Permissions";
@@ -30,6 +29,7 @@ export default function App() {
         {/* Public routes */}
         <Route element={<Layout />}>
           <Route path="/login" element={<Login />} />
+          <Route path="/admin/login" element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/onboarding" element={<Onboarding />} />
         </Route>
@@ -50,8 +50,7 @@ export default function App() {
         </Route>
 
         {/* Admin routes */}
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route element={<AdminRoute />}>
+<Route element={<AdminRoute />}>
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/logs" element={<AdminMissionLogs />} />

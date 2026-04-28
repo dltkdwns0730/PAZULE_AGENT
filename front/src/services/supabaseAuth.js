@@ -4,6 +4,29 @@ const CLIENT_KEY_PATTERN = /^(sb_publishable_|eyJ)/;
 const SESSION_STORAGE_KEY = 'pazule.supabase.session';
 let supabaseClient = null;
 
+const DEMO_SESSIONS = {
+  user: {
+    accessToken: 'demo-user-token',
+    refreshToken: 'demo-refresh-user',
+    expiresIn: 0,
+    tokenType: 'bearer',
+    userId: 'demo-user',
+    email: 'demo-user@pazule.demo',
+    isAdmin: false,
+    isDemo: true,
+  },
+  admin: {
+    accessToken: 'demo-admin-token',
+    refreshToken: 'demo-refresh-admin',
+    expiresIn: 0,
+    tokenType: 'bearer',
+    userId: 'demo-admin',
+    email: 'demo-admin@pazule.demo',
+    isAdmin: true,
+    isDemo: true,
+  },
+};
+
 function decodeBase64Url(value) {
   const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
   const padded = normalized.padEnd(
@@ -107,6 +130,21 @@ export function parseOAuthCallback(hash = window.location.hash) {
 }
 
 export function getUserFromAccessToken(accessToken) {
+  if (accessToken === 'demo-user-token') {
+    return {
+      userId: 'demo-user',
+      email: 'demo-user@pazule.demo',
+      isAdmin: false,
+    };
+  }
+  if (accessToken === 'demo-admin-token') {
+    return {
+      userId: 'demo-admin',
+      email: 'demo-admin@pazule.demo',
+      isAdmin: true,
+    };
+  }
+
   const [, payload] = accessToken.split('.');
   if (!payload) {
     throw new Error('Supabase access token is not a JWT.');
@@ -132,6 +170,10 @@ export function persistSupabaseSession(
 export function getStoredSupabaseSession(storage = window.localStorage) {
   const raw = storage.getItem(SESSION_STORAGE_KEY);
   return raw ? JSON.parse(raw) : null;
+}
+
+export function createDemoSession(role = 'user') {
+  return { ...(DEMO_SESSIONS[role] ?? DEMO_SESSIONS.user) };
 }
 
 export async function getCurrentSupabaseSession(client = getSupabaseClient()) {
