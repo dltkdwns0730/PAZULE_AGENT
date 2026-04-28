@@ -1,423 +1,145 @@
-<div align="center">
-
 # PAZULE
-**사진 한 장으로 장소와 분위기를 검증하는 AI 미션 플랫폼**
 
-[![Python](https://img.shields.io/badge/Python-3.12%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![Flask](https://img.shields.io/badge/Flask-3.x-000000?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
+위치 기반 AI 미션 인증과 쿠폰 발급을 연결하는 B2B2C 미션 플랫폼입니다.
+
+[![Python](https://img.shields.io/badge/Python-%3E%3D3.10-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-%3E%3D2.3-000000?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
-[![LangGraph](https://img.shields.io/badge/LangGraph-Orchestration-FF6B35?style=flat-square)](https://langchain-ai.github.io/langgraph/)
+[![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vite.dev)
 [![CI/CD](https://github.com/dltkdwns0730/PAZULE_AGENT/actions/workflows/ci.yml/badge.svg)](https://github.com/dltkdwns0730/PAZULE_AGENT/actions)
-[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
-사용자가 업로드한 사진을 여러 비전 모델이 앙상블 투표로 검증하고,<br/>
-미션 성공 시 파트너 쿠폰을 자동 발급하는 위치 기반 미션 플랫폼입니다.
+PAZULE은 방문자가 실제 장소에서 사진 미션을 수행하면 GPS, EXIF, 이미지 해시, AI 판정을 거쳐 쿠폰을 발급합니다. 관리자 콘솔은 기업별 미션 로그, 쿠폰, 사용자 활동을 분리해 조회하고, 플랫폼 마스터는 전체 기업 데이터를 추적할 수 있습니다.
 
-[시작하기](#getting-started) &nbsp;&bull;&nbsp; [아키텍처](#architecture) &nbsp;&bull;&nbsp; [기술 결정](#key-technical-decisions) &nbsp;&bull;&nbsp; [시연](#demo) &nbsp;&bull;&nbsp; [팀](#team)
+## At A Glance
 
-</div>
+| 대상 | 먼저 확인할 내용 |
+|---|---|
+| 일반 사용자 | Google OAuth로 로그인하고 오늘의 힌트를 확인한 뒤, 현장에서 사진을 제출해 쿠폰을 받습니다. |
+| 기업/파트너 | 기업별 미션 로그, 쿠폰 발급/사용 상태, 사용자 활동을 관리자 콘솔에서 확인합니다. |
+| 면접관/리뷰어 | LangGraph 파이프라인, Supabase Auth/DB 경계, 테스트/CI 기반 운영 구조를 확인할 수 있습니다. |
 
----
+## Current Capabilities
 
-## 📁 프로젝트 구조
+- 사용자 인증: Supabase OAuth/JWT 기반 로그인과 사용자 소유 미션 세션 검증.
+- 미션 검증: GPS 반경, EXIF, 이미지 해시, SigLIP2/BLIP/Qwen VL 기반 AI 판정.
+- 쿠폰 운영: 미션 성공 시 쿠폰 발급, 지갑 조회, 관리자 콘솔 리딤 처리.
+- 기업 스코프: `organizations -> sites -> mission_sessions` 구조로 기업별 운영 데이터 분리.
+- 관리자 권한: `platform_master`는 전체 조회, 기업 관리자는 소속 기업 데이터 조회.
+- 운영 문서: 계정 분류, 설정, 아키텍처, CI/CD, 상용화 검토 문서를 `docs/`에 분리.
 
-> 각 폴더 이름을 클릭하면 해당 폴더의 역할 설명 문서로 이동합니다.
+## Architecture Snapshot
 
-| 폴더 / 파일 | 역할 | 문서 |
-|---|---|---|
-| [`app/`](./app/README.md) | 핵심 백엔드 패키지 (API · 파이프라인 · 모델 · 서비스) | [→ app/README.md](./app/README.md) |
-| [`tests/`](./tests/README.md) | pytest 자동화 테스트 — CI에서 자동 실행 | [→ tests/README.md](./tests/README.md) |
-| [`scripts/`](./scripts/README.md) | 개발자용 수동 실행 스크립트 (벤치마크·시뮬레이션) | [→ scripts/README.md](./scripts/README.md) |
-| [`docs/`](./docs/README.md) | 아키텍처·CI/CD·변경 이력 문서 | [→ docs/README.md](./docs/README.md) |
-| [`front/`](./front/) | React 19 + Vite 프론트엔드 | |
-| `main.py` | Flask 앱 엔트리포인트 | |
-| `CONTRIBUTING.md` | **기여 가이드 — PR 전 필독** | [→ CONTRIBUTING.md](./CONTRIBUTING.md) |
-
-- **`tests/`**: 자동화된 회귀 방지(Regression Test) 및 CI 환경에서의 검증이 목적인 경우에 사용합니다.
-- **`scripts/`**: 수동 탐색, 특정 모듈 디버깅, 혹은 일회성 벤치마크 수행이 목적인 경우에 사용합니다.
-- **참고 문서**:
-    - 상세한 전략 차이는 각 폴더의 `README`를 참고하세요.
-    - 현재 서비스 구조 및 레거시 삭제 후보 검토는 [`docs/refactor-audit.md`](./docs/refactor-audit.md)에 정리되어 있습니다.
-
----
-## Front UI
-
-<div align="center">
-
-| 메인 화면 | 미션 제출 | 미션 성공 | 쿠폰 제공 | 쿠폰 확인 |
-| :---: | :---: | :---: | :---: | :---: |
-| <img src="./front/src/assets/메인화면.jpg" width="200" /> | <img src="./front/src/assets/제출화면.jpg" width="200" /> | <img src="./front/src/assets/미션성공.jpg" width="200" /> | <img src="./front/src/assets/쿠폰제공.jpg" width="200" /> | <img src="./front/src/assets/쿠폰확인.jpg" width="200" /> |
-
-</div>
-
-## Overview
-
-파주 출판단지 보물찾기 이벤트용 팀 프로젝트(**파주시장상** 🏆)가 시작이었습니다.
-
-**v1에서 드러난 한계:**
-- **오탐** — 비슷한 외관의 건물 앞 사진이 단일 모델에서 통과하는 경우 발생
-- **어뷰징** — 미션 상태를 서버가 관리하지 않아 같은 사진 반복 제출이 가능
-
-이 버전은 수상작 기반으로, 위 한계를 개인적으로 고친 결과물입니다.
-
-| | v1 · 수상작 | v2 · 현재 |
-|---|---|---|
-| 모델 | BLIP-VQA + CLIP (분리 실행) | SigLIP2 + BLIP (앙상블 투표) + Qwen VL (재검증) |
-| 파이프라인 | `mission_manager.py` 단일 호출 | LangGraph 8노드 오케스트레이션 |
-| API | `POST /mission` 1개 | `start / submit / issue / redeem` 4개 |
-| 레포 | [`PAZULE`](https://github.com/dltkdwns0730/PAZULE) | [`PAZULE_AGENT`](https://github.com/dltkdwns0730/PAZULE_AGENT) |
-
----
-
-## Architecture
-
-```mermaid
-flowchart TB
-    %% ── 스타일 정의 ──
-    classDef entry fill:#6366f1,stroke:#4f46e5,color:#fff,font-weight:bold,stroke-width:2px
-    classDef gate fill:#fef3c7,stroke:#f59e0b,color:#92400e,stroke-width:2px
-    classDef core fill:#dbeafe,stroke:#3b82f6,color:#1e40af,stroke-width:2px
-    classDef ai fill:#e0e7ff,stroke:#6366f1,color:#3730a3,stroke-width:2px
-    classDef biz fill:#d1fae5,stroke:#10b981,color:#065f46,stroke-width:2px
-    classDef out_ok fill:#bbf7d0,stroke:#22c55e,color:#14532d,stroke-width:2px
-    classDef out_fail fill:#fecaca,stroke:#ef4444,color:#7f1d1d,stroke-width:2px
-
-    %% ── 진입 ──
-    REQ["📷 POST /api/mission/submit"]:::entry
-
-    %% ── Stage 1: 검증 ──
-    subgraph STAGE1["① 검증"]
-        direction TB
-        V{"validator<br/>EXIF · GPS · 해시 중복"}:::gate
-    end
-
-    %% ── Stage 2: 모델 추론 ──
-    subgraph STAGE2["② 모델 추론"]
-        direction TB
-        R["router<br/>미션 타입 정규화"]:::core
-        E["evaluator<br/>모델 선택 & 실행"]:::core
-
-        subgraph ENSEMBLE["앙상블 투표 (가중치 합산)"]
-            direction LR
-            S2["SigLIP2<br/>로컬"]:::ai
-            BL["BLIP<br/>로컬"]:::ai
-        end
-
-        R --> E
-        E -.-> S2
-        E -.-> BL
-    end
-
-    %% ── Stage 3: 판정 ──
-    subgraph STAGE3["③ 판정"]
-        direction TB
-        AG["aggregator<br/>merged_score · conflict"]:::core
-        CO["council<br/>3-Tier 에스컬레이션"]:::ai
-        QW["Qwen VL<br/>API 재호출"]:::ai
-        JU{"judge<br/>pass / fail"}:::gate
-
-        AG --> CO
-        CO -. "Tier 3<br/>경계값 케이스만" .-> QW
-        QW -.-> CO
-        CO --> JU
-    end
-
-    %% ── Stage 4: 비즈니스 ──
-    subgraph STAGE4["④ 비즈니스"]
-        direction TB
-        PO["policy<br/>쿠폰 자격 · 할인율"]:::biz
-    end
-
-    %% ── 출력 ──
-    OK["✅ 미션 성공 + 쿠폰"]:::out_ok
-    FAIL["❌ 실패 + AI 힌트"]:::out_fail
-
-    %% ── 메인 흐름 ──
-    REQ --> V
-    V -- "통과" --> R
-    S2 -.-> AG
-    BL -.-> AG
-    JU -- "성공" --> PO
-    PO --> OK
-
-    %% ── 실패 경로 ──
-    V -. "차단" .-> FAIL
-    JU -. "실패" .-> FAIL
+```text
+React SPA
+  -> Flask API
+  -> Supabase JWT / GPS / EXIF / hash validation
+  -> LangGraph AI mission pipeline
+  -> mission session and coupon storage
+  -> admin console scoped by organization
 ```
 
-**하네스 구조:**
-- LangGraph `StateGraph`가 하네스 역할 — 각 노드는 공유 상태(`PipelineState`)를 읽고 결과를 기록
-- 노드 간 직접 호출 없음 — 조건 분기와 에러 누적은 하네스가 중앙에서 통제
-- **조기 종료** — validator 실패 시 모델 추론 건너뜀 / judge 실패 시 힌트 경로로 분기
-
-> 상태 흐름, control_flags, Council 3-Tier 에스컬레이션 등 상세 설계는 [`docs/architecture.md`](./docs/architecture.md)를 참고하세요.
-
----
-
-## Key Technical Decisions
-
-### 1. 분리 모델 → 앙상블 투표
-
-**문제:**
-- BLIP-VQA(장소) + CLIP(분위기)을 각각 로딩 — 추론 비용 2배
-- CLIP이 무거워서 로컬 환경에서 응답 시간·메모리 모두 부담
-- 각 모델이 독립 판정 — 한쪽 오탐 시 보정 수단 없음
-
-**대안 검토:**
-- CLIP 유지 + 경량화 시도 → 근본적 한계 (모델 구조 자체가 무거움)
-- SigLIP2로 CLIP 대체 → 동일 태스크(zero-shot 매칭)에서 더 가볍고 빠름
-- Qwen VL을 API로 추가 → 로컬 리소스 부담 없이 정확도 보강
-
-**선택:**
-- SigLIP2(로컬) + BLIP(로컬)로 앙상블 투표, Qwen VL(API)은 Council 에스컬레이션 시 재호출
-- 미션 타입별 가중치 차등: Location(SigLIP2 30% · BLIP 70%) / Atmosphere(SigLIP2 80% · BLIP 20%)
-- 단일 모델 오탐을 다른 모델이 보정 — score 차이 ≥0.35 시 conflict 플래그 및 Qwen VL 재검증 강제 수행
-
-### 2. 함수 체이닝 → LangGraph
-
-**문제:**
-- v1 구조: `validate() → run_blip() → run_clip() → generate_hint()` 직렬 호출
-- v2에서 세션 관리, 쿠폰 정책, 앙상블 투표 추가 → 조건 분기 급증
-  - validator 실패 → 모델 추론 건너뛰기
-  - judge 실패 → 힌트 경로 분기
-  - council이 judge 오버라이드 가능
-- if-else 중첩이 4단계를 초과
-
-**대안 검토:**
-- **Airflow / Prefect** → 배치 스케줄러 기반, 실시간 요청 처리(수 초 응답)에 부적합
-- **직접 구현** → 조건 분기·에러 누적·상태 전달을 매번 수동 관리해야 함
-
-**선택:**
-- LangGraph `StateGraph` 채택
-- `add_conditional_edges()`로 분기 로직을 노드 구현과 분리
-- 노드 간 상태 전달을 선언적으로 정의 — 노드 추가/제거 시 다른 노드 수정 불필요
-
----
+현재 백엔드 API는 [app/api/routes.py](./app/api/routes.py)에 16개 Flask route로 정의되어 있습니다. 프론트엔드 관리자 화면은 `/admin`, `/admin/logs`, `/admin/logs/:missionId`, `/admin/coupons`, `/admin/users` 경로를 사용합니다.
 
 ## Tech Stack
 
-### Backend
-
-| 분류 | 기술 |
+| 영역 | 기술 |
 |---|---|
-| Language | Python 3.12+ |
-| Framework | Flask + Flask-CORS |
-| Orchestration | LangGraph (StateGraph) |
-| Vision Models | SigLIP2, BLIP-VQA, Qwen VL |
-| LLM | OpenAI / OpenRouter / Gemini |
-| Anti-Abuse | EXIF 날짜, GPS BBox, 단일 해시 체크 |
+| Backend | Python `>=3.10`, Flask `>=2.3`, SQLAlchemy, Alembic |
+| Frontend | React 19, Vite 7, React Router, Zustand, Tailwind CSS |
+| AI/ML | LangGraph, SigLIP2, BLIP, Qwen VL, OpenAI/OpenRouter/Gemini 연동 |
+| Auth/DB | Supabase Auth, Supabase Postgres, JWT 검증 |
+| DevOps/Test | uv, pytest, ruff, Vitest, ESLint, GitHub Actions, Docker |
+
+## Run Locally
+
+The default development profile is clone-and-run friendly: JSON storage, demo auth,
+metadata skip, and model bypass are enabled so reviewers can inspect the core flow
+without private `.env` secrets.
+
+### Backend Virtual Environment
+
+Windows PowerShell:
+
+```powershell
+uv venv
+.\.venv\Scripts\Activate.ps1
+uv sync --dev
+uv run python main.py
+```
+
+macOS/Linux:
+
+```bash
+uv venv
+source .venv/bin/activate
+uv sync --dev
+uv run python main.py
+```
+
+If the virtual environment already exists, start from the activation command.
+`uv run ...` can also run commands without manual activation, but activation makes
+the selected Python environment explicit while working in the terminal.
 
 ### Frontend
 
-| 분류 | 기술 |
-|---|---|
-| Framework | React 19 + Vite |
-| Routing | React Router DOM 7 |
-| Styling | Tailwind CSS |
-| State | Zustand |
-
-### CI/CD & DevOps
-
-| 분류 | 기술 |
-|---|---|
-| Package Manager | `uv` (초고속 의존성 관리) |
-| Local Hook | `pre-commit` + `ruff` (포맷팅 방어막) |
-| Remote CI | `GitHub Actions` (Lint & Pytest 자동화) |
-| Remote CD | 멀티스테이지 `Dockerfile` + `ghcr.io` (컨테이너 자동 퍼블리시) |
-
-
----
-
-### 화면 흐름
-
-```
-미션 홈 → 미션 선택 → 사진 촬영 → AI 분석 → 결과 → 쿠폰 발급 → 쿠폰 지갑
+```bash
+cd front
+npm install
+npm run dev
 ```
 
-| 화면 | 설명 |
+기본 포트는 백엔드 `8080`, 프론트엔드 `5173`입니다. 환경 변수와 기본값은 [app/core/config/README.md](./app/core/config/README.md)를 기준으로 확인합니다.
+
+## Demo Mode
+
+| 항목 | 동작 |
 |---|---|
-| **MissionHome** | 오늘의 힌트 확인, 위치/분위기 미션 선택 |
-| **PhotoSubmission** | 카메라 촬영 또는 갤러리 업로드, 남은 시도 횟수 표시 |
-| **MissionResult** | 성공/실패 판정, 신뢰도 점수, AI 힌트 |
-| **CouponWallet** | 보유 쿠폰 목록, QR코드, 사용 상태 |
-| **AdminDashboard** | 미션 현황 모니터링 (관리자) |
+| 사용자 데모 | 로그인 화면의 `사용자 데모` 버튼으로 미션/쿠폰 흐름 확인 |
+| 관리자 데모 | 로그인 화면의 `관리자 데모` 버튼으로 `/admin` 콘솔 확인 |
+| 백엔드 인증 | `DEMO_AUTH_ENABLED=true`에서 `demo-user-token`, `demo-admin-token` 허용 |
+| 저장소 | `STORAGE_BACKEND=json`으로 로컬 `data/` 파일 사용 |
+| AI/메타데이터 | development 기본값에서 `BYPASS_MODEL_VALIDATION=true`, `SKIP_METADATA_VALIDATION=true` |
 
----
+실서비스 방식으로 실행하려면 `.env.example`을 참고해 Supabase와 AI provider 값을 채우고 `PAZULE_ENV=production`, `DEMO_AUTH_ENABLED=false`, `STORAGE_BACKEND=db`를 사용합니다.
 
-## Getting Started
-
-### Prerequisites
-
-- Python 3.12+
-- Node.js 18+
-- [uv](https://github.com/astral-sh/uv) (권장)
-
-### 1. Clone & Setup
-
-의존성을 미친 듯이 빠르게 묶는 `uv`를 사용하므로, 복잡한 파이썬 가상환경 관리를 한 줄로 끝냅니다.
+## Verification
 
 ```bash
-git clone https://github.com/dltkdwns0730/PAZULE_AGENT.git
-cd PAZULE_AGENT
+uv run pytest
+uv run ruff check .
 
-# 가상환경 구축, 패키지 설치 한방 해결
-uv sync --dev
-
-# (선택) 커밋할 때마다 알아서 포맷을 고쳐주는 봇 장착
-uv run pre-commit install
+cd front
+npm run build
+npm run lint
+npm test
 ```
 
-### 2. 환경 변수
+테스트 실행 기준과 커버리지 설정은 [tests/README.md](./tests/README.md)에 정리되어 있습니다.
 
-루트에 `.env` 파일을 생성합니다.
+## Project Structure
 
-```env
-OPENAI_API_KEY=...
-OPENROUTER_API_KEY=...
-GEMINI_API_KEY=...
-MODEL_SELECTION_LOCATION=ensemble
-MODEL_SELECTION_ATMOSPHERE=ensemble
-MISSION_SITE_LAT=37.711988
-MISSION_SITE_LON=126.6867095
-MISSION_SITE_RADIUS_METERS=300
-MISSION_GPS_MAX_ACCURACY_METERS=100
-SKIP_GPS_VALIDATION=false
-VITE_NAVER_MAP_CLIENT_ID=...
-VITE_MISSION_SITE_LAT=37.711988
-VITE_MISSION_SITE_LON=126.6867095
-VITE_MISSION_SITE_RADIUS_METERS=300
-DATABASE_URL=sqlite:///data/pazule.db
-SUPABASE_URL=...
-SUPABASE_JWKS_URL=...
-SUPABASE_JWT_AUDIENCE=authenticated
-SUPABASE_SERVICE_ROLE_KEY=...
-VITE_SUPABASE_URL=...
-VITE_SUPABASE_PUBLISHABLE_KEY=...
-```
-
-> 전체 환경 변수 목록은 [`app/core/config.py`](./app/core/config.py)를 참고하세요.
-
-#### Supabase DB migration from `.env`
-
-The app loads `.env` through `python-dotenv`, but the Supabase CLI does not.
-Use the repo helper so CLI migration commands read the same `.env` file:
-
-```powershell
-# Dry-run remote migrations. No DB mutation.
-$env:PYTHONPATH='.'
-python scripts/tools/supabase_db_apply.py
-
-# Apply remote migrations and run SELECT 1 smoke check.
-$env:PYTHONPATH='.'
-python scripts/tools/supabase_db_apply.py --apply --smoke
-```
-
-Recommended `.env` values:
-
-```env
-STORAGE_BACKEND=json
-SUPABASE_ACCESS_TOKEN=sbp_...
-SUPABASE_PROJECT_REF=yooopszfddqzybicpotx
-```
-
-Do not store the DB password in `.env`. Enter it only for the current
-PowerShell session when applying migrations:
-
-```powershell
-$env:SUPABASE_DB_PASSWORD='...'
-$env:PYTHONPATH='.'
-python scripts/tools/supabase_db_apply.py --apply --smoke
-```
-
-`SUPABASE_URL`, publishable/anon keys, and service-role/secret keys are for
-application API access. They are not sufficient for SQL DDL migrations such as
-`create table` or `alter table`.
-
-For Gmail OAuth in the browser, set only the frontend-safe key:
-
-```env
-VITE_SUPABASE_URL=https://yooopszfddqzybicpotx.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=...
-```
-
-Do not put `SUPABASE_SERVICE_ROLE_KEY` or any `sb_secret_...` key in a
-`VITE_` variable. To verify the real Auth endpoint after filling the
-publishable key:
-
-```powershell
-uv run python scripts/tools/supabase_runtime_verify.py
-```
-
-### 3. 실행
-
-```bash
-# 백엔드 (port 8080)
-python main.py
-
-# 프론트엔드 (port 5173, 별도 터미널)
-cd front && npm install && npm run dev
-```
-
----
-
-## API
-
-전체 엔드포인트 설계와 스키마 명세는 `app/api/routes.py` 소스 코드를 참고하세요.
-
-| 메서드 | 경로 | 설명 |
-|---|---|---|
-| `POST` | `/api/mission/start` | 미션 세션 시작 |
-| `POST` | `/api/mission/submit` | 이미지 제출 → 파이프라인 실행 |
-| `POST` | `/api/coupon/issue` | 쿠폰 발급 (멱등) |
-| `POST` | `/api/coupon/redeem` | 파트너 POS 사용 처리 |
-| `GET` | `/get-today-hint` | 오늘의 힌트 조회 |
-
----
-
-## Contributing
-
-자세한 기여 가이드는 **[CONTRIBUTING.md](./CONTRIBUTING.md)** 를 참고하세요.
-
-PR 전 체크리스트, 브랜치 전략, 커밋 메시지 형식, 코딩 규칙이 모두 정리되어 있습니다.
-
----
-
-## Team
-
-<div align="center">
-
-<table>
-  <tr>
-    <td align="center" width="150">
-      <a href="https://github.com/dltkdwns0730">
-        <img src="https://avatars.githubusercontent.com/u/208967935?v=4" width="100" height="100" style="border-radius:50%;" alt="dltkdwns0730"/><br/>
-        <sub><b>dltkdwns0730</b></sub>
-      </a><br/>
-      <sub>이상준</sub>
-    </td>
-  </tr>
-</table>
-
-v1 수상작은 팀 프로젝트로 개발되었으며, v2는 개인적으로 고도화한 버전입니다.
-
-</div>
-
----
-
-## Resources
-
-| 자료 | 설명 |
+| 경로 | 역할 |
 |---|---|
-| [Architecture](./docs/architecture.md) | V2의 핵심: 앙상블과 커스텀 하네스 구조 |
-| [CI/CD Pipeline](./docs/ci-cd-architecture.md) | 터미널부터 패키지 저장소까지, 완전 자동화 배포 명세 |
-| [상용화 전략](./docs/commercialization-plan.md) | PAZULE이 리얼 비즈니스가 되기 위한 프로덕션 마일스톤 |
-| [Documentation Guide](./docs/doc-guide.md) | 내부 API 문서 및 관리 템플릿 |
-| [v1 수상작 레포](https://github.com/dltkdwns0730/PAZULE) | 영광의 파주시장상을 수상했던 원작 코드베이스 |
+| [app/](./app/README.md) | Flask API, LangGraph 파이프라인, 서비스, DB/Auth 경계 |
+| [front/](./front/) | React 사용자 앱과 관리자 콘솔 |
+| [tests/](./tests/README.md) | pytest 백엔드 테스트와 테스트 작성 기준 |
+| [scripts/](./scripts/README.md) | Supabase 검증, 벤치마크, 운영 보조 스크립트 |
+| [docs/](./docs/README.md) | 현재 상태 기준 설계, 운영, 상용화, 작업 기록 문서 |
 
----
+## Docs Map
 
-<div align="center">
+| 문서 | 내용 |
+|---|---|
+| [Architecture](./docs/architecture.md) | LangGraph 파이프라인과 현재 시스템 구조 |
+| [Admin Company Account Classification](./docs/admin-company-account-classification.md) | 기업별 관리자 계정 분류와 Supabase SQL 작업 절차 |
+| [Commercialization Plan](./docs/commercialization-plan.md) | 현재 제품 구조 기준 B2B2C 상용화 검토 |
+| [CI/CD Pipeline](./docs/ci-cd-architecture.md) | GitHub Actions, Docker, ghcr.io 패키징 구조 |
+| [Task Index](./docs/TASK_INDEX.md) | 작업 문서 인덱스 |
+| [Documentation Guide](./docs/doc-guide.md) | 문서 작성 규칙 |
 
-🏆 v1은 **파주시장상**을 수상한 팀 프로젝트에서 시작되었습니다.
+## Project Status
 
-</div>
+- 사용자 미션은 Supabase OAuth 인증 후 서버가 검증한 사용자 ID를 기준으로 소유권을 관리합니다.
+- 운영 데이터는 기업 단위로 분리되며, 플랫폼 마스터는 전체 기업을 조회할 수 있습니다.
+- 쿠폰과 미션 세션은 `STORAGE_BACKEND` 설정에 따라 JSON 또는 DB 저장소 경계를 사용합니다.
+- 현재 설정 기본값은 위치 임계값 `0.70`, 분위기 임계값 `0.35`, 세션 TTL `60`분, 최대 제출 `3`회, 위치 반경 `300m`입니다.
