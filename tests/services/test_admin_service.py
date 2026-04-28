@@ -128,11 +128,17 @@ def _seed_multi_company_data(database_url: str) -> None:
         )
 
 
+def _use_admin_db(monkeypatch, database_url: str) -> None:
+    monkeypatch.setattr(
+        "app.services.admin_service.settings.DATABASE_URL", database_url
+    )
+    monkeypatch.setattr("app.services.admin_service.settings.STORAGE_BACKEND", "db")
+
+
 def test_org_admin_scope_limits_activity_to_own_company(tmp_path, monkeypatch):
     database_url = _database_url(tmp_path)
     _seed_multi_company_data(database_url)
-    monkeypatch.setattr("app.core.config.settings.DATABASE_URL", database_url)
-    monkeypatch.setattr("app.core.config.settings.STORAGE_BACKEND", "db")
+    _use_admin_db(monkeypatch, database_url)
 
     service = AdminService()
     scope = service.resolve_scope(_principal("admin-a"))
@@ -152,8 +158,7 @@ def test_org_admin_scope_limits_activity_to_own_company(tmp_path, monkeypatch):
 def test_platform_master_can_view_all_companies(tmp_path, monkeypatch):
     database_url = _database_url(tmp_path)
     _seed_multi_company_data(database_url)
-    monkeypatch.setattr("app.core.config.settings.DATABASE_URL", database_url)
-    monkeypatch.setattr("app.core.config.settings.STORAGE_BACKEND", "db")
+    _use_admin_db(monkeypatch, database_url)
 
     service = AdminService()
     scope = service.resolve_scope(_principal("master", "platform_master"))
