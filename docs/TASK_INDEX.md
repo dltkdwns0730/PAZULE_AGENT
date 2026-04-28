@@ -29,4 +29,12 @@
 | 2026-04-27 | v2.9.0 | Supabase OAuth user login and authenticated mission ownership | COMPLETED | `docs/tasks/2026/04/2026-04-27_v2.9.0_supabase-user-oauth-mission-flow.md` |
 | 2026-04-27 | v3.0.0 | Login & Profile UI 재설계 — 사용자 친화성 및 앱 기능 명시성 개선 | COMPLETED | `docs/tasks/2026/04/2026-04-27_v3.0.0_login-profile-ui-redesign.md` |
 | 2026-04-27 | v3.1.0 | Admin operations console MVP | COMPLETED | `docs/tasks/2026/04/2026-04-27_v3.1.0_admin-operations-console.md` |
+| 2026-04-28 | v3.2.0 | B2B multicompany admin scope and platform master visibility | COMPLETED | `docs/tasks/2026/04/2026-04-28_v3.2.0_multicompany-admin-scope.md` |
+| 2026-04-28 | v3.2.1 | Admin console Korean localization | COMPLETED | `docs/tasks/2026/04/2026-04-28_v3.2.1_admin-console-korean-localization.md` |
+| 2026-04-28 | v3.3.0 | Admin pages design sync with main PAZULE design language | COMPLETED | `docs/tasks/2026/04/2026-04-28_v3.3.0_admin-design-sync.md` |
+| 2026-04-28 | v3.3.1 | Company account classification operations docs | COMPLETED | `docs/tasks/2026/04/2026-04-28_v3.3.1_company-account-classification-docs.md` |
+| 2026-04-28 | v3.3.2 | Root README concise hub rewrite | COMPLETED | `docs/tasks/2026/04/2026-04-28_v3.3.2_readme-hub-rewrite.md` |
+| 2026-04-28 | v3.3.3 | Current-state documentation consistency | COMPLETED | `docs/tasks/2026/04/2026-04-28_v3.3.3_current-state-doc-consistency.md` |
+| 2026-04-28 | v3.3.4 | Clone-and-run demo mode | COMPLETED | `docs/tasks/2026/04/2026-04-28_v3.3.4_clone-and-run-demo-mode.md` |
+| 2026-04-29 | v3.3.5 | Environment template cleanup | COMPLETED | `docs/tasks/2026/04/2026-04-29_v3.3.5_env-template-cleanup.md` |
 
