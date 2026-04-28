@@ -65,6 +65,9 @@ class AdminService:
     def _use_db(self) -> bool:
         return settings.STORAGE_BACKEND.lower() == "db"
 
+    def _session_scope(self):
+        return session_scope(settings.DATABASE_URL)
+
     def resolve_scope(self, principal: AuthPrincipal) -> AdminScope:
         if principal.is_admin:
             return AdminScope(
@@ -78,7 +81,7 @@ class AdminService:
                 is_platform_master=False,
                 organization_ids=(),
             )
-        with session_scope() as db:
+        with self._session_scope() as db:
             rows = db.scalars(
                 select(OrganizationMember.organization_id).where(
                     OrganizationMember.user_id == principal.user_id,
@@ -96,7 +99,7 @@ class AdminService:
             if scope.is_platform_master:
                 return [{"id": "pazule-default", "name": "PAZULE", "slug": "pazule"}]
             return []
-        with session_scope() as db:
+        with self._session_scope() as db:
             stmt = select(Organization).order_by(Organization.name.asc())
             if not scope.is_platform_master:
                 if not scope.organization_ids:
@@ -182,7 +185,7 @@ class AdminService:
         self, scope: AdminScope, mission_id: str
     ) -> dict[str, Any] | None:
         if self._use_db():
-            with session_scope() as db:
+            with self._session_scope() as db:
                 model = db.scalar(
                     select(MissionSession)
                     .where(
@@ -366,7 +369,7 @@ class AdminService:
             return True
         if not self._use_db() or not scope.organization_ids:
             return False
-        with session_scope() as db:
+        with self._session_scope() as db:
             coupon = db.scalar(select(Coupon).where(Coupon.code == code).limit(1))
             if not coupon or not coupon.mission_session_id:
                 return False
@@ -379,7 +382,7 @@ class AdminService:
     def _db_summary(
         self, scope: AdminScope, organization_id: str | None = None
     ) -> dict[str, Any]:
-        with session_scope() as db:
+        with self._session_scope() as db:
             scoped_sessions = self._apply_session_scope(
                 db, select(MissionSession), scope, organization_id
             )
@@ -436,7 +439,7 @@ class AdminService:
         search: str | None = None,
         organization_id: str | None = None,
     ) -> list[dict[str, Any]]:
-        with session_scope() as db:
+        with self._session_scope() as db:
             stmt = select(MissionSession).order_by(MissionSession.created_at.desc())
             stmt = self._apply_session_scope(db, stmt, scope, organization_id)
             if status:
@@ -463,7 +466,7 @@ class AdminService:
         search: str | None = None,
         organization_id: str | None = None,
     ) -> list[dict[str, Any]]:
-        with session_scope() as db:
+        with self._session_scope() as db:
             stmt = (
                 select(Coupon)
                 .join(MissionSession, Coupon.mission_session_id == MissionSession.id)
@@ -493,7 +496,7 @@ class AdminService:
         search: str | None = None,
         organization_id: str | None = None,
     ) -> list[dict[str, Any]]:
-        with session_scope() as db:
+        with self._session_scope() as db:
             session_stmt = self._apply_session_scope(
                 db, select(MissionSession), scope, organization_id
             )

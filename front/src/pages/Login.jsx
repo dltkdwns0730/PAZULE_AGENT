@@ -9,19 +9,19 @@ const FLOW_STEPS = [
     step: '01',
     icon: Navigation,
     title: '힌트 확인',
-    desc: '오늘의 장소 힌트를 보고 현장 미션을 시작합니다.',
+    desc: '오늘의 장소 힌트를 확인하고 미션을 시작합니다.',
   },
   {
     step: '02',
     icon: MapPin,
-    title: '현장 인증',
-    desc: 'GPS와 사진 제출로 방문 여부를 검증합니다.',
+    title: '사진 제출',
+    desc: '현장에서 촬영한 사진으로 방문 여부를 검증합니다.',
   },
   {
     step: '03',
     icon: Ticket,
     title: '쿠폰 수령',
-    desc: 'AI 판정 성공 후 쿠폰 지갑에서 보상을 확인합니다.',
+    desc: '미션 성공 후 지갑에서 보상을 확인합니다.',
   },
 ];
 
@@ -50,16 +50,16 @@ function GoogleIcon() {
 
 function FlowStep({ step, icon: Icon, title, desc }) {
   return (
-    <div className="flex items-start gap-4 rounded-2xl border border-gray-100 bg-warm-cream p-4">
-      <div className="flex flex-col items-center gap-1.5">
-        <span className="text-[10px] font-black tracking-widest text-coral-end">{step}</span>
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-soft">
-          <Icon size={18} className="text-dark-teal" aria-hidden="true" />
+    <div className="flex items-start gap-3 rounded-xl border border-gray-100 bg-warm-cream px-3 py-2.5">
+      <div className="flex flex-col items-center gap-1">
+        <span className="text-[9px] font-black tracking-widest text-coral-end">{step}</span>
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-soft">
+          <Icon size={15} className="text-dark-teal" aria-hidden="true" />
         </div>
       </div>
-      <div className="flex-1 pt-1">
-        <p className="text-sm font-black text-dark-teal">{title}</p>
-        <p className="mt-0.5 text-xs leading-relaxed text-gray-500">{desc}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-black text-dark-teal">{title}</p>
+        <p className="mt-0.5 text-[11px] leading-snug text-gray-500">{desc}</p>
       </div>
     </div>
   );
@@ -93,75 +93,74 @@ export default function Login() {
   };
 
   return (
-    <div className="font-display flex min-h-screen bg-white text-dark-teal">
-      <main className="mx-auto flex min-h-screen w-full max-w-md flex-col px-6 pb-10 pt-12">
-        <header className="mb-8">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-dark-teal shadow-btn-strong">
-            <MapPin size={24} className="text-white" aria-hidden="true" />
+    <div className="font-display flex min-h-dvh bg-white text-dark-teal">
+      <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-5 py-6">
+        <header className="mb-4">
+          <div className="mb-2.5 flex h-11 w-11 items-center justify-center rounded-xl bg-dark-teal shadow-btn-strong">
+            <MapPin size={22} className="text-white" aria-hidden="true" />
           </div>
           <p className="text-[11px] font-black uppercase tracking-[0.2em] text-coral-end">
             PAZULE
           </p>
-          <h1 className="mt-2 text-3xl font-black leading-snug text-dark-teal">
-            현장에서 미션을
+          <h1 className="mt-1.5 text-2xl font-black leading-tight text-dark-teal">
+            현장에서 미션을 완료하고
             <br />
-            완료하고 <span className="text-coral-end">쿠폰</span>을 받으세요.
+            <span className="text-coral-end">쿠폰</span>을 받으세요.
           </h1>
-          <p className="mt-3 text-sm font-medium leading-relaxed text-gray-500">
-            데모 계정은 Supabase 키 없이도 사용자 앱과 관리자 콘솔 흐름을 확인할 수 있습니다.
-          </p>
         </header>
 
-        <section aria-label="미션 흐름" className="mb-6 space-y-3">
+        <section aria-label="미션 흐름" className="space-y-2">
           {FLOW_STEPS.map((s) => (
             <FlowStep key={s.step} {...s} />
           ))}
         </section>
 
-        <section className="mb-4 grid grid-cols-2 gap-3" aria-label="데모 로그인">
+        <div className="mt-4">
           <button
             type="button"
-            onClick={() => handleDemoLogin('user')}
-            className="flex h-14 items-center justify-center gap-2 rounded-xl bg-dark-teal px-3 text-sm font-black text-white shadow-btn transition-transform active:scale-[0.98]"
+            onClick={handleGoogleLogin}
+            disabled={isStarting}
+            aria-label="Google 계정으로 로그인"
+            className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-700 shadow-card transition-shadow hover:shadow-hover active:scale-[0.98] disabled:opacity-60"
           >
-            <Ticket size={18} aria-hidden="true" />
-            사용자 데모
+            {isStarting ? (
+              <span className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-dark-teal" />
+            ) : (
+              <GoogleIcon />
+            )}
+            {isStarting ? 'Google로 이동 중' : 'Google 계정으로 로그인'}
           </button>
-          <button
-            type="button"
-            onClick={() => handleDemoLogin('admin')}
-            className="flex h-14 items-center justify-center gap-2 rounded-xl bg-coral-end px-3 text-sm font-black text-white shadow-btn transition-transform active:scale-[0.98]"
-          >
-            <Building2 size={18} aria-hidden="true" />
-            관리자 데모
-          </button>
-        </section>
 
-        <button
-          type="button"
-          onClick={handleGoogleLogin}
-          disabled={isStarting}
-          aria-label="Google 계정으로 로그인"
-          className="flex h-14 w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-700 shadow-card transition-shadow hover:shadow-hover active:scale-[0.98] disabled:opacity-60"
-        >
-          {isStarting ? (
-            <span className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-dark-teal" />
-          ) : (
-            <GoogleIcon />
-          )}
-          {isStarting ? 'Google로 이동 중' : 'Google 계정으로 로그인'}
-        </button>
+          <section className="mt-3 grid grid-cols-2 gap-2.5" aria-label="데모 로그인">
+            <button
+              type="button"
+              onClick={() => handleDemoLogin('user')}
+              className="flex h-12 items-center justify-center gap-2 rounded-xl bg-dark-teal px-3 text-xs font-black text-white shadow-btn transition-transform active:scale-[0.98]"
+            >
+              <Ticket size={16} aria-hidden="true" />
+              사용자 데모
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDemoLogin('admin')}
+              className="flex h-12 items-center justify-center gap-2 rounded-xl bg-coral-end px-3 text-xs font-black text-white shadow-btn transition-transform active:scale-[0.98]"
+            >
+              <Building2 size={16} aria-hidden="true" />
+              관리자 데모
+            </button>
+          </section>
+        </div>
 
         {error ? (
           <p
             role="alert"
-            className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-bold leading-relaxed text-red-600"
+            className="mt-3 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-bold leading-relaxed text-red-600"
           >
             {error}
           </p>
         ) : null}
 
-        <p className="mt-auto flex items-center justify-center gap-1.5 pt-6 text-center text-xs font-medium text-gray-400">
+        <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[11px] font-medium text-gray-400">
           <ShieldCheck size={14} aria-hidden="true" />
           실서비스에서는 Supabase OAuth와 서버 JWT 검증을 사용합니다.
         </p>
