@@ -115,6 +115,9 @@ class Settings:
     BYPASS_MODEL_VALIDATION: bool = _env_or_profile(  # type: ignore[assignment]
         "BYPASS_MODEL_VALIDATION", bool
     )
+    DEMO_AUTH_ENABLED: bool = _env_or_profile(  # type: ignore[assignment]
+        "DEMO_AUTH_ENABLED", bool
+    )
 
     # --- 판정 임계값 ---
     LOCATION_PASS_THRESHOLD: float = _env_or_profile(  # type: ignore[assignment]

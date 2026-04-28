@@ -185,7 +185,46 @@ class TestMissionStartRoute:
             # legacy format check (atmosphere -> photo 등)
             assert data["mission_type"] == "location"
 
-    def test_mission_start_rejects_missing_gps(self, client):
+    def test_mission_start_demo_auth_skips_missing_gps(self, client, monkeypatch):
+        monkeypatch.setattr("app.api.routes.settings.DEMO_AUTH_ENABLED", True)
+        monkeypatch.setattr("app.api.routes.settings.SKIP_GPS_VALIDATION", False)
+        mock_answers = ("ans1", "ans2", "hint1", "hint2", "vqa1", "vqa2")
+        mock_session = {
+            "mission_id": "demo-mission",
+            "mission_type": "location",
+            "max_submissions": 3,
+            "expires_at": "2026-04-29T00:00:00Z",
+            "user_id": "guest",
+            "site_id": "default",
+            "answer": "ans1",
+            "hint": "hint1",
+        }
+
+        with (
+            patch("app.api.routes.get_today_answers", return_value=mock_answers),
+            patch(
+                "app.api.routes.verify_supabase_token", return_value=auth_principal()
+            ),
+            patch(
+                "app.api.routes.mission_session_service.create_session",
+                return_value=mock_session,
+            ),
+        ):
+            response = client.post(
+                "/api/mission/start",
+                json={"mission_type": "location"},
+                headers=AUTH_HEADERS,
+            )
+            data = response.get_json()
+
+            assert response.status_code == 200
+            assert data["mission_id"] == "demo-mission"
+            assert data["location_validation"]["allowed"] is True
+            assert data["location_validation"]["reason"] == "gps_validation_skipped"
+
+    def test_mission_start_rejects_missing_gps(self, client, monkeypatch):
+        monkeypatch.setattr("app.api.routes.settings.DEMO_AUTH_ENABLED", False)
+        monkeypatch.setattr("app.api.routes.settings.SKIP_GPS_VALIDATION", False)
         mock_answers = ("ans1", "ans2", "hint1", "hint2", "vqa1", "vqa2")
 
         with (
@@ -282,7 +321,9 @@ class TestMissionSubmitRoute:
         )
         mark_coupon_issued.assert_called_once_with("mission-1", "AUTO1234")
 
-    def test_submission_rejects_outside_gps_before_pipeline(self, client):
+    def test_submission_rejects_outside_gps_before_pipeline(self, client, monkeypatch):
+        monkeypatch.setattr("app.api.routes.settings.DEMO_AUTH_ENABLED", False)
+        monkeypatch.setattr("app.api.routes.settings.SKIP_GPS_VALIDATION", False)
         mock_session = {
             "mission_id": "mission-1",
             "mission_type": "location",

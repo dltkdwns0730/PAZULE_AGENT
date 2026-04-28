@@ -55,7 +55,7 @@ def distance_meters(lat1: float, lon1: float, lat2: float, lon2: float) -> float
 
 def validate_client_location(payload: dict[str, Any]) -> dict[str, Any]:
     """Validate client GPS against the configured mission site radius."""
-    if settings.SKIP_GPS_VALIDATION:
+    if settings.DEMO_AUTH_ENABLED or settings.SKIP_GPS_VALIDATION:
         return {
             "allowed": True,
             "reason": "gps_validation_skipped",

@@ -34,6 +34,7 @@ DEFAULT_PROFILE: dict[str, object] = {
     #   False → 실제 비전 모델 추론을 수행한다. (프로덕션 기본값)
     #
     "BYPASS_MODEL_VALIDATION": False,
+    "DEMO_AUTH_ENABLED": False,
     # ── 판정 임계값 (Decision Thresholds) ────────────────────
     #
     # LOCATION_PASS_THRESHOLD (float, 0.0 ~ 1.0)
@@ -149,6 +150,8 @@ PROFILES: dict[str, dict[str, object]] = {
         **DEFAULT_PROFILE,
         "SKIP_METADATA_VALIDATION": True,  # GPS·날짜 검증 건너뛰기
         "BYPASS_MODEL_VALIDATION": True,  # AI 추론 건너뛰기 (score=1.0)
+        "DEMO_AUTH_ENABLED": True,
+        "SKIP_GPS_VALIDATION": True,
     },
     # ── test ─────────────────────────────────────────────────
     # pytest 실행 환경. 모든 검증 로직이 활성화되어야 mock이
@@ -158,6 +161,8 @@ PROFILES: dict[str, dict[str, object]] = {
         **DEFAULT_PROFILE,
         "SKIP_METADATA_VALIDATION": False,  # 검증 활성화 (mock으로 대체)
         "BYPASS_MODEL_VALIDATION": False,  # 추론 활성화 (mock으로 대체)
+        "DEMO_AUTH_ENABLED": False,
+        "SKIP_GPS_VALIDATION": False,
     },
     # ── production ───────────────────────────────────────────
     # 실제 서비스 환경. 모든 검증·추론이 활성화된다.
@@ -166,6 +171,8 @@ PROFILES: dict[str, dict[str, object]] = {
         **DEFAULT_PROFILE,
         "SKIP_METADATA_VALIDATION": False,  # 실제 EXIF 검증
         "BYPASS_MODEL_VALIDATION": False,  # 실제 AI 모델 추론
+        "DEMO_AUTH_ENABLED": False,
+        "SKIP_GPS_VALIDATION": False,
     },
 }
 

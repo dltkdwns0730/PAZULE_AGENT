@@ -18,12 +18,14 @@ class TestEnvironmentProfile:
         profile = get_profile("development")
         assert profile["SKIP_METADATA_VALIDATION"] is True
         assert profile["BYPASS_MODEL_VALIDATION"] is True
+        assert profile["SKIP_GPS_VALIDATION"] is True
 
     def test_test_profile_disables_all_bypass_flags(self):
         """test 프로필은 두 bypass 플래그를 False로 설정한다 (mock 활성화)."""
         profile = get_profile("test")
         assert profile["SKIP_METADATA_VALIDATION"] is False
         assert profile["BYPASS_MODEL_VALIDATION"] is False
+        assert profile["SKIP_GPS_VALIDATION"] is False
 
 
 class TestSettingsEnvPriority:
