@@ -84,9 +84,15 @@ export function useMission() {
 
         try {
             const location = await getCurrentPosition();
-            formData.append('client_lat', location.client_lat);
-            formData.append('client_lng', location.client_lng);
-            formData.append('accuracy_meters', location.accuracy_meters);
+            if (location.client_lat != null) {
+                formData.append('client_lat', location.client_lat);
+            }
+            if (location.client_lng != null) {
+                formData.append('client_lng', location.client_lng);
+            }
+            if (location.accuracy_meters != null) {
+                formData.append('accuracy_meters', location.accuracy_meters);
+            }
             const auth = requireAuth();
             const result = await api.submitMission(formData, auth.accessToken);
             store.setSubmissionResult(result);

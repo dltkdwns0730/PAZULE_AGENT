@@ -4,6 +4,7 @@ import {
   getUserFromAccessToken,
   startGoogleOAuth,
   parseOAuthCallback,
+  createDemoSession,
 } from '../../services/supabaseAuth';
 
 describe('supabaseAuth', () => {
@@ -94,6 +95,37 @@ describe('supabaseAuth', () => {
       userId: 'supabase-user-id',
       email: 'a@b.test',
       isAdmin: false,
+    });
+  });
+
+  it('creates demo user and admin sessions without Supabase config', () => {
+    expect(createDemoSession('user')).toMatchObject({
+      accessToken: 'demo-user-token',
+      userId: 'demo-user',
+      email: 'demo-user@pazule.demo',
+      isAdmin: false,
+      isDemo: true,
+    });
+
+    expect(createDemoSession('admin')).toMatchObject({
+      accessToken: 'demo-admin-token',
+      userId: 'demo-admin',
+      email: 'demo-admin@pazule.demo',
+      isAdmin: true,
+      isDemo: true,
+    });
+  });
+
+  it('extracts demo principals from demo access tokens', () => {
+    expect(getUserFromAccessToken('demo-user-token')).toEqual({
+      userId: 'demo-user',
+      email: 'demo-user@pazule.demo',
+      isAdmin: false,
+    });
+    expect(getUserFromAccessToken('demo-admin-token')).toEqual({
+      userId: 'demo-admin',
+      email: 'demo-admin@pazule.demo',
+      isAdmin: true,
     });
   });
 
