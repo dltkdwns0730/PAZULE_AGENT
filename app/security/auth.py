@@ -21,7 +21,7 @@ class AuthPrincipal:
     @property
     def is_admin(self) -> bool:
         app_metadata = self.claims.get("app_metadata") or {}
-        return app_metadata.get("role") == "admin"
+        return app_metadata.get("role") in {"admin", "platform_master"}
 
 
 def extract_bearer_token(authorization_header: str | None) -> str:
@@ -49,6 +49,20 @@ def _require_pyjwt():
 
 def verify_supabase_token(token: str) -> AuthPrincipal:
     """Verify a Supabase access token and return the authenticated principal."""
+    if settings.DEMO_AUTH_ENABLED and token in {"demo-user-token", "demo-admin-token"}:
+        role = "platform_master" if token == "demo-admin-token" else "user"
+        user_id = "demo-admin" if token == "demo-admin-token" else "demo-user"
+        return AuthPrincipal(
+            user_id=user_id,
+            email=f"{user_id}@pazule.demo",
+            claims={
+                "sub": user_id,
+                "email": f"{user_id}@pazule.demo",
+                "app_metadata": {"role": role},
+                "demo": True,
+            },
+        )
+
     if not settings.SUPABASE_JWKS_URL:
         raise AuthError("supabase_jwks_url_not_configured")
 

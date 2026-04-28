@@ -7,6 +7,9 @@ def test_distance_meters_zero_for_same_coordinate():
 
 def test_validate_client_location_allows_inside_radius(monkeypatch):
     monkeypatch.setattr(
+        "app.services.location_service.settings.DEMO_AUTH_ENABLED", False
+    )
+    monkeypatch.setattr(
         "app.services.location_service.settings.SKIP_GPS_VALIDATION", False
     )
     monkeypatch.setattr(
@@ -35,6 +38,9 @@ def test_validate_client_location_allows_inside_radius(monkeypatch):
 
 
 def test_validate_client_location_rejects_outside_radius(monkeypatch):
+    monkeypatch.setattr(
+        "app.services.location_service.settings.DEMO_AUTH_ENABLED", False
+    )
     monkeypatch.setattr(
         "app.services.location_service.settings.SKIP_GPS_VALIDATION", False
     )
@@ -65,6 +71,9 @@ def test_validate_client_location_rejects_outside_radius(monkeypatch):
 
 def test_validate_client_location_rejects_missing_gps(monkeypatch):
     monkeypatch.setattr(
+        "app.services.location_service.settings.DEMO_AUTH_ENABLED", False
+    )
+    monkeypatch.setattr(
         "app.services.location_service.settings.SKIP_GPS_VALIDATION", False
     )
 
@@ -75,6 +84,9 @@ def test_validate_client_location_rejects_missing_gps(monkeypatch):
 
 
 def test_validate_client_location_rejects_low_accuracy(monkeypatch):
+    monkeypatch.setattr(
+        "app.services.location_service.settings.DEMO_AUTH_ENABLED", False
+    )
     monkeypatch.setattr(
         "app.services.location_service.settings.SKIP_GPS_VALIDATION", False
     )
@@ -96,7 +108,24 @@ def test_validate_client_location_rejects_low_accuracy(monkeypatch):
 
 def test_validate_client_location_can_skip(monkeypatch):
     monkeypatch.setattr(
+        "app.services.location_service.settings.DEMO_AUTH_ENABLED", False
+    )
+    monkeypatch.setattr(
         "app.services.location_service.settings.SKIP_GPS_VALIDATION", True
+    )
+
+    result = validate_client_location({})
+
+    assert result["allowed"] is True
+    assert result["reason"] == "gps_validation_skipped"
+
+
+def test_validate_client_location_skips_in_demo_auth(monkeypatch):
+    monkeypatch.setattr(
+        "app.services.location_service.settings.DEMO_AUTH_ENABLED", True
+    )
+    monkeypatch.setattr(
+        "app.services.location_service.settings.SKIP_GPS_VALIDATION", False
     )
 
     result = validate_client_location({})

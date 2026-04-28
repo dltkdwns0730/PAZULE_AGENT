@@ -80,9 +80,13 @@ def _require_admin_principal() -> AuthPrincipal:
     return principal
 
 
-def _admin_or_error() -> tuple[AuthPrincipal | None, tuple[Response, int] | None]:
+def _admin_scope_or_error():
     try:
-        return _require_admin_principal(), None
+        principal = _require_auth_principal()
+        scope = admin_service.resolve_scope(principal)
+        if not scope.is_platform_master and not scope.organization_ids:
+            raise PermissionError("admin_required")
+        return scope, None
     except AuthError as exc:
         return None, _auth_error_response(exc)
     except PermissionError as exc:
@@ -478,30 +482,44 @@ def get_user_coupons() -> Response:
 
 @api.route("/api/admin/summary", methods=["GET"])
 def admin_summary() -> Response:
-    _, error = _admin_or_error()
+    scope, error = _admin_scope_or_error()
     if error:
         return error
-    return jsonify(admin_service.get_summary())
+    return jsonify(
+        admin_service.get_summary(
+            scope, organization_id=request.args.get("organization_id") or None
+        )
+    )
+
+
+@api.route("/api/admin/organizations", methods=["GET"])
+def admin_organizations() -> Response:
+    scope, error = _admin_scope_or_error()
+    if error:
+        return error
+    return jsonify(admin_service.list_organizations(scope))
 
 
 @api.route("/api/admin/mission-sessions", methods=["GET"])
 def admin_mission_sessions() -> Response:
-    _, error = _admin_or_error()
+    scope, error = _admin_scope_or_error()
     if error:
         return error
     rows = admin_service.list_mission_sessions(
+        scope,
         status=request.args.get("status") or None,
         search=request.args.get("search") or None,
+        organization_id=request.args.get("organization_id") or None,
     )
     return jsonify(rows)
 
 
 @api.route("/api/admin/mission-sessions/<mission_id>", methods=["GET"])
 def admin_mission_session_detail(mission_id: str) -> Response:
-    _, error = _admin_or_error()
+    scope, error = _admin_scope_or_error()
     if error:
         return error
-    row = admin_service.get_mission_session(mission_id)
+    row = admin_service.get_mission_session(scope, mission_id)
     if not row:
         return jsonify({"error": "mission_session_not_found"}), 404
     return jsonify(row)
@@ -509,31 +527,41 @@ def admin_mission_session_detail(mission_id: str) -> Response:
 
 @api.route("/api/admin/coupons", methods=["GET"])
 def admin_coupons() -> Response:
-    _, error = _admin_or_error()
+    scope, error = _admin_scope_or_error()
     if error:
         return error
     rows = admin_service.list_coupons(
+        scope,
         status=request.args.get("status") or None,
         search=request.args.get("search") or None,
+        organization_id=request.args.get("organization_id") or None,
     )
     return jsonify(rows)
 
 
 @api.route("/api/admin/coupons/<code>/redeem", methods=["POST"])
 def admin_coupon_redeem(code: str) -> Response:
-    _, error = _admin_or_error()
+    scope, error = _admin_scope_or_error()
     if error:
         return error
     payload = request.get_json(silent=True) or {}
     partner_pos_id = payload.get("partner_pos_id") or "ADMIN-CONSOLE"
-    result = admin_service.redeem_coupon(code, partner_pos_id)
+    result = admin_service.redeem_coupon(scope, code, partner_pos_id)
+    if result.get("redeem_status") == "forbidden":
+        return jsonify(result), 403
     status = 200 if result.get("redeem_status") == "redeemed" else 400
     return jsonify(result), status
 
 
 @api.route("/api/admin/users", methods=["GET"])
 def admin_users() -> Response:
-    _, error = _admin_or_error()
+    scope, error = _admin_scope_or_error()
     if error:
         return error
-    return jsonify(admin_service.list_users(search=request.args.get("search") or None))
+    return jsonify(
+        admin_service.list_users(
+            scope,
+            search=request.args.get("search") or None,
+            organization_id=request.args.get("organization_id") or None,
+        )
+    )
