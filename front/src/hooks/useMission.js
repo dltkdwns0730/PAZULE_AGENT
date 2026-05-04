@@ -35,8 +35,7 @@ export function useMission() {
             };
             store.setPreviewHint(missionType, hintData);
             return hintData;
-        } catch (err) {
-            console.error('Failed to fetch hint:', err);
+        } catch {
             store.setPreviewHint(missionType, null);
             return null;
         } finally {

@@ -12,11 +12,7 @@ from typing import Any, Callable
 from app.core.config import settings
 from app.core.utils import normalize_mission_type
 from app.db.repositories import MissionSessionRepository
-
-
-def _utcnow() -> datetime:
-    """현재 UTC 시각을 반환한다."""
-    return datetime.now(timezone.utc)
+from app.db.utils import _utcnow
 
 
 class MissionSessionService:
@@ -375,8 +371,6 @@ class MissionSessionService:
             if session.get("user_id") != user_id
         ]
         self._write_all(data)
-        # 해당 사용자의 세션인 경우 필터링 로직 적용
-        # 오늘 성공한 미션 세션은 보존
 
     @staticmethod
     def hash_file(file_path: str) -> str:

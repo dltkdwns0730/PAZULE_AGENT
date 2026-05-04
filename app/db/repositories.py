@@ -23,17 +23,22 @@ from app.db.models import (
     UserProfile,
 )
 from app.db.session import session_scope
+from app.db.utils import _iso, _utcnow
 
 
 DEFAULT_ORG_ID = "00000000-0000-0000-0000-000000000001"
 
 
-def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
-
-
-def _iso(value: datetime | None) -> str | None:
-    return value.isoformat() if value else None
+def _find_session(db, mission_id: str) -> "MissionSession | None":
+    """mission_id 또는 legacy_mission_id로 MissionSession을 조회한다."""
+    return db.scalar(
+        select(MissionSession)
+        .where(
+            (MissionSession.legacy_mission_id == mission_id)
+            | (MissionSession.id == mission_id)
+        )
+        .limit(1)
+    )
 
 
 def _as_aware(value: datetime) -> datetime:
@@ -117,14 +122,14 @@ class MissionSessionRepository:
 
     def get_session(self, mission_id: str) -> dict[str, Any] | None:
         with session_scope(self.database_url) as db:
-            model = self._find_session(db, mission_id)
+            model = _find_session(db, mission_id)
             if not model:
                 return None
             return self._to_dict(db, model)
 
     def can_submit(self, mission_id: str) -> tuple[bool, str]:
         with session_scope(self.database_url) as db:
-            model = self._find_session(db, mission_id)
+            model = _find_session(db, mission_id)
             if not model:
                 return False, "session_not_found"
             if _utcnow() > _as_aware(model.expires_at):
@@ -138,7 +143,7 @@ class MissionSessionRepository:
         self, mission_id: str, image_hash: str, result: dict[str, Any]
     ) -> dict[str, Any] | None:
         with session_scope(self.database_url) as db:
-            model = self._find_session(db, mission_id)
+            model = _find_session(db, mission_id)
             if not model:
                 return None
             db.add(
@@ -162,7 +167,7 @@ class MissionSessionRepository:
         self, mission_id: str, coupon_code: str
     ) -> dict[str, Any] | None:
         with session_scope(self.database_url) as db:
-            model = self._find_session(db, mission_id)
+            model = _find_session(db, mission_id)
             if not model:
                 return None
             model.coupon_code = coupon_code
@@ -272,16 +277,6 @@ class MissionSessionRepository:
             for row in [*submissions, *coupons, *events, *rows]:
                 db.delete(row)
 
-    def _find_session(self, db, mission_id: str) -> MissionSession | None:
-        return db.scalar(
-            select(MissionSession)
-            .where(
-                (MissionSession.legacy_mission_id == mission_id)
-                | (MissionSession.id == mission_id)
-            )
-            .limit(1)
-        )
-
     def _submission_count(self, db, session_id: str) -> int:
         return int(
             db.scalar(
@@ -346,7 +341,7 @@ class CouponRepository:
             _ensure_user_profile(db, user_id)
             mission_session = None
             if mission_id:
-                mission_session = self._find_session(db, mission_id)
+                mission_session = _find_session(db, mission_id)
                 if mission_session:
                     existing = self._find_by_session_id(db, mission_session.id)
                     if existing:
@@ -431,16 +426,6 @@ class CouponRepository:
             rows = db.scalars(select(Coupon).where(Coupon.user_id == user_id)).all()
             for row in rows:
                 db.delete(row)
-
-    def _find_session(self, db, mission_id: str) -> MissionSession | None:
-        return db.scalar(
-            select(MissionSession)
-            .where(
-                (MissionSession.legacy_mission_id == mission_id)
-                | (MissionSession.id == mission_id)
-            )
-            .limit(1)
-        )
 
     def _find_by_session_id(self, db, session_id: str) -> Coupon | None:
         return db.scalar(
