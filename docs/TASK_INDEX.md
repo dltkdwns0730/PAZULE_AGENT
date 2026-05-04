@@ -37,4 +37,5 @@
 | 2026-04-28 | v3.3.3 | Current-state documentation consistency | COMPLETED | `docs/tasks/2026/04/2026-04-28_v3.3.3_current-state-doc-consistency.md` |
 | 2026-04-28 | v3.3.4 | Clone-and-run demo mode | COMPLETED | `docs/tasks/2026/04/2026-04-28_v3.3.4_clone-and-run-demo-mode.md` |
 | 2026-04-29 | v3.3.5 | Environment template cleanup | COMPLETED | `docs/tasks/2026/04/2026-04-29_v3.3.5_env-template-cleanup.md` |
+| 2026-05-04 | v3.3.6 | Login height scroll fix | COMPLETED | `docs/tasks/2026/05/2026-05-04_v3.3.6_login-height-scroll-fix.md` |
 
