@@ -57,3 +57,8 @@ front/dist/
 
 # AI Agents
 .claude/
+
+# Internal scripts (business logic / debug tools — not for public repo)
+scripts/debug/
+scripts/tools/
+scripts/benchmarks/
