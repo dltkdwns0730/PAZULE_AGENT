@@ -19,13 +19,10 @@ from app.db.models import (
     UserProfile,
 )
 from app.db.session import session_scope
+from app.db.utils import _iso
 from app.security.auth import AuthPrincipal
 from app.services.coupon_service import coupon_service
 from app.services.mission_session_service import mission_session_service
-
-
-def _iso(value: datetime | None) -> str | None:
-    return value.isoformat() if value else None
 
 
 def _parse_dt(value: str | None) -> datetime:
