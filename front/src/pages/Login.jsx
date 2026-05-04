@@ -93,8 +93,11 @@ export default function Login() {
   };
 
   return (
-    <div className="font-display flex min-h-dvh bg-white text-dark-teal">
-      <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-5 py-6">
+    <div
+      data-testid="login-screen"
+      className="font-display flex h-full min-h-0 overflow-y-auto bg-white text-dark-teal"
+    >
+      <main className="mx-auto flex min-h-full w-full max-w-md flex-col justify-center px-5 py-6">
         <header className="mb-4">
           <div className="mb-2.5 flex h-11 w-11 items-center justify-center rounded-xl bg-dark-teal shadow-btn-strong">
             <MapPin size={22} className="text-white" aria-hidden="true" />

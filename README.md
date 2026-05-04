@@ -100,6 +100,13 @@ npm run dev
 | 저장소 | `STORAGE_BACKEND=json`으로 로컬 `data/` 파일 사용 |
 | AI/메타데이터 | development 기본값에서 `BYPASS_MODEL_VALIDATION=true`, `SKIP_METADATA_VALIDATION=true` |
 
+Demo mode is intended for checking the product flow only. When
+`BYPASS_MODEL_VALIDATION=true`, the backend skips real SigLIP2/BLIP/Qwen model
+inference and uses the demo bypass decision path instead. Demo pass rates,
+`confidence`, and `model_votes` must not be interpreted as AI model accuracy
+metrics. Validate real model behavior with `BYPASS_MODEL_VALIDATION=false` and
+the required API keys or local model environment configured.
+
 실서비스 방식으로 실행하려면 `.env.example`을 참고해 Supabase와 AI provider 값을 채우고 `PAZULE_ENV=production`, `DEMO_AUTH_ENABLED=false`, `STORAGE_BACKEND=db`를 사용합니다.
 
 ## Verification
