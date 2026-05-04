@@ -55,8 +55,7 @@ export default function Scan() {
                 const err = await response.json();
                 alert(err.message || '쿠폰 사용에 실패했습니다.');
             }
-        } catch (error) {
-            console.error('Redeem failed:', error);
+        } catch {
             alert('네트워크 오류가 발생했습니다.');
         }
     };
