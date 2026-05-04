@@ -72,7 +72,8 @@
 from flask import Flask
 from flask_cors import CORS
 
-from app.api.routes import api
+from app.api.admin_routes import admin_api
+from app.api.user_routes import user_api
 from app.core.config import settings
 
 
@@ -95,7 +96,8 @@ def create_app():
 
     app = Flask(__name__)
     CORS(app)
-    app.register_blueprint(api)
+    app.register_blueprint(user_api)
+    app.register_blueprint(admin_api)
     return app
 
 

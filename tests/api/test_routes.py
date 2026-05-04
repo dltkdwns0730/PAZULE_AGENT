@@ -3,7 +3,7 @@ import io
 import pytest
 from flask import Flask
 from unittest.mock import patch
-from app.api.routes import api
+from app.api.user_routes import user_api as api
 from app.security.auth import AuthPrincipal
 
 
@@ -38,9 +38,10 @@ class TestHintRoute:
         """location 미션 힌트 요청 시 200과 정답/힌트를 반환한다."""
         mock_answers = ("ans1", "ans2", "hint1", "hint2", "vqa1", "vqa2")
         with (
-            patch("app.api.routes.get_today_answers", return_value=mock_answers),
+            patch("app.api.user_routes.get_today_answers", return_value=mock_answers),
             patch(
-                "app.api.routes.verify_supabase_token", return_value=auth_principal()
+                "app.api.user_routes.verify_supabase_token",
+                return_value=auth_principal(),
             ),
         ):
             response = client.get(
@@ -56,9 +57,10 @@ class TestHintRoute:
         """atmosphere 미션 힌트 요청 시 ans2/hint2를 반환한다."""
         mock_answers = ("ans1", "ans2", "hint1", "hint2", "vqa1", "vqa2")
         with (
-            patch("app.api.routes.get_today_answers", return_value=mock_answers),
+            patch("app.api.user_routes.get_today_answers", return_value=mock_answers),
             patch(
-                "app.api.routes.verify_supabase_token", return_value=auth_principal()
+                "app.api.user_routes.verify_supabase_token",
+                return_value=auth_principal(),
             ),
         ):
             response = client.get(
@@ -74,10 +76,12 @@ class TestHintRoute:
         """내부 에러 발생 시 500을 반환한다."""
         with (
             patch(
-                "app.api.routes.get_today_answers", side_effect=Exception("DB Error")
+                "app.api.user_routes.get_today_answers",
+                side_effect=Exception("DB Error"),
             ),
             patch(
-                "app.api.routes.verify_supabase_token", return_value=auth_principal()
+                "app.api.user_routes.verify_supabase_token",
+                return_value=auth_principal(),
             ),
         ):
             response = client.get("/get-today-hint", headers=AUTH_HEADERS)
@@ -116,13 +120,13 @@ class TestMissionStartRoute:
         }
 
         with (
-            patch("app.api.routes.get_today_answers", return_value=mock_answers),
+            patch("app.api.user_routes.get_today_answers", return_value=mock_answers),
             patch(
-                "app.api.routes.verify_supabase_token",
+                "app.api.user_routes.verify_supabase_token",
                 return_value=auth_principal("auth-user"),
             ),
             patch(
-                "app.api.routes.mission_session_service.create_session",
+                "app.api.user_routes.mission_session_service.create_session",
                 return_value=mock_session,
             ) as create_session,
         ):
@@ -157,12 +161,13 @@ class TestMissionStartRoute:
         }
 
         with (
-            patch("app.api.routes.get_today_answers", return_value=mock_answers),
+            patch("app.api.user_routes.get_today_answers", return_value=mock_answers),
             patch(
-                "app.api.routes.verify_supabase_token", return_value=auth_principal()
+                "app.api.user_routes.verify_supabase_token",
+                return_value=auth_principal(),
             ),
             patch(
-                "app.api.routes.mission_session_service.create_session",
+                "app.api.user_routes.mission_session_service.create_session",
                 return_value=mock_session,
             ),
         ):
@@ -186,8 +191,8 @@ class TestMissionStartRoute:
             assert data["mission_type"] == "location"
 
     def test_mission_start_demo_auth_skips_missing_gps(self, client, monkeypatch):
-        monkeypatch.setattr("app.api.routes.settings.DEMO_AUTH_ENABLED", True)
-        monkeypatch.setattr("app.api.routes.settings.SKIP_GPS_VALIDATION", False)
+        monkeypatch.setattr("app.api.user_routes.settings.DEMO_AUTH_ENABLED", True)
+        monkeypatch.setattr("app.api.user_routes.settings.SKIP_GPS_VALIDATION", False)
         mock_answers = ("ans1", "ans2", "hint1", "hint2", "vqa1", "vqa2")
         mock_session = {
             "mission_id": "demo-mission",
@@ -201,12 +206,13 @@ class TestMissionStartRoute:
         }
 
         with (
-            patch("app.api.routes.get_today_answers", return_value=mock_answers),
+            patch("app.api.user_routes.get_today_answers", return_value=mock_answers),
             patch(
-                "app.api.routes.verify_supabase_token", return_value=auth_principal()
+                "app.api.user_routes.verify_supabase_token",
+                return_value=auth_principal(),
             ),
             patch(
-                "app.api.routes.mission_session_service.create_session",
+                "app.api.user_routes.mission_session_service.create_session",
                 return_value=mock_session,
             ),
         ):
@@ -223,14 +229,15 @@ class TestMissionStartRoute:
             assert data["location_validation"]["reason"] == "gps_validation_skipped"
 
     def test_mission_start_rejects_missing_gps(self, client, monkeypatch):
-        monkeypatch.setattr("app.api.routes.settings.DEMO_AUTH_ENABLED", False)
-        monkeypatch.setattr("app.api.routes.settings.SKIP_GPS_VALIDATION", False)
+        monkeypatch.setattr("app.api.user_routes.settings.DEMO_AUTH_ENABLED", False)
+        monkeypatch.setattr("app.api.user_routes.settings.SKIP_GPS_VALIDATION", False)
         mock_answers = ("ans1", "ans2", "hint1", "hint2", "vqa1", "vqa2")
 
         with (
-            patch("app.api.routes.get_today_answers", return_value=mock_answers),
+            patch("app.api.user_routes.get_today_answers", return_value=mock_answers),
             patch(
-                "app.api.routes.verify_supabase_token", return_value=auth_principal()
+                "app.api.user_routes.verify_supabase_token",
+                return_value=auth_principal(),
             ),
         ):
             payload = {"mission_type": "location", "user_id": "test_user"}
@@ -275,24 +282,28 @@ class TestMissionSubmitRoute:
 
         with (
             patch(
-                "app.api.routes.verify_supabase_token", return_value=auth_principal()
+                "app.api.user_routes.verify_supabase_token",
+                return_value=auth_principal(),
             ),
             patch(
-                "app.api.routes.mission_session_service.can_submit",
+                "app.api.user_routes.mission_session_service.can_submit",
                 return_value=(True, "ok"),
             ),
             patch(
-                "app.api.routes.mission_session_service.get_session",
+                "app.api.user_routes.mission_session_service.get_session",
                 return_value=mock_session,
             ),
-            patch("app.api.routes._validate_upload", return_value=(True, ".jpg")),
-            patch("app.api.routes.pipeline_app.invoke", return_value=pipeline_output),
-            patch("app.api.routes.mission_session_service.record_submission"),
+            patch("app.api.user_routes._validate_upload", return_value=(True, ".jpg")),
             patch(
-                "app.api.routes.coupon_service.issue_coupon", return_value=mock_coupon
+                "app.api.user_routes.pipeline_app.invoke", return_value=pipeline_output
+            ),
+            patch("app.api.user_routes.mission_session_service.record_submission"),
+            patch(
+                "app.api.user_routes.coupon_service.issue_coupon",
+                return_value=mock_coupon,
             ) as issue_coupon,
             patch(
-                "app.api.routes.mission_session_service.mark_coupon_issued"
+                "app.api.user_routes.mission_session_service.mark_coupon_issued"
             ) as mark_coupon_issued,
         ):
             response = client.post(
@@ -322,8 +333,8 @@ class TestMissionSubmitRoute:
         mark_coupon_issued.assert_called_once_with("mission-1", "AUTO1234")
 
     def test_submission_rejects_outside_gps_before_pipeline(self, client, monkeypatch):
-        monkeypatch.setattr("app.api.routes.settings.DEMO_AUTH_ENABLED", False)
-        monkeypatch.setattr("app.api.routes.settings.SKIP_GPS_VALIDATION", False)
+        monkeypatch.setattr("app.api.user_routes.settings.DEMO_AUTH_ENABLED", False)
+        monkeypatch.setattr("app.api.user_routes.settings.SKIP_GPS_VALIDATION", False)
         mock_session = {
             "mission_id": "mission-1",
             "mission_type": "location",
@@ -335,17 +346,18 @@ class TestMissionSubmitRoute:
 
         with (
             patch(
-                "app.api.routes.verify_supabase_token", return_value=auth_principal()
+                "app.api.user_routes.verify_supabase_token",
+                return_value=auth_principal(),
             ),
             patch(
-                "app.api.routes.mission_session_service.can_submit",
+                "app.api.user_routes.mission_session_service.can_submit",
                 return_value=(True, "ok"),
             ),
             patch(
-                "app.api.routes.mission_session_service.get_session",
+                "app.api.user_routes.mission_session_service.get_session",
                 return_value=mock_session,
             ),
-            patch("app.api.routes.pipeline_app.invoke") as invoke,
+            patch("app.api.user_routes.pipeline_app.invoke") as invoke,
         ):
             response = client.post(
                 "/api/mission/submit",
@@ -373,7 +385,7 @@ class TestCouponRedeemRoute:
         """쿠폰 사용 성공 시 200을 반환한다."""
         mock_result = {"redeem_status": "redeemed", "message": "Success"}
         with patch(
-            "app.api.routes.coupon_service.redeem_coupon", return_value=mock_result
+            "app.api.user_routes.coupon_service.redeem_coupon", return_value=mock_result
         ):
             payload = {"coupon_code": "ABC-123", "partner_pos_id": "POS-01"}
             response = client.post("/api/coupon/redeem", json=payload)
@@ -385,7 +397,7 @@ class TestCouponRedeemRoute:
         """이미 사용된 쿠폰은 400(또는 로직에 따른 코드)을 반환한다."""
         mock_result = {"redeem_status": "already_redeemed", "message": "Already used"}
         with patch(
-            "app.api.routes.coupon_service.redeem_coupon", return_value=mock_result
+            "app.api.user_routes.coupon_service.redeem_coupon", return_value=mock_result
         ):
             payload = {"coupon_code": "USED-01", "partner_pos_id": "POS-01"}
             response = client.post("/api/coupon/redeem", json=payload)
