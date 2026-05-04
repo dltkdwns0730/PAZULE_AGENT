@@ -109,6 +109,7 @@ the required API keys or local model environment configured.
 
 실서비스 방식으로 실행하려면 `.env.example`을 참고해 Supabase와 AI provider 값을 채우고 `PAZULE_ENV=production`, `DEMO_AUTH_ENABLED=false`, `STORAGE_BACKEND=db`를 사용합니다.
 
+
 ## Verification
 
 ```bash
