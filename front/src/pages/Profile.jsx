@@ -112,8 +112,8 @@ export default function Profile() {
       }
       try {
         setStats(await api.getUserStats(userId, accessToken));
-      } catch (error) {
-        console.error('Failed to load profile stats:', error);
+      } catch {
+        // 프로필 통계 로드 실패 — 빈 상태 유지
       } finally {
         setIsLoading(false);
       }
@@ -127,8 +127,7 @@ export default function Profile() {
       await api.resetUserData(userId, accessToken);
       resetAll();
       navigate('/');
-    } catch (error) {
-      console.error('Failed to reset user data:', error);
+    } catch {
       alert('초기화 중 오류가 발생했습니다.');
     }
   };

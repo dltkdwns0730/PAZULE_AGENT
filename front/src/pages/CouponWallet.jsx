@@ -23,8 +23,8 @@ export default function CouponWallet() {
                 new Date(b.issued_at) - new Date(a.issued_at)
             );
             setCoupons(sorted);
-        } catch (error) {
-            console.error('쿠폰 로드 실패:', error);
+        } catch {
+            // 쿠폰 목록 로드 실패 — 빈 상태 유지
         } finally {
             setIsLoading(false);
         }

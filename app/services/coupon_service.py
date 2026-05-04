@@ -266,13 +266,11 @@ class CouponService:
             return self._db_repository.get_user_coupons(user_id)
 
         data = self._read_all()
-        # 쿠폰 객체에 저장된 user_id를 직접 확인 (새로운 방식)
-        # 또는 mission_id를 통해 세션 데이터와 대조 (기존 방식 보완)
         user_coupons = [
             c for c in data.get("coupons", []) if c.get("user_id") == user_id
         ]
 
-        # 하위 호환성을 위해: user_id가 없는 예전 쿠폰들은 세션 데이터를 통해 한 번 더 확인
+        # 레거시 guest 세션 데이터와 병합: user_id 필드 없이 저장된 구형 쿠폰 보완
         if user_id == "guest":
             from app.services.mission_session_service import mission_session_service
 
@@ -325,9 +323,6 @@ class CouponService:
             if c.get("user_id") != user_id
             and c.get("mission_id") not in user_mission_ids
         ]
-
-        # 하위 호환성 (user_id가 guest인 경우 세션 연동 데이터까지 고려해야 할 수 있으나,
-        # 초기화 시점에는 명시적으로 user_id 기반 삭제만 수행함이 안전함)
 
         data["coupons"] = filtered_coupons
         self._write_all(data)
