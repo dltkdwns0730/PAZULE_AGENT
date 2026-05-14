@@ -21,7 +21,7 @@ export default function MissionResult() {
         navigate('/');
     };
 
-    const { success, score, message, error } = submissionResult ?? {};
+    const { success, score, message, error, hint } = submissionResult ?? {};
     const isSuccess = Boolean(success);
     const matchPercentage = score !== undefined ? (score * 100).toFixed(0) : (isSuccess ? '100' : '0');
 
@@ -173,7 +173,7 @@ export default function MissionResult() {
                         </div>
                         <h1 className="text-[#37776f] text-[28px] font-bold leading-tight mb-3 tracking-tight">인증 실패</h1>
                         <p className="text-slate-500 text-base font-medium leading-relaxed max-w-[280px]">
-                            {message || error || "대상을 찾을 수 없습니다. 사진에서 예상되는 특정 기능을 식별할 수 없었습니다."}
+                            {hint || message || error || "사진을 다시 확인해 주세요. 미션 대상이 화면에 충분히 보이도록 촬영하면 성공 가능성이 높아집니다."}
                         </p>
                     </div>
 
