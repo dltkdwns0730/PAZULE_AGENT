@@ -71,6 +71,27 @@ npm run dev
 
 브라우저에서 `http://localhost:5173`으로 접속합니다.
 
+## Demo Screenshots
+
+아래 이미지는 데모 모드에서 실제 구동 화면을 캡처한 것입니다.
+
+  <table>
+    <tr>
+      <th>로그인/데모 진입</th>
+      <th>사용자 미션 홈</th>
+      <th>쿠폰 지갑</th>
+      <th>관리자 대시보드</th>
+      <th>관리자 쿠폰 관리</th>
+    </tr>
+    <tr>
+      <td><img src="./docs/screenshots/01-login-demo-buttons.png" alt="로그인 화면" width="150"></td>
+      <td><img src="./docs/screenshots/02-user-mission-home.png" alt="사용자 미션 홈" width="150"></td>
+      <td><img src="./docs/screenshots/03-user-coupon-wallet.png" alt="쿠폰 지갑" width="150"></td>
+      <td><img src="./docs/screenshots/04-admin-dashboard.png" alt="관리자 대시보드" width="150"></td>
+      <td><img src="./docs/screenshots/05-admin-coupons.png" alt="관리자 쿠폰 관리" width="150"></td>
+    </tr>
+  </table>
+
 ## What to Test
 
 ### 사용자 데모
@@ -94,27 +115,6 @@ npm run dev
 - AI 파이프라인: LangGraph 기반 validator, evaluator, aggregator, judge, policy 흐름.
 - 운영 기능: 쿠폰 발급/리딤, 사용자 지갑, 관리자 콘솔, 기업 스코프.
 - 품질 관리: pytest, Vitest, ruff, ESLint, GitHub Actions, Docker 구성.
-
-## Demo Screenshots
-
-아래 이미지는 데모 모드에서 실제 구동 화면을 캡처한 것입니다.
-
-  <table>
-    <tr>
-      <th>로그인/데모 진입</th>
-      <th>사용자 미션 홈</th>
-      <th>쿠폰 지갑</th>
-      <th>관리자 대시보드</th>
-      <th>관리자 쿠폰 관리</th>
-    </tr>
-    <tr>
-      <td><img src="./docs/screenshots/01-login-demo-buttons.png" alt="로그인 화면" width="150"></td>
-      <td><img src="./docs/screenshots/02-user-mission-home.png" alt="사용자 미션 홈" width="150"></td>
-      <td><img src="./docs/screenshots/03-user-coupon-wallet.png" alt="쿠폰 지갑" width="150"></td>
-      <td><img src="./docs/screenshots/04-admin-dashboard.png" alt="관리자 대시보드" width="150"></td>
-      <td><img src="./docs/screenshots/05-admin-coupons.png" alt="관리자 쿠폰 관리" width="150"></td>
-    </tr>
-  </table>
 
 ## Demo Mode Notes
 
