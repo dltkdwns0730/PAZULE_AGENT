@@ -9,6 +9,7 @@ import {
   ChevronRight,
   LogOut,
   ArrowLeft,
+  RotateCcw,
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
@@ -87,6 +88,56 @@ function MissionHistoryItem({ item }) {
         </div>
       </div>
       <Navigation size={14} className="flex-shrink-0 text-gray-300" aria-hidden="true" />
+    </div>
+  );
+}
+
+function ProfileActionCard({
+  icon: Icon,
+  title,
+  description,
+  actionLabel,
+  onClick,
+  tone = 'teal',
+  meta,
+  trailingIcon: TrailingIcon,
+}) {
+  const isDanger = tone === 'danger';
+  const iconClass = isDanger ? 'bg-red-50 text-red-500' : 'bg-dark-teal text-white';
+  const titleClass = isDanger ? 'text-red-500' : 'text-dark-teal';
+  const buttonClass = isDanger
+    ? 'border border-red-100 bg-white text-red-500 hover:bg-red-50'
+    : 'bg-dark-teal text-white shadow-btn hover:shadow-hover';
+
+  return (
+    <div
+      data-testid="profile-action-card"
+      className="rounded-2xl border border-gray-100 bg-white p-4 shadow-card"
+    >
+      <div className="flex items-start gap-3">
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconClass}`}>
+          <Icon size={18} aria-hidden="true" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className={`text-sm font-black leading-tight ${titleClass}`}>{title}</h3>
+            {meta ? (
+              <span className="shrink-0 rounded-full bg-light-grey px-2.5 py-0.5 text-[10px] font-bold text-gray-500">
+                {meta}
+              </span>
+            ) : null}
+          </div>
+          <p className="mt-1 text-xs leading-relaxed text-gray-500">{description}</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onClick}
+        className={`mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-black transition-all active:scale-[0.98] ${buttonClass}`}
+      >
+        <span>{actionLabel}</span>
+        {TrailingIcon ? <TrailingIcon size={16} aria-hidden="true" /> : null}
+      </button>
     </div>
   );
 }
@@ -229,42 +280,26 @@ export default function Profile() {
           )}
         </section>
 
-        {/* Primary CTA */}
-        <section className="px-6 mb-4" aria-label="쿠폰 지갑">
-          <button
-            onClick={() => navigate('/wallet')}
-            className="flex w-full items-center justify-between rounded-2xl bg-dark-teal px-5 py-4 font-bold text-white shadow-btn-strong transition-transform active:scale-[0.98]"
-          >
-            <span className="flex items-center gap-3">
-              <Wallet size={20} aria-hidden="true" />
-              <span>
-                <span className="block text-sm font-black">쿠폰 지갑 보기</span>
-                {stats.total_coupons > 0 && (
-                  <span className="block text-xs font-medium text-white/70">
-                    쿠폰 {stats.total_coupons}장 보유 중
-                  </span>
-                )}
-              </span>
-            </span>
-            <ChevronRight size={18} className="text-white/70" aria-hidden="true" />
-          </button>
-        </section>
-
-        {/* Danger zone */}
-        <section className="px-6 pb-10" aria-label="위험 영역">
-          <div className="rounded-2xl border border-red-50 bg-red-50/40 p-4">
-            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-red-400">
-              위험 영역
-            </p>
-            <p className="mb-3 text-xs leading-relaxed text-gray-500">
-              미션 기록과 쿠폰 데이터가 영구 삭제됩니다.
-            </p>
-            <button
+        {/* Profile actions */}
+        <section className="px-6 pb-10" aria-label="프로필 작업">
+          <div className="space-y-3">
+            <ProfileActionCard
+              icon={Wallet}
+              title="쿠폰 지갑 보기"
+              description="보유 쿠폰과 사용 가능한 QR 코드를 확인합니다."
+              actionLabel="쿠폰 지갑으로 이동"
+              onClick={() => navigate('/wallet')}
+              meta={stats.total_coupons > 0 ? `${stats.total_coupons}장 보유` : '0장 보유'}
+              trailingIcon={ChevronRight}
+            />
+            <ProfileActionCard
+              icon={RotateCcw}
+              title="위험 영역"
+              description="미션 기록과 쿠폰 데이터가 영구 삭제됩니다."
+              actionLabel="모든 데이터 초기화"
               onClick={handleReset}
-              className="text-xs font-bold text-red-500 underline underline-offset-2 transition-opacity hover:opacity-70"
-            >
-              모든 데이터 초기화
-            </button>
+              tone="danger"
+            />
           </div>
         </section>
       </main>

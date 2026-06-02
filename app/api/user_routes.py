@@ -68,6 +68,31 @@ def _forbidden_response(reason: str = "forbidden") -> tuple[Response, int]:
     return jsonify({"error": reason}), 403
 
 
+@user_api.route("/", methods=["GET"])
+def service_info() -> Response:
+    """Return a browser-friendly API server landing response."""
+    return jsonify(
+        {
+            "service": "PAZULE API",
+            "version": settings.VERSION,
+            "frontend_url": "http://localhost:5173",
+            "endpoints": [
+                "/get-today-hint",
+                "/api/mission/start",
+                "/api/mission/submit",
+                "/api/coupons",
+                "/api/admin/summary",
+            ],
+        }
+    )
+
+
+@user_api.route("/favicon.ico", methods=["GET"])
+def favicon() -> Response:
+    """Avoid noisy 404 logs from browsers probing the API server root."""
+    return Response(status=204)
+
+
 @user_api.route("/get-today-hint", methods=["GET"])
 def get_today_hint() -> Response:
     """오늘의 미션 정답 힌트를 반환한다.

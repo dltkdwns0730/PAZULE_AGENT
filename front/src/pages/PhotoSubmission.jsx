@@ -53,7 +53,7 @@ export default function PhotoSubmission() {
             } else {
                 const newAttemptsLeft = Math.max(0, attemptsLeft - 1);
                 setAttemptsLeft(newAttemptsLeft);
-                setRetryError(result.error || result.message || '인증 실패. 대상을 찾을 수 없습니다.');
+                setRetryError(result.hint || result.error || result.message || '사진을 다시 확인해 주세요.');
 
                 if (newAttemptsLeft <= 0) {
                     navigate('/mission/result'); // Go to failure result if out of attempts

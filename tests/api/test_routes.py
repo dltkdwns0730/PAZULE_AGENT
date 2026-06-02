@@ -31,6 +31,25 @@ def auth_principal(user_id: str = "guest") -> AuthPrincipal:
     )
 
 
+class TestServiceInfoRoutes:
+    """Browser-friendly API server info routes."""
+
+    def test_root_returns_api_server_guidance(self, client):
+        response = client.get("/")
+        data = response.get_json()
+
+        assert response.status_code == 200
+        assert data["service"] == "PAZULE API"
+        assert data["frontend_url"] == "http://localhost:5173"
+        assert "/get-today-hint" in data["endpoints"]
+
+    def test_favicon_returns_empty_no_content(self, client):
+        response = client.get("/favicon.ico")
+
+        assert response.status_code == 204
+        assert response.data == b""
+
+
 class TestHintRoute:
     """GET /get-today-hint 엔드포인트 검증."""
 
