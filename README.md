@@ -8,7 +8,13 @@
 [![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vite.dev)
 [![CI/CD](https://github.com/dltkdwns0730/PAZULE_AGENT/actions/workflows/ci.yml/badge.svg)](https://github.com/dltkdwns0730/PAZULE_AGENT/actions)
 
-PAZULE은 방문자가 실제 장소에서 사진 미션을 수행하면 GPS, EXIF, 이미지 해시, AI 판정을 거쳐 쿠폰을 발급하는 미션 플랫폼입니다. 관리자 콘솔에서는 기업별 미션 로그, 쿠폰 발급/사용 상태, 사용자 활동을 확인할 수 있습니다.
+PAZULE은 방문 인증, AI 판정, 쿠폰 보상, 운영 관리가 하나의 흐름으로 연결된 위치 기반 미션 플랫폼입니다. 사용자는 Supabase OAuth 또는 데모 세션으로 로그인하고, 현장 사진을 제출하면 백엔드가 사용자 소유권, GPS, EXIF, 촬영일, 이미지 해시를 먼저 검증합니다. 이후 LangGraph 파이프라인이 미션 라우팅, AI 모델 평가, 점수 집계, 선택적 council 보정, 최종 판정, 쿠폰 정책을 실행해 성공 시 쿠폰을 발급합니다. 관리자 콘솔에서는 기업별 미션 로그, 쿠폰 발급/사용 상태, 사용자 활동을 확인할 수 있습니다.
+
+## How PAZULE Works
+
+![PAZULE mission workflow](./data/assets/pazule-mission-workflow.png)
+
+실패 흐름은 코드 구조에 맞춰 구분됩니다. `validator`에서 GPS/EXIF/해시 검증이 차단되면 LLM 힌트 없이 `responder`가 blocked 응답을 반환하고, `judge` 판정 실패는 `responder`가 LLM 또는 정적 재시도 힌트를 포함해 응답합니다.
 
 ## Quick Demo
 
@@ -146,7 +152,7 @@ React SPA
   -> organization-scoped admin console
 ```
 
-현재 백엔드 API는 [app/api/routes.py](./app/api/routes.py)에 16개 Flask route로 정의되어 있습니다. 프론트엔드 관리자 화면은 `/admin`, `/admin/logs`, `/admin/logs/:missionId`, `/admin/coupons`, `/admin/users` 경로를 사용합니다.
+현재 백엔드 API는 사용자/관리자 blueprint와 호환 라우트로 분리되어 있습니다. 프론트엔드 관리자 화면은 `/admin`, `/admin/logs`, `/admin/logs/:missionId`, `/admin/coupons`, `/admin/users` 경로를 사용합니다.
 
 ## Tech Stack
 
