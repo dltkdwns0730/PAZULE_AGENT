@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 
 const LOADING_MESSAGES = [
-    "Analyzing architectural features...",
-    "Matching with reference context...",
-    "Cross-referencing angles...",
-    "Verifying location...",
-    "Almost there..."
+    "사진의 장소 특징을 확인하고 있어요.",
+    "미션 조건과 맞는지 살펴보고 있어요.",
+    "촬영 정보와 제출 내용을 정리하고 있어요.",
+    "곧 결과를 보여드릴게요."
 ];
 
 export default function AILoadingOverlay({ isVisible }) {
@@ -40,14 +39,11 @@ export default function AILoadingOverlay({ isVisible }) {
 
                     {/* Inner core */}
                     <div className="absolute inset-4 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(55,119,111,0.4)] animate-pulse">
-                        <span className="material-symbols-outlined text-white text-[32px] font-variation-settings-'FILL' 1;">psychology</span>
+                        <span className="material-symbols-outlined text-white text-[32px] font-variation-settings-'FILL' 1;">photo_camera</span>
                     </div>
-
-                    {/* Scanning line effect */}
-                    <div className="absolute top-0 left-0 w-full h-[2px] bg-white/60 shadow-[0_0_10px_2px_rgba(255,255,255,0.8)] animate-[scan_2s_ease-in-out_infinite]"></div>
                 </div>
 
-                <h3 className="text-xl font-extrabold text-slate-800 dark:text-white mb-2 font-display tracking-tight">AI Vision Engine</h3>
+                <h3 className="text-xl font-extrabold text-slate-800 dark:text-white mb-2 font-display tracking-tight">사진 확인 중</h3>
 
                 <div className="h-[40px] flex items-center justify-center">
                     <p key={messageIndex} className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-snug animate-fade-in-up">

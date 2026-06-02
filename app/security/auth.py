@@ -67,15 +67,18 @@ def verify_supabase_token(token: str) -> AuthPrincipal:
         raise AuthError("supabase_jwks_url_not_configured")
 
     jwt, PyJWKClient = _require_pyjwt()
-    jwks_client = PyJWKClient(settings.SUPABASE_JWKS_URL)
-    signing_key = jwks_client.get_signing_key_from_jwt(token)
-    claims = jwt.decode(
-        token,
-        signing_key.key,
-        algorithms=["RS256", "ES256"],
-        audience=settings.SUPABASE_JWT_AUDIENCE,
-        options={"require": ["sub", "exp"]},
-    )
+    try:
+        jwks_client = PyJWKClient(settings.SUPABASE_JWKS_URL)
+        signing_key = jwks_client.get_signing_key_from_jwt(token)
+        claims = jwt.decode(
+            token,
+            signing_key.key,
+            algorithms=["RS256", "ES256"],
+            audience=settings.SUPABASE_JWT_AUDIENCE,
+            options={"require": ["sub", "exp"]},
+        )
+    except Exception as exc:
+        raise AuthError("invalid_or_expired_token") from exc
 
     return AuthPrincipal(
         user_id=claims["sub"],

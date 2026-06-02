@@ -65,6 +65,23 @@ function FlowStep({ step, icon: Icon, title, desc }) {
   );
 }
 
+const loginButtonClass =
+  'flex h-11 w-full items-center justify-center gap-3 rounded-lg border border-gray-200 bg-white px-4 text-sm font-bold text-gray-700 transition-shadow hover:shadow-hover active:scale-[0.98] disabled:opacity-60';
+
+function LoginOption({ title, subtitle, children }) {
+  return (
+    <div data-testid="login-option" className="rounded-xl border border-gray-100 bg-white p-3 shadow-card">
+      <div className="mb-2">
+        <h2 className="text-sm font-black leading-tight text-dark-teal">{title}</h2>
+        <p className="mt-0.5 text-[11px] font-medium leading-snug text-gray-500">
+          {subtitle}
+        </p>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 export default function Login() {
   const navigate = useNavigate();
   const setSession = useAuthStore((state) => state.setSession);
@@ -97,8 +114,8 @@ export default function Login() {
       data-testid="login-screen"
       className="font-display flex h-full min-h-0 overflow-y-auto bg-white text-dark-teal"
     >
-      <main className="mx-auto flex min-h-full w-full max-w-md flex-col justify-center px-5 py-6">
-        <header className="mb-4">
+      <main className="mx-auto flex min-h-full w-full max-w-md flex-col justify-center px-5 py-5">
+        <header className="mb-3">
           <div className="mb-2.5 flex h-11 w-11 items-center justify-center rounded-xl bg-dark-teal shadow-btn-strong">
             <MapPin size={22} className="text-white" aria-hidden="true" />
           </div>
@@ -118,41 +135,48 @@ export default function Login() {
           ))}
         </section>
 
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            disabled={isStarting}
-            aria-label="Google 계정으로 로그인"
-            className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-700 shadow-card transition-shadow hover:shadow-hover active:scale-[0.98] disabled:opacity-60"
-          >
-            {isStarting ? (
-              <span className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-dark-teal" />
-            ) : (
-              <GoogleIcon />
-            )}
-            {isStarting ? 'Google로 이동 중' : 'Google 계정으로 로그인'}
-          </button>
+        <section className="mt-4 space-y-2.5" aria-label="로그인 선택">
+          <LoginOption title="실제 유저 로그인" subtitle="Google 계정으로 개인 미션 기록을 저장합니다.">
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={isStarting}
+              aria-label="Google 계정으로 로그인"
+              className={loginButtonClass}
+            >
+              {isStarting ? (
+                <span className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-dark-teal" />
+              ) : (
+                <GoogleIcon />
+              )}
+              {isStarting ? 'Google로 이동 중' : 'Google 계정으로 로그인'}
+            </button>
+          </LoginOption>
 
-          <section className="mt-3 grid grid-cols-2 gap-2.5" aria-label="데모 로그인">
-            <button
-              type="button"
-              onClick={() => handleDemoLogin('user')}
-              className="flex h-12 items-center justify-center gap-2 rounded-xl bg-dark-teal px-3 text-xs font-black text-white shadow-btn transition-transform active:scale-[0.98]"
-            >
-              <Ticket size={16} aria-hidden="true" />
-              사용자 데모
-            </button>
-            <button
-              type="button"
-              onClick={() => handleDemoLogin('admin')}
-              className="flex h-12 items-center justify-center gap-2 rounded-xl bg-coral-end px-3 text-xs font-black text-white shadow-btn transition-transform active:scale-[0.98]"
-            >
-              <Building2 size={16} aria-hidden="true" />
-              관리자 데모
-            </button>
+          <section className="space-y-2.5" aria-label="데모 로그인">
+            <LoginOption title="사용자 데모 로그인" subtitle="미션과 쿠폰 지갑을 바로 확인합니다.">
+              <button
+                type="button"
+                onClick={() => handleDemoLogin('user')}
+                className={loginButtonClass}
+              >
+                <Ticket size={16} aria-hidden="true" />
+                사용자 데모 로그인
+              </button>
+            </LoginOption>
+
+            <LoginOption title="관리자 데모 로그인" subtitle="운영 콘솔 화면으로 진입합니다.">
+              <button
+                type="button"
+                onClick={() => handleDemoLogin('admin')}
+                className={loginButtonClass}
+              >
+                <Building2 size={16} aria-hidden="true" />
+                관리자 데모 로그인
+              </button>
+            </LoginOption>
           </section>
-        </div>
+        </section>
 
         {error ? (
           <p
@@ -163,7 +187,7 @@ export default function Login() {
           </p>
         ) : null}
 
-        <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[11px] font-medium text-gray-400">
+        <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[11px] font-medium text-gray-400">
           <ShieldCheck size={14} aria-hidden="true" />
           실서비스에서는 Supabase OAuth와 서버 JWT 검증을 사용합니다.
         </p>

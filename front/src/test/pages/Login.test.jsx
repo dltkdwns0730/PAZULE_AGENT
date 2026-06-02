@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Login from '../../pages/Login';
 
@@ -36,9 +36,38 @@ describe('Login viewport layout', () => {
       </MemoryRouter>,
     );
 
+    expect(screen.getByRole('heading', { name: '실제 유저 로그인' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '사용자 데모 로그인' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '관리자 데모 로그인' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Google 계정으로 로그인' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /사용자 데모/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /관리자 데모/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '사용자 데모 로그인' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '관리자 데모 로그인' })).toBeInTheDocument();
+  });
+
+  it('uses one shared card and button treatment for every login option', () => {
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>,
+    );
+
+    const options = screen.getAllByTestId('login-option');
+    expect(options).toHaveLength(3);
+
+    options.forEach((option) => {
+      expect(option).toHaveClass('rounded-xl');
+      expect(option).toHaveClass('border');
+      expect(option).toHaveClass('shadow-card');
+
+      const button = within(option).getByRole('button');
+      expect(button).toHaveClass('h-11');
+      expect(button).toHaveClass('w-full');
+      expect(button).toHaveClass('rounded-lg');
+      expect(button).toHaveClass('border');
+      expect(button).toHaveClass('border-gray-200');
+      expect(button).toHaveClass('bg-white');
+      expect(button).toHaveClass('text-gray-700');
+    });
   });
 
   it('scrolls inside the app frame instead of forcing a viewport-height child', () => {
