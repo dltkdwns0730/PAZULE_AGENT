@@ -93,17 +93,22 @@ npm run dev
 
 아래 이미지는 데모 모드에서 실제 구동 화면을 캡처한 것입니다.
 
-| 로그인/데모 진입 | 사용자 미션 홈 |
-|---|---|
-| ![로그인 화면](./docs/screenshots/01-login-demo-buttons.png) | ![사용자 미션 홈](./docs/screenshots/02-user-mission-home.png) |
-
-| 쿠폰 지갑 | 관리자 대시보드 |
-|---|---|
-| ![쿠폰 지갑](./docs/screenshots/03-user-coupon-wallet.png) | ![관리자 대시보드](./docs/screenshots/04-admin-dashboard.png) |
-
-| 관리자 쿠폰 관리 |
-|---|
-| ![관리자 쿠폰 관리](./docs/screenshots/05-admin-coupons.png) |
+  <table>
+    <tr>
+      <th>로그인/데모 진입</th>
+      <th>사용자 미션 홈</th>
+      <th>쿠폰 지갑</th>
+      <th>관리자 대시보드</th>
+      <th>관리자 쿠폰 관리</th>
+    </tr>
+    <tr>
+      <td><img src="./docs/screenshots/01-login-demo-buttons.png" alt="로그인 화면" width="150"></td>
+      <td><img src="./docs/screenshots/02-user-mission-home.png" alt="사용자 미션 홈" width="150"></td>
+      <td><img src="./docs/screenshots/03-user-coupon-wallet.png" alt="쿠폰 지갑" width="150"></td>
+      <td><img src="./docs/screenshots/04-admin-dashboard.png" alt="관리자 대시보드" width="150"></td>
+      <td><img src="./docs/screenshots/05-admin-coupons.png" alt="관리자 쿠폰 관리" width="150"></td>
+    </tr>
+  </table>
 
 ## Demo Mode Notes
 
@@ -152,7 +157,6 @@ React SPA
 | AI/ML | LangGraph, SigLIP2, BLIP, Qwen VL, OpenAI/OpenRouter/Gemini 연동 |
 | Auth/DB | Supabase Auth, Supabase Postgres, JWT 검증 |
 | DevOps/Test | uv, pytest, ruff, Vitest, ESLint, GitHub Actions, Docker |
-
 
 ## Verification
 
